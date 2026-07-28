@@ -8,7 +8,7 @@ if (resendApiKey) {
   resend = new Resend(resendApiKey)
 }
 
-export type EmailTemplate = 'welcome' | 'book-published'
+export type EmailTemplate = 'welcome' | 'book-published' | 'morning-digest'
 
 export async function sendEmail(
   template: EmailTemplate,
@@ -51,6 +51,8 @@ function getSubject(template: EmailTemplate, props: Record<string, unknown>): st
       return 'Welcome to BookBunny! 🐰'
     case 'book-published':
       return `Your book "${props.bookTitle || 'Untitled'}" is ready! 📖`
+    case 'morning-digest':
+      return `Good morning, ${props.userName || 'there'}! ☀️`
     default:
       return 'Message from BookBunny'
   }
