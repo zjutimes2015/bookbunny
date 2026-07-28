@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bunny-pink: #FF6B8A;
+  --color-bunny-coral: #FF8FAB;
+  --color-bunny-lavender: #C8A2E8;
+  --color-bunny-sky: #87CEEB;
+  --color-bunny-mint: #98D8C8;
+  --color-bunny-peach: #FFDAB9;
+  --color-bunny-cream: #FFF5EE;
+  --color-bunny-warm: #FAF0E6;
+  --color-bunny-text: #2D2D2D;
+  --color-bunny-gray: #8E8E93;
+  --color-bunny-border: #E5E5EA;
+
+  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-family-display: 'Inter', system-ui, sans-serif;
+
+  --radius-apple: 14px;
+  --radius-apple-lg: 20px;
+  --radius-apple-xl: 28px;
+}
+
+/* Apple-style base */
+body {
+  font-family: var(--font-family-sans);
+  background-color: #FFFFFF;
+  color: var(--color-bunny-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Children's book playful accents */
+.bunny-gradient {
+  background: linear-gradient(135deg, #FF6B8A 0%, #C8A2E8 50%, #87CEEB 100%);
+}
+
+.bunny-text-gradient {
+  background: linear-gradient(135deg, #FF6B8A, #C8A2E8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.apple-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-apple-lg);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--color-bunny-border);
+  transition: all 0.2s ease;
+}
+
+.apple-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+.apple-button {
+  background: #2D2D2D;
+  color: white;
+  border-radius: var(--radius-apple);
+  padding: 12px 24px;
+  font-weight: 500;
+  font-size: 15px;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.apple-button:hover {
+  opacity: 0.85;
+  transform: scale(1.02);
+}
+
+.apple-button-secondary {
+  background: #F2F2F7;
+  color: #2D2D2D;
+  border-radius: var(--radius-apple);
+  padding: 12px 24px;
+  font-weight: 500;
+  font-size: 15px;
+  transition: all 0.2s;
+  border: 1px solid var(--color-bunny-border);
+  cursor: pointer;
+}
+
+.apple-button-secondary:hover {
+  background: #E5E5EA;
+}
+
+.apple-input {
+  background: #F2F2F7;
+  border-radius: var(--radius-apple);
+  padding: 14px 18px;
+  font-size: 16px;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  outline: none;
+  width: 100%;
+}
+
+.apple-input:focus {
+  border-color: var(--color-bunny-pink);
+  background: #FFFFFF;
+}
+
+/* Hero section bounce animation */
+@keyframes bunny-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.bunny-bounce {
+  animation: bunny-bounce 3s ease-in-out infinite;
+}
+
+/* Page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.3s ease-out;
+}
