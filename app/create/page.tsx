@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 import MultiCharacterManager from '@/components/MultiCharacterManager'
+import TurnstileWidget from '@/components/TurnstileWidget'
 
 type Step = 'characters' | 'story' | 'generating' | 'preview'
 
@@ -19,6 +20,8 @@ export default function CreatePage() {
   const [characters, setCharacters] = useState<CharData[]>([])
   const [story, setStory] = useState<{ title: string; pages: string[] } | null>(null)
   const [loading, setLoading] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const [turnstileError, setTurnstileError] = useState(false)
 
   // Generation state
   const [genId, setGenId] = useState<string | null>(null)
@@ -46,6 +49,25 @@ export default function CreatePage() {
   // Story generation
   const handleGenerateStory = async () => {
     if (!theme || characters.length === 0) return
+
+    // Verify Turnstile
+    if (!turnstileToken) {
+      setTurnstileError(true)
+      return
+    }
+    setTurnstileError(false)
+
+    const verifyRes = await fetch('/api/verify-turnstile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: turnstileToken }),
+    })
+    const verifyData = await verifyRes.json()
+    if (!verifyData.success) {
+      setTurnstileError(true)
+      return
+    }
+
     setLoading(true)
     try {
       const charNames = characters.map(c => c.name).join(', ')
@@ -224,6 +246,15 @@ export default function CreatePage() {
                     <option value="7-10">Chapter Book (7-10)</option>
                   </select>
                 </div>
+                {turnstileError && (
+                  <p className="text-xs text-red-400 text-center">Please complete the verification</p>
+                )}
+                <TurnstileWidget
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken(null)}
+                  onError={() => setTurnstileError(true)}
+                  className="my-3"
+                />
                 <button className="apple-button w-full disabled:opacity-50" disabled={!theme || loading}
                         onClick={handleGenerateStory}>
                   {loading ? '✨ Generating...' : `✨ Create Book with ${characters.length} Character${characters.length > 1 ? 's' : ''}`}
