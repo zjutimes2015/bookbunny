@@ -3,6 +3,7 @@ import '@/styles/globals.css'
 import Header from '@/components/Header'
 import CrispChat from '@/components/CrispChat'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+import { AuthProvider } from '@/lib/auth-context'
 
 export const metadata: Metadata = {
   title: 'BookBunny — Create Magical Children\'s Books with AI',
@@ -21,9 +22,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <CrispChat />
         <GoogleAnalytics />
-        <main className="pt-16">
-          {children}
-        </main>
+        <AuthProvider>
+          <main className="pt-16">
+            {children}
+          </main>
+        </AuthProvider>
       </body>
     </html>
   )

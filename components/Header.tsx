@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { UserAvatar } from './UserViews'
 import clsx from 'clsx'
 
 export default function Header() {
@@ -30,8 +31,9 @@ export default function Header() {
               Pricing
             </Link>
             <Link href="/create" className="bg-[#2D2D2D] text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:opacity-85 transition-all hover:scale-[1.02]">
-              Get Started Free
+              Create Book
             </Link>
+            <UserAvatar />
           </nav>
 
           {/* Mobile menu button */}
