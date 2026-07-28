@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import '@/styles/globals.css'
 import Header from '@/components/Header'
+import CrispChat from '@/components/CrispChat'
 
 export const metadata: Metadata = {
   title: 'BookBunny — Create Magical Children\'s Books with AI',
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen bg-white">
         <Header />
+        <CrispChat />
         <main className="pt-16">
           {children}
         </main>
