@@ -13,18 +13,17 @@ export default function HomePage() {
           </div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF5EE] border border-[#FFDAB9] text-sm text-[#FF6B8A] font-medium mb-6">
             <span className="w-2 h-2 rounded-full bg-[#FF6B8A]" />
-            AI-Powered Children&apos;s Book Creator
+            Leveled Reading · GRL A–E · AI Children&apos;s Books
           </div>
 
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-[#2D2D2D] max-w-3xl leading-[1.08]">
-            Create Magical{' '}
-            <span className="bunny-text-gradient">Children&apos;s Books</span>{' '}
-            in Minutes
+            Books That Match{' '}
+            <span className="bunny-text-gradient">Your Child&apos;s Reading Level</span>
           </h1>
           <p className="mt-5 text-lg sm:text-xl text-[#8E8E93] max-w-xl leading-relaxed">
-            Upload a photo, create a character, and generate a beautifully illustrated storybook.
-            Every page keeps your character looking exactly the same.
+            Create personalized leveled readers — vocabulary and sentences matched to GRL A–E,
+            with comprehension questions built in. Every book stars your child.
           </p>
 
           {/* CTA */}
@@ -52,9 +51,9 @@ export default function HomePage() {
         </h2>
         <div className="grid md:grid-cols-3 gap-6">
           {[
-            { step: '1', title: 'Upload a Photo', desc: 'Upload a photo of your child or describe your character. AI creates a consistent hero for your story.' },
-            { step: '2', title: 'Generate Your Story', desc: 'Tell us the theme — space adventure, magical forest, or your own idea. AI writes a age-appropriate story.' },
-            { step: '3', title: 'Export & Publish', desc: 'Get a KDP-ready PDF. Print on Amazon or share as an eBook. Your character stays the same on every page.' },
+            { step: '1', title: 'Pick a Reading Level', desc: 'Choose GRL A–E — from first words to confident readers. AI matches vocabulary and sentence length to your child&apos;s level.' },
+            { step: '2', title: 'Star Your Child', desc: 'Upload a photo or describe a character. AI creates a consistent hero and writes a leveled story just for them.' },
+            { step: '3', title: 'Read, Check, Grow', desc: 'Each book comes with comprehension questions and a reading journey that suggests the next level up.' },
           ].map((item) => (
             <div key={item.step} className="apple-card p-8 text-center">
               <div className="w-10 h-10 rounded-full bunny-gradient text-white font-bold flex items-center justify-center mx-auto mb-4 text-lg">

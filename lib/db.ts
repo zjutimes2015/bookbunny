@@ -23,6 +23,8 @@ export const stories = pgTable('stories', {
   title: text('title').notNull(),
   content: text('content').array().notNull(),
   ageGroup: text('age_group').notNull(),
+  level: text('level'),  // GRL 分级: 'A'...'E'
+  quiz: text('quiz'),    // JSON string: 阅读理解题
   theme: text('theme').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
@@ -32,8 +34,10 @@ export const books = pgTable('books', {
   title: text('title').notNull(),
   characterId: uuid('character_id').references(() => characters.id),
   storyId: uuid('story_id').references(() => stories.id),
+  userId: text('user_id'),  // 创建者（家长面板按用户聚合）
   pageImageUrls: text('page_image_urls').array(),
   status: text('status').notNull().default('draft'),
   format: text('format'),
+  level: text('level'),  // GRL 分级: 'A'...'E'（冗余，便于列表查询）
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
