@@ -18,7 +18,15 @@ interface CharData {
 export default function CreatePage() {
   const [step, setStep] = useState<Step>('characters')
   const [characters, setCharacters] = useState<CharData[]>([])
-  const [story, setStory] = useState<{ title: string; pages: string[] } | null>(null)
+  const [story, setStory] = useState<{
+    title: string
+    pages: string[]
+    level?: string
+    levelLabel?: string
+    vocabularyPassed?: boolean
+    vocabularyRatio?: number
+    quiz?: { questions: { q: string; options: string[]; answer: number; skill: string }[] } | null
+  } | null>(null)
   const [loading, setLoading] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [turnstileError, setTurnstileError] = useState(false)
@@ -29,9 +37,20 @@ export default function CreatePage() {
     total: number; completed: number; pages: { index: number; status: string; imageB64?: string }[]
   } | null>(null)
   const [pageImages, setPageImages] = useState<(string | null)[]>([])
+  const [savedBookId, setSavedBookId] = useState<string | null>(null)
 
   const [theme, setTheme] = useState('')
   const [ageGroup, setAgeGroup] = useState('3-5')
+  const [level, setLevel] = useState('C')
+
+  // Reading level options (GRL A-E, 3-8岁主战场)
+  const LEVEL_OPTIONS = [
+    { grl: 'A', label: 'Level A', age: '3-4', desc: 'Emerging · 1-6 words per sentence' },
+    { grl: 'B', label: 'Level B', age: '4-5', desc: 'Beginning · 2-8 words per sentence' },
+    { grl: 'C', label: 'Level C', age: '5-6', desc: 'Early · 3-10 words per sentence' },
+    { grl: 'D', label: 'Level D', age: '6-7', desc: 'Developing · 4-13 words per sentence' },
+    { grl: 'E', label: 'Level E', age: '7-8', desc: 'Confident · 5-16 words per sentence' },
+  ]
 
   // Multi-character
   const handleAddCharacter = async (name: string, photo?: File) => {
@@ -74,7 +93,7 @@ export default function CreatePage() {
       const res = await fetch('/api/create-story', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ theme, ageGroup, characterName: charNames, pages: 20 }),
+        body: JSON.stringify({ theme, ageGroup, characterName: charNames, pages: 20, level }),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
@@ -129,6 +148,8 @@ export default function CreatePage() {
 
         if (data.status === 'done' || data.status === 'error') {
           clearInterval(interval)
+          // Auto-save book to DB (best-effort, doesn't block preview)
+          saveBook()
           setTimeout(() => setStep('preview'), 500)
         }
       } catch {}
@@ -136,6 +157,29 @@ export default function CreatePage() {
 
     return () => clearInterval(interval)
   }, [genId])
+
+  // Save the generated story + book to the database
+  const saveBook = async () => {
+    if (!story || savedBookId) return
+    try {
+      const res = await fetch('/api/books', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: story.title,
+          pages: story.pages,
+          ageGroup,
+          theme,
+          level: story.level || null,
+          quiz: story.quiz || null,
+        }),
+      })
+      const data = await res.json()
+      if (data.bookId) setSavedBookId(data.bookId)
+    } catch (err) {
+      console.warn('Save book failed (non-blocking):', err)
+    }
+  }
 
   // Export PDF with real images
   const handleExportPDF = async () => {
@@ -246,6 +290,30 @@ export default function CreatePage() {
                     <option value="7-10">Chapter Book (7-10)</option>
                   </select>
                 </div>
+                <div>
+                  <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Reading Level (GRL)</label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {LEVEL_OPTIONS.map(opt => (
+                      <button
+                        key={opt.grl}
+                        type="button"
+                        onClick={() => setLevel(opt.grl)}
+                        className={`rounded-xl border px-2 py-2 text-center transition-all ${
+                          level === opt.grl
+                            ? 'border-[#FF6B8A] bg-[#FFF5EE] ring-1 ring-[#FF6B8A]'
+                            : 'border-[#E5E5EA] bg-white hover:border-[#C8A2E8]'
+                        }`}
+                      >
+                        <span className="block text-sm font-bold text-[#2D2D2D]">{opt.label}</span>
+                        <span className="block text-[10px] text-[#8E8E93] mt-0.5">{opt.age}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-[#8E8E93] mt-1.5">
+                    {LEVEL_OPTIONS.find(o => o.grl === level)?.desc}
+                    <span className="text-[#FF6B8A]"> · Matched to your child's reading level</span>
+                  </p>
+                </div>
                 {turnstileError && (
                   <p className="text-xs text-red-400 text-center">Please complete the verification</p>
                 )}
@@ -308,9 +376,25 @@ export default function CreatePage() {
                 <h2 className="text-xl font-bold text-[#2D2D2D]">{story.title}</h2>
                 <p className="text-sm text-[#8E8E93]">
                   {characters.map(c => c.name).join(' & ')} • {story.pages.length} pages • {ageGroup}
+                  {story.levelLabel && (
+                    <span className="inline-flex items-center ml-2 px-2 py-0.5 rounded-full bg-[#FFF5EE] text-[#FF6B8A] text-[11px] font-semibold">
+                      {story.levelLabel}
+                    </span>
+                  )}
+                  {story.vocabularyPassed === false && (
+                    <span className="inline-flex items-center ml-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[11px]">
+                      {story.vocabularyRatio}% above level — try Level {String.fromCharCode((story.level || 'C').charCodeAt(0) + 1)}
+                    </span>
+                  )}
                 </p>
               </div>
               <div className="flex gap-2 w-full sm:w-auto">
+                {savedBookId && (
+                  <Link href={`/book/${savedBookId}`}
+                        className="apple-button text-sm px-4 py-2.5 flex-1 sm:flex-none">
+                    📖 View Story
+                  </Link>
+                )}
                 <button className="apple-button text-sm px-4 py-2.5 flex-1 sm:flex-none disabled:opacity-50"
                         disabled={loading} onClick={handleExportPDF}>
                   {loading ? '...' : '📄 Download PDF'}
