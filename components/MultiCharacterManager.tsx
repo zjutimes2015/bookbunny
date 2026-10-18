@@ -7,6 +7,8 @@ interface Character {
   name: string
   photoPreview?: string
   refSeed?: number
+  /** 正在生成角色设定卡 */
+  generating?: boolean
 }
 
 interface MultiCharacterManagerProps {
@@ -51,7 +53,9 @@ export default function MultiCharacterManager({
             className="apple-card p-3 text-center relative group"
           >
             <div className="w-12 h-12 rounded-full bg-[#FFF5EE] flex items-center justify-center mx-auto mb-2 text-xl">
-              {char.photoPreview ? (
+              {char.generating ? (
+                <span className="animate-pulse">✨</span>
+              ) : char.photoPreview ? (
                 <img src={char.photoPreview} alt={char.name}
                      className="w-12 h-12 rounded-full object-cover" />
               ) : (
@@ -59,6 +63,9 @@ export default function MultiCharacterManager({
               )}
             </div>
             <p className="text-xs font-medium text-[#2D2D2D] truncate">{char.name}</p>
+            {char.generating && (
+              <p className="text-[9px] text-[#C8A2E8] mt-0.5">designing…</p>
+            )}
             <button
               onClick={() => onRemove(char.id)}
               className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#FF6B8A] text-white text-xs
@@ -88,8 +95,8 @@ export default function MultiCharacterManager({
         )}
       </div>
 
-      {/* Quick add form (shown when no empty slots) */}
-      {characters.length > 0 && characters.length < maxCharacters && (
+      {/* Quick add form (always available while slots remain — enables 方案A 不用真照) */}
+      {characters.length < maxCharacters && (
         <details className="text-sm">
           <summary className="text-[#FF6B8A] cursor-pointer font-medium">+ Add by name only</summary>
           <div className="flex gap-2 mt-2">

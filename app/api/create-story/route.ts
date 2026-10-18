@@ -3,7 +3,7 @@ import { generateStory } from '@/lib/api/story'
 
 export async function POST(req: NextRequest) {
   try {
-    const { theme, ageGroup, characterName, pages, level } = await req.json()
+    const { theme, ageGroup, characterName, pages, level, styleLexicon, styleCard, characterCards } = await req.json()
 
     if (!theme || !ageGroup || !characterName) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -15,6 +15,9 @@ export async function POST(req: NextRequest) {
       characterName,
       pages: pages || 20,
       level, // 可选：GRL 分级（'A' - 'E'）
+      styleLexicon, // 可选：风格层（固定风格词库）
+      styleCard, // 可选：风格设定卡
+      characterCards, // 可选：角色设定卡（一致性）
     })
 
     return NextResponse.json(story)

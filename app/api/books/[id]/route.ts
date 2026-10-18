@@ -18,8 +18,10 @@ export async function GET(
         b.id,
         b.title,
         b.level,
+        b.aspect,
         b.created_at,
         s.content AS pages,
+        s.outline AS outline,
         s.age_group AS age_group,
         s.theme,
         s.quiz
@@ -47,9 +49,11 @@ export async function GET(
       id: row.id,
       title: row.title,
       pages: row.pages || [],
+      outline: row.outline || null,
       ageGroup: row.age_group || '',
       theme: row.theme || '',
       level: row.level || null,
+      aspect: row.aspect || null,
       quiz,
       createdAt: row.created_at,
     })

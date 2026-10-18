@@ -2,25 +2,38 @@ import { NextRequest, NextResponse } from 'next/server'
 import { execSync } from 'child_process'
 import { writeFileSync, unlinkSync } from 'fs'
 import { join } from 'path'
+import type { PageOutline } from '@/lib/types/book'
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { title, pages, author, size } = body
+    const { title, pages, outline, author, size } = body
 
-    if (!title || !pages || !Array.isArray(pages)) {
+    const hasOutline = Array.isArray(outline) && outline.length > 0
+    const hasPages = Array.isArray(pages)
+
+    if (!title || (!hasOutline && !hasPages)) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     }
+
+    // 统一取每页文字：outline 取 pageText；pages 兼容 string / {text} 两种旧格式
+    const pageList: { text: string; characters: string[] }[] = hasOutline
+      ? (outline as PageOutline[]).map(p => ({
+          text: p.pageText,
+          characters: Array.isArray(p.characters) ? p.characters : [],
+        }))
+      : (pages as (string | { text: string; characters?: string[] })[]).map(p =>
+          typeof p === 'string'
+            ? { text: p, characters: [] }
+            : { text: p.text, characters: p.characters || [] },
+        )
 
     // Format data for the PDF generator
     const bookData = {
       title,
       author: author || 'BookBunny',
       size: size || '8.5x8.5',
-      pages: pages.map((p: string | { text: string; characters?: string[] }) => ({
-        text: typeof p === 'string' ? p : p.text,
-        characters: typeof p === 'string' ? [] : (p.characters || []),
-      })),
+      pages: pageList,
     }
 
     // Call Python PDF generator

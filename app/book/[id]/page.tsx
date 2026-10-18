@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import BunnyMascot from '@/components/BunnyMascot'
+import { pagesToOutline, type PageOutline } from '@/lib/types/book'
 
 interface QuizQuestion {
   q: string
@@ -16,6 +17,7 @@ interface BookDetail {
   id: string
   title: string
   pages: string[]
+  outline?: PageOutline[] | null
   ageGroup: string
   theme: string
   level: string | null
@@ -78,6 +80,12 @@ export default function BookDetailPage() {
     )
   }
 
+  // 优先使用结构化 outline；旧数据回退到 pages（string[]）
+  const outline: PageOutline[] =
+    book.outline && book.outline.length > 0
+      ? book.outline
+      : pagesToOutline(book.pages || [])
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 md:py-12">
       {/* Header */}
@@ -93,7 +101,7 @@ export default function BookDetailPage() {
               {book.ageGroup} years
             </span>
             <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#98D8C8]/20 text-[#4A9E8E] text-xs">
-              {book.pages.length} pages
+              {outline.length} pages
             </span>
           </div>
           <h1 className="text-2xl font-bold text-[#2D2D2D]">{book.title}</h1>
@@ -110,10 +118,10 @@ export default function BookDetailPage() {
 
       {/* Story pages */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-10">
-        {book.pages.map((page, i) => (
+        {outline.map((page, i) => (
           <div key={i} className="apple-card p-4">
             <span className="text-[10px] text-[#C8A2E8] font-semibold">PAGE {i + 1}</span>
-            <p className="text-sm text-[#2D2D2D] leading-relaxed mt-1.5">{page}</p>
+            <p className="text-sm text-[#2D2D2D] leading-relaxed mt-1.5">{page.pageText}</p>
           </div>
         ))}
       </div>

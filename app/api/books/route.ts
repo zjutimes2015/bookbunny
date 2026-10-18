@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
+import { outlineToPages, type PageOutline } from '@/lib/types/book'
 
 const sql = neon(process.env.NEON_DATABASE_URL!)
 
 interface SaveBookBody {
   title: string
-  pages: string[]
+  pages?: string[]
+  outline?: PageOutline[]
   ageGroup: string
   theme: string
   level?: string | null
   quiz?: unknown | null
+  aspect?: string | null
 }
 
 // 从 cookie 解析当前用户（与 /api/auth/me 同一套逻辑）
@@ -34,17 +37,24 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as SaveBookBody
 
-    if (!body.title || !Array.isArray(body.pages) || body.pages.length === 0) {
+    const hasOutline = Array.isArray(body.outline) && body.outline.length > 0
+    const hasPages = Array.isArray(body.pages) && body.pages.length > 0
+
+    if (!body.title || (!hasOutline && !hasPages)) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    // content = 页面文字投影（优先从 outline 提取，回退到旧的 pages）
+    const content = hasOutline ? outlineToPages(body.outline!) : (body.pages as string[])
+    const outlineJson = hasOutline ? JSON.stringify(body.outline) : null
+
     const userId = await getUserId(req)
 
-    // 1. 保存 story（含 level + quiz JSON）
+    // 1. 保存 story（含 outline jsonb + level + quiz JSON）
     const quizJson = body.quiz ? JSON.stringify(body.quiz) : null
     const storyResult = await sql`
-      INSERT INTO stories (title, content, age_group, theme, level, quiz)
-      VALUES (${body.title}, ${body.pages}, ${body.ageGroup}, ${body.theme}, ${body.level || null}, ${quizJson})
+      INSERT INTO stories (title, content, outline, age_group, theme, level, quiz)
+      VALUES (${body.title}, ${content}, ${outlineJson}::jsonb, ${body.ageGroup}, ${body.theme}, ${body.level || null}, ${quizJson})
       RETURNING id
     `
     const storyId = storyResult[0]?.id
@@ -52,8 +62,8 @@ export async function POST(req: NextRequest) {
 
     // 2. 保存 book（关联 story + 用户，冗余 level 便于列表查询）
     const bookResult = await sql`
-      INSERT INTO books (title, story_id, user_id, status, format, level)
-      VALUES (${body.title}, ${storyId}, ${userId}, 'ready', 'ebook', ${body.level || null})
+      INSERT INTO books (title, story_id, user_id, status, format, level, aspect)
+      VALUES (${body.title}, ${storyId}, ${userId}, 'ready', 'ebook', ${body.level || null}, ${body.aspect || null})
       RETURNING id
     `
     const bookId = bookResult[0]?.id

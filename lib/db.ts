@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
-import { pgTable, text, integer, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { pgTable, text, integer, timestamp, uuid, jsonb } from 'drizzle-orm/pg-core'
 
 // Database connection
 const sql = neon(process.env.NEON_DATABASE_URL!)
@@ -15,13 +15,16 @@ export const characters = pgTable('characters', {
   style: text('style').notNull().default('watercolor'),
   refSeed: integer('ref_seed').notNull(),
   promptTemplate: text('prompt_template').notNull(),
+  card: jsonb('card'),                          // 角色设定卡 CharacterCard（12 项）
+  consistencyLine: text('consistency_line'),    // 一致性固定句（注入每页 prompt）
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
 export const stories = pgTable('stories', {
   id: uuid('id').defaultRandom().primaryKey(),
   title: text('title').notNull(),
-  content: text('content').array().notNull(),
+  content: text('content').array().notNull(),  // 页面文字投影（阅读进度/词汇校验用）
+  outline: jsonb('outline'),                   // 结构化单页大纲 PageOutline[]（18 字段）
   ageGroup: text('age_group').notNull(),
   level: text('level'),  // GRL 分级: 'A'...'E'
   quiz: text('quiz'),    // JSON string: 阅读理解题
@@ -39,5 +42,6 @@ export const books = pgTable('books', {
   status: text('status').notNull().default('draft'),
   format: text('format'),
   level: text('level'),  // GRL 分级: 'A'...'E'（冗余，便于列表查询）
+  aspect: text('aspect'),  // 画幅比例: 1:1 / 4:3 / 3:4 / 16:9 / a4
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })

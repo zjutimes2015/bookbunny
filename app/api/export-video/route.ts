@@ -2,16 +2,26 @@ import { NextRequest, NextResponse } from 'next/server'
 import { execSync } from 'child_process'
 import { writeFileSync, unlinkSync } from 'fs'
 import { join } from 'path'
+import type { PageOutline } from '@/lib/types/book'
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { title, pages } = body
-    if (!title || !pages || !Array.isArray(pages)) {
+    const { title, pages, outline } = body
+
+    const hasOutline = Array.isArray(outline) && outline.length > 0
+    const hasPages = Array.isArray(pages)
+
+    if (!title || (!hasOutline && !hasPages)) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     }
 
-    const bookData = { title, pages: pages.map((p: string | { text: string }) => typeof p === 'string' ? { text: p } : p) }
+    // 统一取每页文字：outline 取 pageText；pages 兼容 string / {text} 两种旧格式
+    const pageList: { text: string }[] = hasOutline
+      ? (outline as PageOutline[]).map(p => ({ text: p.pageText }))
+      : (pages as (string | { text: string })[]).map(p => typeof p === 'string' ? { text: p } : p)
+
+    const bookData = { title, pages: pageList }
     const tmpInput = join('/tmp', `bb_vid_${Date.now()}_in.json`)
     const tmpOutput = join('/tmp', `bb_vid_${Date.now()}.mp4`)
     writeFileSync(tmpInput, JSON.stringify(bookData))
