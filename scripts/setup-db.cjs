@@ -1,8 +1,19 @@
-/** Quick DB connection test */
+/** Quick DB connection test + base table bootstrap */
+const fs = require('fs')
+const path = require('path')
 const { neon } = require('@neondatabase/serverless')
 
+/** 从 .env.local 读取 NEON_DATABASE_URL，避免把连接串硬编码进仓库 */
+function loadDatabaseUrl() {
+  const envPath = path.join(__dirname, '..', '.env.local')
+  const env = fs.readFileSync(envPath, 'utf-8')
+  const match = env.match(/^\s*NEON_DATABASE_URL\s*=\s*(.+)$/m)
+  if (!match) throw new Error('NEON_DATABASE_URL not found in .env.local')
+  return match[1].trim().replace(/^["']|["']$/g, '')
+}
+
 async function main() {
-  const sql = neon('***REMOVED-DB-CREDENTIAL***')
+  const sql = neon(loadDatabaseUrl())
   
   const result = await sql`SELECT current_database() as db, version() as ver`
   console.log('DB:', result[0].db)
