@@ -98,7 +98,7 @@ export default function MorningDigestEmail({
               Unsubscribe from daily emails
             </Link>
             <Text style={footerText}>
-              BookBunny — Creating smiles, one story at a time. 🐰
+              SproutTales — Creating smiles, one story at a time. 🐰
             </Text>
           </Section>
         </Container>

@@ -1,5 +1,11 @@
 import { STYLE_LIBRARY, AGE_COLOR_GUIDE, type StyleLibraryEntry } from '@/data/style-library'
-import type { StyleCard, StyleLexicon } from '@/lib/types/book'
+import {
+  contentLanguageRule,
+  DEFAULT_BOOK_LANGUAGE,
+  type StyleCard,
+  type StyleLexicon,
+  type BookLanguage,
+} from '@/lib/types/book'
 
 const OR_KEY = process.env.OPENROUTER_API_KEY
 const OR_BASE = 'https://openrouter.ai/api/v1'
@@ -92,10 +98,13 @@ function normalizeLexicon(raw: unknown, fb: StyleLexicon): StyleLexicon {
  * 调 OpenRouter deepseek-chat 请求 JSON；任何失败（无 key / 网络 / 解析）都回退到确定性兜底，绝不向调用方抛错。
  */
 export async function generateStyleLexicon(
-  params: { styleId: string; ageGroup: string; theme: string },
+  params: { styleId: string; ageGroup: string; theme: string; language?: BookLanguage },
 ): Promise<{ card: StyleCard; lexicon: StyleLexicon }> {
-  const { styleId, ageGroup, theme } = params
+  const { styleId, ageGroup, theme, language } = params
   const fallback = buildFallback(styleId, ageGroup, theme)
+
+  const lang = language ?? DEFAULT_BOOK_LANGUAGE
+  const languageRule = contentLanguageRule(lang)
 
   if (!OR_KEY) return fallback
 
@@ -108,7 +117,7 @@ export async function generateStyleLexicon(
 Inputs:
 - Theme: ${theme}
 - Target age: ${ageGroup} (age band ${ageKey})
-- Chosen main style: ${entry.name} (${entry.nameEn})
+- Chosen main style: ${entry.name}
 - Style traits: ${entry.features}
 - English AI keywords for this style: ${entry.aiKeywords}
 - Eye-friendly color guide for this age band: ${colorGuide}
@@ -118,8 +127,9 @@ Rules:
 - Color rules MUST follow the eye-friendly guide above (this protects young readers' eyes).
 - Backgrounds must not compete with the main character; always reserve whitespace for text.
 - NEVER reference or imitate any specific artist, studio or franchise (e.g. Ghibli, Disney, Pixar).
+- ${languageRule}
 
-Return ONLY a JSON object (all values are strings; lexicon values must be FLUX-friendly English keywords):
+Return ONLY a JSON object (all values are strings; the card and lexicon values are image-facing so keep them in English, FLUX-friendly keywords):
 {
   "card": {
     "workingTheme": "...", "ageRange": "...", "mainStyle": "...", "colorMood": "...",

@@ -2,7 +2,13 @@
 // 产出：12 项角色设定卡 + 一致性固定句（注入每页生图 prompt）+ 角色参考图（供每页作 reference）
 
 import { generateImage } from '@/lib/api/flux'
-import type { CharacterCard, StyleLexicon } from '@/lib/types/book'
+import {
+  contentLanguageRule,
+  DEFAULT_BOOK_LANGUAGE,
+  type CharacterCard,
+  type StyleLexicon,
+  type BookLanguage,
+} from '@/lib/types/book'
 
 const OR_KEY = process.env.OPENROUTER_API_KEY
 const OR_BASE = 'https://openrouter.ai/api/v1'
@@ -43,7 +49,7 @@ export function buildConsistencyLine(card: CharacterCard): string {
 function fallbackCard(name: string, photoUsage: CharacterCard['photoUsage']): CharacterCard {
   return {
     name,
-    roleType: '主角 / protagonist',
+    roleType: 'protagonist',
     ageFeel: 'young child, cute and friendly',
     appearance: 'round face, big friendly eyes, soft warm smile',
     hairOrFur: 'soft fluffy fur, neat and tidy',
@@ -112,9 +118,13 @@ export async function generateCharacterCard(params: {
   ageGroup?: string
   theme?: string
   photoUsage?: CharacterCard['photoUsage']
+  /** 内容语言（可选）：面向读者的文字语言，缺省英语 */
+  language?: BookLanguage
 }): Promise<CharacterResult> {
-  const { name, photoDataUri, styleLexicon, styleName, ageGroup, theme, photoUsage } = params
+  const { name, photoDataUri, styleLexicon, styleName, ageGroup, theme, photoUsage, language } = params
   const fallback = fallbackCard(name, photoUsage)
+  const lang = language ?? DEFAULT_BOOK_LANGUAGE
+  const languageRule = contentLanguageRule(lang)
   let card = fallback
 
   if (OR_KEY) {
@@ -131,6 +141,8 @@ Rules:
 - noChangeItems MUST list the exact visual invariants to keep identical across pages.
 - Currency/compatible with young children; friendly and non-scary.
 - NEVER imitate any specific artist, studio or franchise (e.g. Ghibli / Disney / Pixar).
+- ${languageRule}
+- Every visual descriptor field (name, roleType, ageFeel, appearance, hairOrFur, clothing, signatureProp, noChangeItems) MUST stay in English so the image model (FLUX) renders them reliably.
 
 Return ONLY a JSON object (all values are strings):
 {

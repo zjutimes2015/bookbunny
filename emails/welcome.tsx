@@ -27,7 +27,7 @@ export default function WelcomeEmail({
   return (
     <Html>
       <Head />
-      <Preview>Welcome to BookBunny — start creating magical stories!</Preview>
+      <Preview>Welcome to SproutTales — start creating magical stories!</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={logoSection}>
@@ -35,16 +35,16 @@ export default function WelcomeEmail({
               src={`${baseUrl}/bookbunny-logo.png`}
               width="48"
               height="48"
-              alt="BookBunny"
+              alt="SproutTales"
               style={logo}
             />
-            <Text style={brandName}>BookBunny</Text>
+            <Text style={brandName}>SproutTales</Text>
           </Section>
 
           <Heading style={h1}>Welcome, {userName}! 🐰</Heading>
 
           <Text style={paragraph}>
-            You&apos;ve joined BookBunny — the easiest way to create beautiful,
+            You&apos;ve joined SproutTales — the easiest way to create beautiful,
             character-consistent children&apos;s books with AI.
           </Text>
 
@@ -66,7 +66,7 @@ export default function WelcomeEmail({
           <Text style={footer}>
             If you did not create this account, please ignore this email.
             <br />
-            © {new Date().getFullYear()} BookBunny. All rights reserved.
+            © {new Date().getFullYear()} SproutTales. All rights reserved.
           </Text>
         </Container>
       </Body>

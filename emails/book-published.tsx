@@ -34,7 +34,7 @@ export default function BookPublishedEmail({
         <Container style={container}>
           <Section style={logoSection}>
             <div style={{ fontSize: '40px', textAlign: 'center' }}>📖</div>
-            <Text style={brandName}>BookBunny</Text>
+            <Text style={brandName}>SproutTales</Text>
           </Section>
 
           <Heading style={h1}>Your Book is Ready! 🎉</Heading>
@@ -46,7 +46,7 @@ export default function BookPublishedEmail({
           <Section style={bookCard}>
             <div style={{ fontSize: '48px', marginBottom: '8px' }}>📚</div>
             <Text style={bookTitleStyle}>{bookTitle}</Text>
-            <Text style={bookMeta}>Created with BookBunny</Text>
+            <Text style={bookMeta}>Created with SproutTales</Text>
           </Section>
 
           <Section style={ctaSection}>
@@ -65,7 +65,7 @@ export default function BookPublishedEmail({
           <Text style={footer}>
             Happy storytelling!
             <br />
-            🐰 The BookBunny Team
+            🐰 The SproutTales Team
           </Text>
         </Container>
       </Body>

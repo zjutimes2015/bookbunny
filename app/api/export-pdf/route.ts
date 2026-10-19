@@ -1,107 +1,85 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { execSync } from 'child_process'
-import { writeFileSync, unlinkSync } from 'fs'
-import { join } from 'path'
+import { PDFDocument } from 'pdf-lib'
+import { buildInteriorPdf, buildCoverPdf, type KdpPageInput } from '@/lib/kdp/export'
+import { padToKdpPageCount, type KdpPaper } from '@/lib/kdp/spec'
 import type { PageOutline } from '@/lib/types/book'
 
-export async function POST(req: NextRequest) {
+// Vercel 函数请求体上限约 4.5MB：整本 24 页的 base64 图片往往超过该上限，
+// 因此超大体积的导出请走客户端路径（/create 页在浏览器内直接调用 lib/kdp/export）。
+// 本路由为纯 TS 薄封装，保留给自动化 / 小体量场景，几何与生成逻辑全部来自 lib/kdp/export。
+export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { title, pages, outline, author, size } = body
-
-    const hasOutline = Array.isArray(outline) && outline.length > 0
-    const hasPages = Array.isArray(pages)
-
-    if (!title || (!hasOutline && !hasPages)) {
-      return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    const {
+      title, author, outline, pages: rawPages,
+      images, trim = '8.5x8.5', paper = 'white', exportType = 'interior',
+    } = body as {
+      title?: string
+      author?: string
+      outline?: PageOutline[]
+      pages?: (string | { text?: string })[]
+      images?: Record<string | number, string>
+      trim?: string
+      paper?: KdpPaper
+      exportType?: 'interior' | 'cover' | 'both'
     }
 
-    // 统一取每页文字：outline 取 pageText；pages 兼容 string / {text} 两种旧格式
-    const pageList: { text: string; characters: string[] }[] = hasOutline
-      ? (outline as PageOutline[]).map(p => ({
-          text: p.pageText,
-          characters: Array.isArray(p.characters) ? p.characters : [],
-        }))
-      : (pages as (string | { text: string; characters?: string[] })[]).map(p =>
-          typeof p === 'string'
-            ? { text: p, characters: [] }
-            : { text: p.text, characters: p.characters || [] },
-        )
-
-    // Format data for the PDF generator
-    const bookData = {
-      title,
-      author: author || 'BookBunny',
-      size: size || '8.5x8.5',
-      pages: pageList,
+    if (!title) {
+      return Response.json({ error: 'Missing title' }, { status: 400 })
     }
 
-    // Call Python PDF generator
-    const tmpInput = join('/tmp', `bookbunny_${Date.now()}_input.json`)
-    const tmpOutput = join('/tmp', `bookbunny_${Date.now()}.pdf`)
-    writeFileSync(tmpInput, JSON.stringify(bookData))
+    // outline 文本 + 图片（key 为绝对页码）合成 KdpPageInput[]
+    const outlineList = Array.isArray(outline) ? outline : []
+    const imgMap: Record<string, string> = images ? { ...images } as Record<string, string> : {}
 
-    try {
-      const pdfServicePath = join(process.cwd(), 'pdf-service', 'generate.py')
-      execSync(`python3 "${pdfServicePath}" "${tmpInput}" "${tmpOutput}"`, {
-        timeout: 30000,
-        stdio: 'pipe',
+    const maxOutline = outlineList.reduce((m, p) => Math.max(m, p.pageNumber || 0), 0)
+    const maxImage = Object.keys(imgMap).reduce((m, k) => Math.max(m, Number(k) || 0), 0)
+    const maxPage = Math.max(maxOutline, maxImage, Array.isArray(rawPages) ? rawPages.length : 0)
+
+    const pageInputs: KdpPageInput[] = []
+    for (let n = 1; n <= maxPage; n++) {
+      const o = outlineList.find(p => p.pageNumber === n)
+      const legacy = Array.isArray(rawPages) ? rawPages[n - 1] : undefined
+      const legacyText = typeof legacy === 'string' ? legacy : legacy?.text
+      pageInputs.push({
+        text: o?.pageText ?? legacyText,
+        imageDataUrl: imgMap[String(n)],
       })
-
-      // Read the generated PDF
-      const fs = await import('fs/promises')
-      const pdfBuffer = await fs.readFile(tmpOutput)
-
-      // Cleanup temp files
-      try { unlinkSync(tmpInput) } catch {}
-      try { unlinkSync(tmpOutput) } catch {}
-
-      return new NextResponse(pdfBuffer, {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf"`,
-          'Content-Length': pdfBuffer.length.toString(),
-        },
-      })
-    } catch (e) {
-      // Cleanup on error
-      try { unlinkSync(tmpInput) } catch {}
-      try { unlinkSync(tmpOutput) } catch {}
-      throw e
     }
-  } catch (err) {
-    console.error('PDF export error:', err)
-    // Fallback: return HTML if PDF fails
-    const body = await req.json().catch(() => ({ title: 'Book', pages: [] }))
-    const fallbackHtml = generateFallbackHtml(body)
-    return new NextResponse(fallbackHtml, {
+
+    const pageCount = padToKdpPageCount(pageInputs.length)
+    let bytes: Uint8Array
+
+    if (exportType === 'cover') {
+      bytes = await buildCoverPdf({ title, author, pages: pageCount, trim, paper })
+    } else if (exportType === 'both') {
+      // 自动化场景：把封面页与内页合并成一个文件（封面在前）。
+      // 注意：KDP 实际上传要求内页与封面为两个独立文件，正式交付请分别下载。
+      const interiorBytes = await buildInteriorPdf({ title, author, pages: pageInputs, trim, paper })
+      const coverBytes = await buildCoverPdf({ title, author, pages: pageCount, trim, paper })
+      const merged = await PDFDocument.create()
+      const coverDoc = await PDFDocument.load(coverBytes)
+      for (const p of await merged.copyPages(coverDoc, coverDoc.getPageIndices())) merged.addPage(p)
+      const interiorDoc = await PDFDocument.load(interiorBytes)
+      for (const p of await merged.copyPages(interiorDoc, interiorDoc.getPageIndices())) merged.addPage(p)
+      bytes = await merged.save()
+    } else {
+      bytes = await buildInteriorPdf({ title, author, pages: pageInputs, trim, paper })
+    }
+
+    const slug = title.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'book'
+    const suffix = exportType === 'cover' ? 'cover' : exportType === 'both' ? 'book' : 'interior'
+
+    // 转成纯粹的 ArrayBuffer（pdf-lib 的 Uint8Array 在 TS 5.7 下不能直接作为 BodyInit）
+    const pdfBody = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
+
+    return new Response(pdfBody, {
       headers: {
-        'Content-Type': 'text/html',
-        'Content-Disposition': `attachment; filename="book.html"`,
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${slug}-${suffix}.pdf"`,
       },
     })
+  } catch (err) {
+    console.error('PDF export error:', err)
+    return Response.json({ error: 'PDF export failed' }, { status: 500 })
   }
-}
-
-function generateFallbackHtml(data: { title?: string; pages?: string[] | { text: string }[] }) {
-  const title = data.title || 'My Book'
-  const pages = data.pages || []
-  return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>${title}</title>
-<style>
-  @page { margin: 0; size: 8.5in 8.5in; }
-  body { margin: 0; font-family: Inter, sans-serif; }
-  .page { width: 8.5in; height: 8.5in; display: flex; flex-direction: column;
-    justify-content: center; align-items: center; page-break-after: always;
-    background: #FFF5EE; padding: 0.75in; box-sizing: border-box; }
-  h1 { font-size: 36pt; color: #2D2D2D; }
-  .text { font-size: 18pt; color: #2D2D2D; line-height: 1.6; text-align: center; max-width: 6in; }
-</style></head><body>
-  <div class="page"><h1>${title}</h1></div>
-  ${pages.map((p: string | { text: string }) => {
-    const text = typeof p === 'string' ? p : p.text
-    return `<div class="page"><div class="text">${text}</div></div>`
-  }).join('')}
-  <div class="page"><h2>The End</h2></div>
-</body></html>`
 }

@@ -1,4 +1,5 @@
 import type { ReadingLevel } from '@/lib/reading-levels'
+import { contentLanguageRule, DEFAULT_BOOK_LANGUAGE, type BookLanguage } from '@/lib/types/book'
 
 const OR_KEY = process.env.OPENROUTER_API_KEY
 const OR_BASE = 'https://openrouter.ai/api/v1'
@@ -19,10 +20,13 @@ export interface Quiz {
  * 复用 OpenRouter/DeepSeek 管线，与 story 生成同一模型。
  * 输出 3-5 题，每题 4 选项 + 答案索引 + 技能类型。
  */
-export async function generateQuiz(storyText: string, level: ReadingLevel | null): Promise<Quiz> {
+export async function generateQuiz(storyText: string, level: ReadingLevel | null, language?: BookLanguage): Promise<Quiz> {
   const levelBlock = level
     ? `Reading Level: GRL ${level.grl} (${level.label}, ages ${level.ageRange}). Questions must be answerable by a child at this level — simple vocabulary, short options.`
     : 'Keep questions simple and age-appropriate for a young child.'
+
+  const lang = language ?? DEFAULT_BOOK_LANGUAGE
+  const languageRule = contentLanguageRule(lang)
 
   const prompt = `You are a children's reading comprehension teacher. Based on the story below, create EXACTLY 4 multiple-choice questions.
 
@@ -38,6 +42,7 @@ Rules:
 - Each question has exactly 4 options, only ONE correct answer
 - Options should be short (2-6 words), simple, unambiguous
 - Correct answer index is 0-based
+- ${languageRule}
 
 Format: Return ONLY a JSON object:
 {

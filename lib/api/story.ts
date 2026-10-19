@@ -4,11 +4,15 @@ import {
   splitOutline,
   outlineToPages,
   pagesToOutline,
+  contentLanguageRule,
+  languageName,
+  DEFAULT_BOOK_LANGUAGE,
   type PageOutline,
   type StoryResult,
   type StyleCard,
   type StyleLexicon,
   type CharacterCard,
+  type BookLanguage,
 } from '@/lib/types/book'
 
 const OR_KEY = process.env.OPENROUTER_API_KEY
@@ -26,6 +30,8 @@ interface StoryOptions {
   styleCard?: StyleCard
   /** 角色设定卡（可选）：注入大纲，锁定角色一致性 */
   characterCards?: CharacterCard[]
+  /** 内容语言（可选）：面向读者的文字语言，缺省英语 */
+  language?: BookLanguage
 }
 
 // === 解析防御：字段归一化 ===
@@ -81,16 +87,16 @@ function buildVisualDirectionBlock(card?: StyleCard, lexicon?: StyleLexicon): st
   const lines: string[] = [
     'Visual direction (must match) — this fixed style applies to the WHOLE book. Every page\'s visual fields (field 10 visualStyle, field 11 colorMood, field 16 forbiddenElements) MUST comply:',
   ]
-  if (card?.mainStyle) lines.push(`- 主风格 / Main style: ${card.mainStyle}`)
-  if (lexicon?.technique) lines.push(`- 插画技法 / Technique: ${lexicon.technique}`)
-  if (lexicon?.colorMood || card?.colorMood) lines.push(`- 色彩氛围 / Color mood: ${lexicon?.colorMood || card?.colorMood}`)
-  if (lexicon?.characterStyling) lines.push(`- 角色造型 / Character styling: ${lexicon.characterStyling}`)
-  if (lexicon?.sceneComplexity) lines.push(`- 场景复杂度 / Scene complexity: ${lexicon.sceneComplexity}`)
-  if (lexicon?.texture) lines.push(`- 画面质感 / Texture: ${lexicon.texture}`)
-  if (card?.eyeCare) lines.push(`- 护眼要求 / Eye-care: ${card.eyeCare}`)
-  if (card?.emotionTexture) lines.push(`- 情绪质感 / Emotion: ${card.emotionTexture}`)
-  if (lexicon?.forbidden || card?.forbiddenStyles) lines.push(`- 禁止项 / Forbidden: ${lexicon?.forbidden || card?.forbiddenStyles}`)
-  if (card?.styleKeywords) lines.push(`- 固定风格关键词 / Fixed style keywords: ${card.styleKeywords}`)
+  if (card?.mainStyle) lines.push(`- Main style: ${card.mainStyle}`)
+  if (lexicon?.technique) lines.push(`- Technique: ${lexicon.technique}`)
+  if (lexicon?.colorMood || card?.colorMood) lines.push(`- Color mood: ${lexicon?.colorMood || card?.colorMood}`)
+  if (lexicon?.characterStyling) lines.push(`- Character styling: ${lexicon.characterStyling}`)
+  if (lexicon?.sceneComplexity) lines.push(`- Scene complexity: ${lexicon.sceneComplexity}`)
+  if (lexicon?.texture) lines.push(`- Texture: ${lexicon.texture}`)
+  if (card?.eyeCare) lines.push(`- Eye-care: ${card.eyeCare}`)
+  if (card?.emotionTexture) lines.push(`- Emotion: ${card.emotionTexture}`)
+  if (lexicon?.forbidden || card?.forbiddenStyles) lines.push(`- Forbidden: ${lexicon?.forbidden || card?.forbiddenStyles}`)
+  if (card?.styleKeywords) lines.push(`- Fixed style keywords: ${card.styleKeywords}`)
   lines.push('- Use exactly ONE main style for the whole book; do NOT name any specific artist, studio or franchise (e.g. Ghibli / Disney / Pixar).')
   return lines.join('\n')
 }
@@ -128,6 +134,8 @@ export async function generateStory(options: StoryOptions): Promise<StoryResult>
 
   const visualDirectionBlock = buildVisualDirectionBlock(options.styleCard, options.styleLexicon)
   const characterBibleBlock = buildCharacterBibleBlock(options.characterCards)
+  const lang = options.language ?? DEFAULT_BOOK_LANGUAGE
+  const languageRule = contentLanguageRule(lang)
 
   const prompt = `You are a professional children's book author and illustrator-director. Produce a per-page production blueprint (single-page outline) for a children's picture book.
 
@@ -137,35 +145,42 @@ Parameters:
 - Main Character(s): ${options.characterName}
 - Number of pages: ${pageCount} (page 1 is the COVER, the rest are BODY)
 
-${constraintsBlock ? constraintsBlock + '\n' : ''}${characterBibleBlock ? characterBibleBlock + '\n\n' : ''}${visualDirectionBlock ? visualDirectionBlock + '\n\n' : ''}For EACH page output the following 18 fields (this is a "construction drawing", be concrete, NEVER vague like "warm scene"):
+${constraintsBlock ? constraintsBlock + '\n' : ''}${languageRule}\n\n${characterBibleBlock ? characterBibleBlock + '\n\n' : ''}${visualDirectionBlock ? visualDirectionBlock + '\n\n' : ''}For EACH page output the following 18 fields (this is a "construction drawing", be concrete, NEVER vague like "warm scene").
+
+LANGUAGE CONTRACT (strictly enforced, no exceptions):
+- Reader-facing fields (3, 4, 6, 7, 8, 18) and the title MUST be written in ${languageName(lang)}.
+- Image-facing fields (10, 11, 12, 13, 14, 15, 16, 17) MUST be written in ENGLISH, because they are fed directly to the image model.
+- A single field value must NEVER contain two languages. No transliteration, no bilingual labels.
+
 1 pageNumber (int)
 2 pageFunction ("cover" for page 1, "body" for the rest)
-3 pageTheme
-4 plotNode (which plot beat this page advances)
-5 characters (array of character names appearing)
-6 characterAction (what the protagonist does)
-7 characterEmotion
-8 pageText (the sentence read to the child, 10-20 words, age-appropriate)
+3 pageTheme (in ${languageName(lang)})
+4 plotNode (in ${languageName(lang)}, which plot beat this page advances)
+5 characters (array of character names appearing, written in ${languageName(lang)})
+6 characterAction (in ${languageName(lang)}, what the protagonist does)
+7 characterEmotion (in ${languageName(lang)})
+8 pageText (in ${languageName(lang)}, the sentence read to the child, 10-20 words, age-appropriate)
 9 wordCountHint (int, words in pageText)
-10 visualStyle
-11 colorMood
-12 coreVisualElements (array, must-appear objects)
-13 supportingVisualElements (array)
-14 composition (e.g. close-up, wide shot, centered)
-15 textWhitespace (where to leave room for text)
-16 forbiddenElements (array, e.g. "no text in image", "no scary elements")
-17 imagePromptPoints (key notes for the illustrator/FLOW model)
-18 continuity (how it connects to the previous page)
+10 visualStyle (ENGLISH only, e.g. "soft watercolor, gentle low-saturation palette")
+11 colorMood (ENGLISH only, e.g. "warm pink and creamy yellow")
+12 coreVisualElements (array of must-appear objects, ENGLISH only)
+13 supportingVisualElements (array, ENGLISH only)
+14 composition (ENGLISH only, e.g. "close-up", "wide shot", "centered")
+15 textWhitespace (ENGLISH only, where to leave room for text)
+16 forbiddenElements (array, ENGLISH only, e.g. "no text in image", "no scary elements")
+17 imagePromptPoints (ENGLISH only, key notes for the illustrator/FLUX model)
+18 continuity (in ${languageName(lang)}, how it connects to the previous page)
 
 Requirements:
 - Each page expresses exactly ONE plot node.
 - Story has a clear beginning, middle, end with emotional progression.
 - Keep character appearance / clothing / style consistent across pages.
 - Every page leaves whitespace for text.
+- Language: reader-facing text in ${languageName(lang)}, image-facing fields in English. Never mix.
 
 Return ONLY a JSON object:
 {
-  "title": "The story title",
+  "title": "The story title, in ${languageName(lang)}",
   "outline": [ { ...18 fields... }, ... ]
 }`
 
@@ -237,7 +252,7 @@ Return ONLY a JSON object:
   // 6. 生成阅读理解 Quiz（有分级才生成；失败降级为 null）
   if (level && outline.length > 0) {
     try {
-      const quiz: Quiz = await generateQuiz(outlineToPages(outline).join(' '), level)
+      const quiz: Quiz = await generateQuiz(outlineToPages(outline).join(' '), level, lang)
       story.quiz = quiz
     } catch (err) {
       console.warn('Quiz generation failed (degraded to null):', err instanceof Error ? err.message : err)

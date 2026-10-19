@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 
 const resendApiKey = process.env.RESEND_API_KEY
-const fromEmail = process.env.EMAIL_FROM || 'noreply@bookbunny.app'
+const fromEmail = process.env.EMAIL_FROM || 'noreply@sprouttales.com'
 
 let resend: Resend | null = null
 if (resendApiKey) {
@@ -27,7 +27,7 @@ export async function sendEmail(
     const element = React.createElement(Template, props)
 
     const { error } = await resend.emails.send({
-      from: `BookBunny <${fromEmail}>`,
+      from: `SproutTales <${fromEmail}>`,
       to,
       subject: getSubject(template, props),
       react: element,
@@ -48,13 +48,13 @@ export async function sendEmail(
 function getSubject(template: EmailTemplate, props: Record<string, unknown>): string {
   switch (template) {
     case 'welcome':
-      return 'Welcome to BookBunny! 🐰'
+      return 'Welcome to SproutTales! 🐰'
     case 'book-published':
       return `Your book "${props.bookTitle || 'Untitled'}" is ready! 📖`
     case 'morning-digest':
       return `Good morning, ${props.userName || 'there'}! ☀️`
     default:
-      return 'Message from BookBunny'
+      return 'Message from SproutTales'
   }
 }
 

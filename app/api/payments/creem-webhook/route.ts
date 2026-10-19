@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 import crypto from 'node:crypto'
+import { VPC_METHODS, recordConsent, type VpcMethodId } from '@/lib/compliance/consent'
+import { VPC_VERIFICATION } from '@/lib/payments/creem'
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text()
@@ -28,6 +30,26 @@ export async function POST(req: NextRequest) {
       const userId = metadata.userId as string
       const plan = (metadata.plan as string) || 'pro'
       const customerEmail = obj.customer?.email || checkout.customer?.email || ''
+
+      // Verifiable-parental-consent charge: write the consent and stop here. This must
+      // never create a payment row or grant plan entitlements.
+      if (metadata.purpose === 'vpc') {
+        const rawMethod = metadata.method as string
+        const vpcMethod: VpcMethodId = VPC_METHODS.some((m) => m.id === rawMethod)
+          ? (rawMethod as VpcMethodId)
+          : 'card-charge'
+        if (userId) {
+          await recordConsent({
+            userId,
+            vpcMethod,
+            vpcReference: (obj.order?.id || obj.id || null) as string | null,
+            vpcAmountCents: obj.order?.amount ?? VPC_VERIFICATION.priceCents,
+            consentUserAgent: 'creem-webhook',
+          })
+          console.log(`✅ Parental consent verified for ${userId}`)
+        }
+        return NextResponse.json({ received: true })
+      }
 
       // Store payment record
       const orderId = obj.order?.id || obj.id || `ch_${Date.now()}`

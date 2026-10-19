@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import BunnyMascot from '@/components/BunnyMascot'
+import ReadAloudPlayer from '@/components/ReadAloudPlayer'
 import { pagesToOutline, type PageOutline } from '@/lib/types/book'
 
 interface QuizQuestion {
@@ -39,6 +40,7 @@ export default function BookDetailPage() {
   const [error, setError] = useState('')
   const [answers, setAnswers] = useState<Record<number, number>>({})
   const [submitted, setSubmitted] = useState(false)
+  const [activePage, setActivePage] = useState<number | null>(null)
 
   useEffect(() => {
     if (!bookId) return
@@ -51,6 +53,13 @@ export default function BookDetailPage() {
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))
   }, [bookId])
+
+  // 朗读推进到新页时，把对应卡片滚动到视野内（SSR 下 document 不可用，已在 effect 内）
+  useEffect(() => {
+    if (activePage === null) return
+    const el = document.getElementById(`story-page-${activePage}`)
+    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [activePage])
 
   const handleAnswer = (qIdx: number, optIdx: number) =>
     setAnswers(prev => ({ ...prev, [qIdx]: optIdx }))
@@ -116,10 +125,22 @@ export default function BookDetailPage() {
         </Link>
       </div>
 
+      {/* Read aloud + background music */}
+      <ReadAloudPlayer
+        pages={outline.map(p => p.pageText)}
+        onActivePageChange={setActivePage}
+      />
+
       {/* Story pages */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-10">
         {outline.map((page, i) => (
-          <div key={i} className="apple-card p-4">
+          <div
+            key={i}
+            id={`story-page-${i}`}
+            className={`apple-card p-4 transition-all ${
+              activePage === i ? 'ring-2 ring-[#FF6B8A] border-[#FF6B8A] bg-[#FFF5EE]' : ''
+            }`}
+          >
             <span className="text-[10px] text-[#C8A2E8] font-semibold">PAGE {i + 1}</span>
             <p className="text-sm text-[#2D2D2D] leading-relaxed mt-1.5">{page.pageText}</p>
           </div>

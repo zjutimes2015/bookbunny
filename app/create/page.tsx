@@ -4,11 +4,15 @@ import { useState } from 'react'
 import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 import MultiCharacterManager from '@/components/MultiCharacterManager'
+import ParentalConsentGate from '@/components/ParentalConsentGate'
 import TurnstileWidget from '@/components/TurnstileWidget'
-import type { PageOutline, StyleCard, StyleLexicon, CharacterCard, AspectRatio } from '@/lib/types/book'
-import { ASPECT_OPTIONS } from '@/lib/types/book'
+import AIPromptBox from '@/components/AIPromptBox'
+import type { PageOutline, StyleCard, StyleLexicon, CharacterCard, AspectRatio, BookLanguage } from '@/lib/types/book'
+import { ASPECT_OPTIONS, BOOK_LANGUAGES, DEFAULT_BOOK_LANGUAGE } from '@/lib/types/book'
 import { STYLE_LIBRARY } from '@/data/style-library'
 import { runImageChecks, runThreeStepChecks } from '@/lib/page-checks'
+import { buildInteriorPdf, buildCoverPdf, type KdpPageInput } from '@/lib/kdp/export'
+import { KDP_TRIM, padToKdpPageCount, interiorDimsIn, coverDimsIn } from '@/lib/kdp/spec'
 
 // 阶段6：至简三步状态机（设定 → 生成大纲 → 按纲生图）
 type Step = 'setup' | 'outline' | 'illustrate'
@@ -28,10 +32,21 @@ interface CharData {
   generating?: boolean
 }
 
-/** 页面功能中文标签 */
+/** Page function labels (English — reader-facing) */
 const FUNC_LABEL: Record<string, string> = {
-  cover: '封面', 'front-matter': '扉页', body: '正文', 'back-cover': '封底',
+  cover: 'Cover', 'front-matter': 'Front Matter', body: 'Body', 'back-cover': 'Back Cover',
 }
+
+/** Quick-start story ideas for the AI prompt box (English — reader-facing) */
+const THEME_IDEAS = [
+  'A magical forest adventure',
+  'A journey to the moon',
+  'A shy dragon learns to share',
+  'A bedtime story under the sea',
+]
+
+/** KDP 裁切尺寸选项（以 lib/kdp/spec 为唯一来源） */
+const TRIM_OPTIONS = Object.entries(KDP_TRIM).map(([id, t]) => ({ id, label: `${t.w} × ${t.h} in` }))
 
 /** 生图检查表状态样式 */
 const STATUS_BG: Record<string, string> = { pass: 'bg-[#EAF7F1]', warn: 'bg-amber-50', manual: 'bg-[#F2F2F7]' }
@@ -55,6 +70,26 @@ function pickTrialPages(outline: PageOutline[]): number[] {
   return Array.from(idx).sort((a, b) => a - b).map(i => outline[i].pageNumber)
 }
 
+// KDP 导出：文件名 slug 化（仅 ASCII，避免中文/特殊字符）
+function slugify(s: string): string {
+  return s.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'book'
+}
+
+// 触发浏览器下载（不依赖 Node fs，纯客户端）
+function downloadBytes(bytes: Uint8Array, filename: string) {
+  // pdf-lib 的 Uint8Array 在 TS 5.7 下不能直接作为 BlobPart，需转成纯 ArrayBuffer
+  const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
+  const blob = new Blob([buffer], { type: 'application/pdf' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
 export default function CreatePage() {
   const [step, setStep] = useState<Step>('setup')
   const [characters, setCharacters] = useState<CharData[]>([])
@@ -70,6 +105,10 @@ export default function CreatePage() {
   const [loading, setLoading] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [turnstileError, setTurnstileError] = useState(false)
+
+  // 家长同意：无生效同意时不得上传儿童照片
+  const [photoConsent, setPhotoConsent] = useState(false)
+  const [consentBlocked, setConsentBlocked] = useState(false)
 
   // 阶段5：生图流程状态（试生成 → 5 页一批续跑）
   const [genProgress, setGenProgress] = useState<{
@@ -88,9 +127,15 @@ export default function CreatePage() {
   const [level, setLevel] = useState('C')
   const [pageCount, setPageCount] = useState(20) // 第一步：页数
 
+  // 绘本内容语言（出海默认英语，一本只用一种语言）
+  const [language, setLanguage] = useState<BookLanguage>(DEFAULT_BOOK_LANGUAGE)
+
   // 规格层（阶段3）：画幅比例 + 宝宝照片方案
   const [aspect, setAspect] = useState<AspectRatio>('1:1')
   const [photoUsage, setPhotoUsage] = useState<'illustrated' | 'photo-family' | 'photo-public'>('illustrated')
+
+  // KDP 印刷规格：裁切尺寸（决定内页尺寸与封面书脊宽度）
+  const [trim, setTrim] = useState('8.5x8.5')
 
   // Style layer（风格层）
   const [styleId, setStyleId] = useState('')
@@ -110,7 +155,7 @@ export default function CreatePage() {
       const res = await fetch('/api/style', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ styleId: id, ageGroup, theme }),
+        body: JSON.stringify({ styleId: id, ageGroup, theme, language }),
       })
       const data = await res.json()
       if (data.card && data.lexicon) {
@@ -135,6 +180,12 @@ export default function CreatePage() {
 
   // Multi-character：加入后立即生成「角色设定卡 + 一致性固定句 + 角色参考图」
   const handleAddCharacter = async (name: string, photo?: File) => {
+    // 儿童照片属于个人信息：没有生效的家长同意就绝不处理。
+    if (photo && !photoConsent) {
+      setConsentBlocked(true)
+      return
+    }
+    setConsentBlocked(false)
     const id = `char_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
     const draft: CharData = { id, name, generating: true }
     if (photo) draft.photoPreview = URL.createObjectURL(photo)
@@ -147,6 +198,7 @@ export default function CreatePage() {
       fd.append('theme', theme)
       fd.append('ageGroup', ageGroup)
       fd.append('photoUsage', photoUsage)
+      fd.append('language', language)
       if (styleCard?.mainStyle) fd.append('styleName', styleCard.mainStyle)
       if (styleLexicon) fd.append('styleLexicon', JSON.stringify(styleLexicon))
 
@@ -204,6 +256,7 @@ export default function CreatePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           theme, ageGroup, characterName: charNames, pages: pageCount, level,
+          language,
           styleLexicon, styleCard,
           characterCards: characters.map(c => c.card).filter(Boolean), // 阶段3：角色一致性
         }),
@@ -234,6 +287,7 @@ export default function CreatePage() {
           consistencyLine,                              // 阶段3：每页注入
           aspect,                                       // 阶段3：画幅比例
           styleLexicon,
+          language,
         }),
       })
       const data = await res.json()
@@ -310,6 +364,7 @@ export default function CreatePage() {
           level: story.level || null,
           quiz: story.quiz || null,
           aspect,
+          language,
         }),
       })
       const data = await res.json()
@@ -319,26 +374,68 @@ export default function CreatePage() {
     }
   }
 
-  // Export PDF with real images
+  // 由页面 outline + 已生成的 pageImages 构造 KdpPageInput[]（images key 为绝对页码）
+  const buildPageInputs = (): KdpPageInput[] => {
+    if (!story) return []
+    const byNum = new Map(story.outline.map(p => [p.pageNumber, p]))
+    const maxOutline = story.outline.reduce((m, p) => Math.max(m, p.pageNumber), 0)
+    const maxImage = Object.keys(pageImages).reduce((m, k) => Math.max(m, Number(k) || 0), 0)
+    const maxNo = Math.max(maxOutline, maxImage, 1)
+    const inputs: KdpPageInput[] = []
+    for (let n = 1; n <= maxNo; n++) {
+      inputs.push({ text: byNum.get(n)?.pageText, imageDataUrl: pageImages[n] })
+    }
+    return inputs
+  }
+
+  // KDP 成品尺寸提示（导出区展示；几何全部来自 lib/kdp/spec）
+  const kdpPageCount = padToKdpPageCount(buildPageInputs().length)
+  const interiorIn = interiorDimsIn(trim)
+  const coverIn = coverDimsIn(trim, kdpPageCount)
+
+  // Export KDP-ready interior PDF — generated in the browser (images live client-side)
   const handleExportPDF = async () => {
     if (!story) return
     setLoading(true)
     try {
-      const res = await fetch('/api/export-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: story.title,
-          author: characters.map(c => c.name).join(' & '),
-          outline: story.outline,
-          size: '8.5x8.5',
-        }),
+      const author = characters.map(c => c.name).join(' & ')
+      const bytes = await buildInteriorPdf({
+        title: story.title,
+        author,
+        pages: buildPageInputs(),
+        trim,
+        paper: 'white',
       })
-      if (!res.ok) throw new Error('Export failed')
-      const blob = await res.blob()
-      window.open(URL.createObjectURL(blob), '_blank')
+      downloadBytes(bytes, `${slugify(story.title)}-interior.pdf`)
     } catch (err: unknown) {
       alert('Export failed: ' + (err instanceof Error ? err.message : 'Error'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Export KDP-ready full cover PDF (back cover + spine + front cover)
+  const handleExportCover = async () => {
+    if (!story) return
+    setLoading(true)
+    try {
+      const author = characters.map(c => c.name).join(' & ')
+      const pages = buildPageInputs()
+      const coverPage = story.outline.find(p => p.pageFunction === 'cover')
+      const backPage = story.outline.find(p => p.pageFunction === 'back-cover')
+      const bytes = await buildCoverPdf({
+        title: story.title,
+        author,
+        pages: padToKdpPageCount(pages.length),
+        trim,
+        paper: 'white',
+        frontImageDataUrl: coverPage ? pageImages[coverPage.pageNumber] : undefined,
+        backImageDataUrl: backPage ? pageImages[backPage.pageNumber] : undefined,
+        blurb: backPage?.pageText,
+      })
+      downloadBytes(bytes, `${slugify(story.title)}-cover.pdf`)
+    } catch (err: unknown) {
+      alert('Cover export failed: ' + (err instanceof Error ? err.message : 'Error'))
     } finally {
       setLoading(false)
     }
@@ -431,6 +528,13 @@ export default function CreatePage() {
             <h2 className="text-xl font-bold text-[#2D2D2D] mt-3">Create Your Characters</h2>
             <p className="text-sm text-[#8E8E93] mt-1">Add up to 5 characters</p>
           </div>
+          <ParentalConsentGate onConsentChange={setPhotoConsent} />
+          {consentBlocked && (
+            <p className="text-xs text-red-500 text-center mb-4">
+              Parental consent is required before a photograph of your child can be used. Complete the
+              step above, or add the character without a photo.
+            </p>
+          )}
           <div className="space-y-6">
             <MultiCharacterManager
               characters={characters}
@@ -443,8 +547,12 @@ export default function CreatePage() {
               <>
                 <div>
                   <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Story Theme</label>
-                  <input className="apple-input" placeholder="e.g. A magical forest adventure..." value={theme}
-                         onChange={(e) => setTheme(e.target.value)} />
+                  <AIPromptBox
+                    value={theme}
+                    onChange={setTheme}
+                    placeholder="e.g. A magical forest adventure..."
+                    suggestions={THEME_IDEAS}
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Age Group</label>
@@ -454,6 +562,20 @@ export default function CreatePage() {
                     <option value="5-7">Early Reader (5-7)</option>
                     <option value="7-10">Chapter Book (7-10)</option>
                   </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Book Language</label>
+                  <select className="apple-input" value={language}
+                          onChange={(e) => setLanguage(e.target.value as BookLanguage)}>
+                    {BOOK_LANGUAGES.map(l => (
+                      <option key={l.id} value={l.id}>
+                        {l.nativeLabel && l.nativeLabel !== l.label ? `${l.label} · ${l.nativeLabel}` : l.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-[#8E8E93] mt-1.5">
+                    One book uses a single language — the story text is written in it.
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Reading Level (GRL)</label>
@@ -480,7 +602,7 @@ export default function CreatePage() {
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Picture-Book Style（风格层）</label>
+                  <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Picture-Book Style</label>
                   <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                     {STYLE_LIBRARY.map(s => (
                       <button
@@ -492,7 +614,6 @@ export default function CreatePage() {
                         }`}
                       >
                         <span className="block text-[11px] font-semibold text-[#2D2D2D] leading-tight">{s.name}</span>
-                        <span className="block text-[9px] text-[#8E8E93] mt-0.5 leading-tight">{s.nameEn}</span>
                       </button>
                     ))}
                   </div>
@@ -501,11 +622,11 @@ export default function CreatePage() {
                       ? 'Applying style...'
                       : styleCard
                         ? `${styleCard.mainStyle} · ${styleCard.colorMood}`
-                        : 'Pick ONE main style for the whole book（先用主题生成风格卡）'}
+                        : 'Pick ONE main style for the whole book'}
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">页数 / Page Count</label>
+                  <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Page Count</label>
                   <div className="grid grid-cols-4 gap-2">
                     {[12, 16, 20, 24].map(n => (
                       <button
@@ -519,13 +640,13 @@ export default function CreatePage() {
                         }`}
                       >
                         <span className="block text-sm font-bold text-[#2D2D2D]">{n}</span>
-                        <span className="block text-[10px] text-[#8E8E93]">{n === 20 ? '推荐' : '页'}</span>
+                        <span className="block text-[10px] text-[#8E8E93]">{n === 20 ? 'pages · Recommended' : 'pages'}</span>
                       </button>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">画幅比例 / Aspect Ratio（规格层）</label>
+                  <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Aspect Ratio</label>
                   <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                     {ASPECT_OPTIONS.map(opt => (
                       <button
@@ -545,15 +666,15 @@ export default function CreatePage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">宝宝照片方案 / Photo Policy</label>
+                  <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Photo Policy</label>
                   <select className="apple-input" value={photoUsage}
                           onChange={(e) => setPhotoUsage(e.target.value as typeof photoUsage)}>
-                    <option value="illustrated">方案 A · 不用真照（隐私最安全，可商用）</option>
-                    <option value="photo-family">方案 B · 用真照 · 仅家庭使用</option>
-                    <option value="photo-public">方案 B · 用真照 · 可公开</option>
+                    <option value="illustrated">Option A · No real photo (privacy-safe, commercial use)</option>
+                    <option value="photo-family">Option B · Real photo · Family use only</option>
+                    <option value="photo-public">Option B · Real photo · Public sharing</option>
                   </select>
                   <p className="text-[11px] text-[#8E8E93] mt-1.5">
-                    方案 A 按名字+主题生成插画角色；方案 B 用宝宝照片作 AI 参考图（注意隐私使用范围）
+                    Option A builds an illustrated character from name + theme. Option B uses your baby's photo as an AI reference image (note the privacy scope).
                   </p>
                 </div>
                 {turnstileError && (
@@ -568,7 +689,7 @@ export default function CreatePage() {
                 <button className="apple-button w-full disabled:opacity-50"
                         disabled={!theme || characters.length === 0 || loading}
                         onClick={handleGenerateStory}>
-                  {loading ? '✨ Generating...' : '✨ 生成大纲 / Generate Outline'}
+                  {loading ? '✨ Generating...' : '✨ Generate Outline'}
                 </button>
               </>
             )}
@@ -593,13 +714,13 @@ export default function CreatePage() {
             </div>
             <button className="apple-button text-sm px-4 py-2.5 disabled:opacity-50"
                     disabled={generating} onClick={startIllustration}>
-              🎨 按纲生图 / Start Illustrating
+              🎨 Start Illustrating
             </button>
           </div>
 
           {/* 13 项三步流程检查表（文档 6.5） */}
           <div className="mb-2">
-            <h3 className="text-sm font-semibold text-[#2D2D2D] mb-2">三步流程检查表（文档 6.5 · 13 项）</h3>
+            <h3 className="text-sm font-semibold text-[#2D2D2D] mb-2">Three-Step Checklist (Doc 6.5 · 13 items)</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-5">
               {threeStepChecks.map(c => (
                 <div key={c.key} className="flex items-center gap-2 text-xs">
@@ -611,7 +732,7 @@ export default function CreatePage() {
           </div>
 
           {/* 单页大纲表（表A + 表B 摘要） */}
-          <h3 className="text-sm font-semibold text-[#2D2D2D] mb-2">单页大纲表（表A + 表B）</h3>
+          <h3 className="text-sm font-semibold text-[#2D2D2D] mb-2">Page-by-Page Outline (Table A + Table B)</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[440px] overflow-auto pr-1">
             {story.outline.map(p => (
               <div key={p.pageNumber} className="rounded-xl border border-[#E5E5EA] p-3 bg-white">
@@ -623,10 +744,10 @@ export default function CreatePage() {
                 </div>
                 <p className="text-xs text-[#2D2D2D] leading-relaxed">{p.pageText}</p>
                 <p className="text-[10px] text-[#8E8E93] mt-1 leading-relaxed">
-                  画面：{p.plotNode || p.coreVisualElements?.join('、')}
+                  Visual: {p.plotNode || p.coreVisualElements?.join(', ')}
                 </p>
                 <p className="text-[10px] text-[#8E8E93] leading-relaxed">
-                  排版：{p.composition || p.textWhitespace}
+                  Layout: {p.composition || p.textWhitespace}
                 </p>
                 <p className="text-[10px] text-[#C8A2E8] mt-0.5 leading-relaxed">{p.visualStyle}</p>
               </div>
@@ -643,11 +764,11 @@ export default function CreatePage() {
             {(!trialDone || generating) && <div className="bunny-bounce"><BunnyMascot size={72} /></div>}
             <h2 className="text-lg font-bold text-[#2D2D2D] mt-3">
               {!trialDone
-                ? '试生成 4-5 页中…（先看效果，再决定续跑）'
-                : generating ? '按 5 页一批续跑生成中…' : '试生成完成，请先确认效果'}
+                ? 'Generating a 4-5 page trial… (review first, then continue)'
+                : generating ? 'Continuing in batches of 5 pages…' : 'Trial ready — please review the result'}
             </h2>
             <p className="text-sm text-[#8E8E93] mt-1 mb-4">
-              本批 {genProgress ? `${genProgress.completed} / ${genProgress.total}` : '…'} · 整本已完成 {Object.keys(pageImages).length} / {story.outline.length} 页
+              This batch {genProgress ? `${genProgress.completed} / ${genProgress.total}` : '…'} · Book {Object.keys(pageImages).length} / {story.outline.length} pages done
             </p>
 
             {/* 本批进度条 */}
@@ -683,10 +804,10 @@ export default function CreatePage() {
                 {pendingPages.length > 0 ? (
                   <button className="apple-button text-sm px-6 py-3 disabled:opacity-50"
                           disabled={generating} onClick={continueBatches}>
-                    {generating ? '生成中…' : `▶ 继续按 5 页一批生成（剩余 ${pendingPages.length} 页）`}
+                    {generating ? 'Generating…' : `▶ Continue in batches of 5 pages (${pendingPages.length} pages left)`}
                   </button>
                 ) : (
-                  <p className="text-sm text-[#FF6B8A] font-semibold">🎉 整本绘本已全部生成</p>
+                  <p className="text-sm text-[#FF6B8A] font-semibold">🎉 The whole book is generated</p>
                 )}
               </div>
             )}
@@ -695,7 +816,7 @@ export default function CreatePage() {
           {/* 12 项生图检查表（文档 5.9） */}
           {trialDone && (
             <div className="apple-card p-8">
-              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-3">生图检查表（文档 5.9 · 12 项）</h3>
+              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-3">Image Checklist (Doc 5.9 · 12 items)</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {imageChecks.map(c => (
                   <div key={c.key}
@@ -709,7 +830,7 @@ export default function CreatePage() {
                       <label className="ml-auto flex items-center gap-1 text-[10px] text-[#8E8E93] cursor-pointer shrink-0">
                         <input type="checkbox" checked={!!manualChecks[c.key]}
                                onChange={e => setManualChecks(prev => ({ ...prev, [c.key]: e.target.checked }))} />
-                        通过
+                        Pass
                       </label>
                     )}
                   </div>
@@ -750,10 +871,30 @@ export default function CreatePage() {
                     {loading ? '...' : '📄 Download PDF'}
                   </button>
                   <button className="apple-button-secondary text-sm px-4 py-2.5 flex-1 sm:flex-none disabled:opacity-50"
+                          disabled={loading} onClick={handleExportCover}>
+                    {loading ? '...' : '🖼️ Download KDP Cover'}
+                  </button>
+                  <button className="apple-button-secondary text-sm px-4 py-2.5 flex-1 sm:flex-none disabled:opacity-50"
                           disabled={loading} onClick={handleExportVideo}>
                     {loading ? '...' : '🎬 Video'}
                   </button>
                 </div>
+              </div>
+
+              {/* KDP print spec（裁切尺寸 + 成品尺寸提示，几何来自 lib/kdp/spec） */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-6 pb-6 border-b border-[#E5E5EA]">
+                <label htmlFor="kdp-trim" className="text-sm font-medium text-[#2D2D2D]">Print size</label>
+                <select id="kdp-trim" name="kdp-trim" className="apple-input w-auto"
+                        value={trim} onChange={(e) => setTrim(e.target.value)}>
+                  {TRIM_OPTIONS.map(o => (
+                    <option key={o.id} value={o.id}>{o.label}</option>
+                  ))}
+                </select>
+                <span className="text-xs text-[#8E8E93]">
+                  Interior {interiorIn.widthIn.toFixed(2)} × {interiorIn.heightIn.toFixed(2)} in (incl. bleed)
+                  {' · '}{kdpPageCount} pages
+                  {' · '}cover {coverIn.widthIn.toFixed(2)} × {coverIn.heightIn.toFixed(2)} in
+                </span>
               </div>
 
               {/* Full page grid with images（按绝对页码取图） */}
@@ -778,7 +919,7 @@ export default function CreatePage() {
           {trialDone && story.quiz?.questions?.length ? (
             <div className="apple-card p-8">
               <h3 className="text-sm font-semibold text-[#2D2D2D] mb-3">
-                理解小测验 / Comprehension Quiz · {story.levelLabel || `GRL ${story.level || level}`}
+                Comprehension Quiz · {story.levelLabel || `GRL ${story.level || level}`}
               </h3>
               <div className="space-y-3">
                 {story.quiz.questions.map((q, qi) => (
@@ -794,7 +935,7 @@ export default function CreatePage() {
                         </div>
                       ))}
                     </div>
-                    <p className="text-[10px] text-[#C8A2E8] mt-1">考察：{q.skill}</p>
+                    <p className="text-[10px] text-[#C8A2E8] mt-1">Skill: {q.skill}</p>
                   </div>
                 ))}
               </div>

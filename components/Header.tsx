@@ -18,7 +18,7 @@ export default function Header() {
               B
             </div>
             <span className="font-semibold text-lg text-[#2D2D2D] group-hover:opacity-70 transition-opacity">
-              BookBunny
+              SproutTales
             </span>
           </Link>
 

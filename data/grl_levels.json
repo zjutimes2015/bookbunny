@@ -7,7 +7,7 @@
       "wordLimit": 8,
       "sentenceMaxWords": 6,
       "pageCount": 10,
-      "description": "单句 1-6 词，每页 1 个短句，重复句式，高频词为主",
+      "description": "Single sentences of 1-6 words, one short sentence per page, repetitive sentence patterns, mostly high-frequency words",
       "vocabulary": [
         "a", "the", "and", "is", "it", "I", "see", "look", "like", "can",
         "go", "to", "my", "me", "you", "we", "are", "in", "on", "at",
@@ -30,7 +30,7 @@
       "wordLimit": 12,
       "sentenceMaxWords": 8,
       "pageCount": 12,
-      "description": "单句 2-8 词，简单句 + 少量常见句式，故事线简单",
+      "description": "Sentences of 2-8 words, simple sentences plus a few common patterns, simple storyline",
       "vocabulary": [
         "a", "the", "and", "is", "it", "I", "see", "look", "like", "can",
         "go", "to", "my", "me", "you", "we", "are", "in", "on", "at",
@@ -60,7 +60,7 @@
       "wordLimit": 18,
       "sentenceMaxWords": 10,
       "pageCount": 14,
-      "description": "单句 3-10 词，可含简单连词，故事有起承转合",
+      "description": "Sentences of 3-10 words, may include simple conjunctions, story has a clear beginning, middle, and end",
       "vocabulary": [
         "a", "the", "and", "is", "it", "I", "see", "look", "like", "can",
         "go", "to", "my", "me", "you", "we", "are", "in", "on", "at",
@@ -101,7 +101,7 @@
       "wordLimit": 25,
       "sentenceMaxWords": 13,
       "pageCount": 16,
-      "description": "单句 4-13 词，可含从句，词汇更丰富，情节有冲突和解决",
+      "description": "Sentences of 4-13 words, may include subordinate clauses, richer vocabulary, plot with conflict and resolution",
       "vocabulary": [
         "a", "the", "and", "is", "it", "I", "see", "look", "like", "can",
         "go", "to", "my", "me", "you", "we", "are", "in", "on", "at",
@@ -147,7 +147,7 @@
       "wordLimit": 35,
       "sentenceMaxWords": 16,
       "pageCount": 18,
-      "description": "单句 5-16 词，复杂句式 + 描述性语言，情节更丰富，含对话",
+      "description": "Sentences of 5-16 words, complex sentence patterns plus descriptive language, richer plot, includes dialogue",
       "vocabulary": [
         "a", "the", "and", "is", "it", "I", "see", "look", "like", "can",
         "go", "to", "my", "me", "you", "we", "are", "in", "on", "at",

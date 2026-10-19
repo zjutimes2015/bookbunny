@@ -36,14 +36,14 @@ export async function notifyDiscord(
     {
       color: COLORS[event] || 0x8E8E93,
       timestamp: new Date().toISOString(),
-      footer: { text: 'BookBunny' },
+      footer: { text: 'SproutTales' },
     },
   ]
 
   switch (event) {
     case 'new_user':
       embeds[0].title = '🐰 New User Joined!'
-      embeds[0].description = `**${data.name || 'Someone'}** just joined BookBunny`
+      embeds[0].description = `**${data.name || 'Someone'}** just joined SproutTales`
       embeds[0].fields = [
         { name: 'Email', value: (data.email as string) || 'N/A', inline: true },
         { name: 'Time', value: new Date().toLocaleString(), inline: true },

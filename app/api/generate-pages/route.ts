@@ -92,8 +92,10 @@ async function callFlux(prompt: string, size: string, image?: string): Promise<s
 
 export async function POST(req: NextRequest) {
   try {
-    const { outline, pages, characterImageB64, refSeed, style, styleLexicon, consistencyLine, aspect } =
+    // language: 生图接口同样接受内容语言参数（仅用于接口统一，生图 prompt 恒为英文）
+    const { outline, pages, characterImageB64, refSeed, style, styleLexicon, consistencyLine, aspect, language } =
       await req.json()
+    void language
 
     const pageOutline: PageOutline[] = Array.isArray(outline)
       ? outline

@@ -6,7 +6,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics'
 import { AuthProvider } from '@/lib/auth-context'
 
 export const metadata: Metadata = {
-  title: 'BookBunny — Create Magical Children\'s Books with AI',
+  title: 'SproutTales — Create Magical Children\'s Books with AI',
   description: 'Upload a photo, create a character-consistent story, and export a KDP-ready children\'s book in minutes. Powered by AI.',
 }
 

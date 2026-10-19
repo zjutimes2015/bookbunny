@@ -25,7 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="w-7 h-7 rounded-lg bunny-gradient flex items-center justify-center text-white text-xs font-bold shrink-0">
             B
           </div>
-          {!collapsed && <span className="font-semibold text-sm text-[#2D2D2D]">BookBunny</span>}
+          {!collapsed && <span className="font-semibold text-sm text-[#2D2D2D]">SproutTales</span>}
         </div>
 
         {/* Nav */}

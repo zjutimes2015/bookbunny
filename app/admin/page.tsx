@@ -42,7 +42,7 @@ export default async function AdminDashboard() {
     <div>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[#2D2D2D]">Dashboard</h1>
-        <p className="text-sm text-[#8E8E93] mt-1">Overview of your BookBunny platform</p>
+        <p className="text-sm text-[#8E8E93] mt-1">Overview of your SproutTales platform</p>
       </div>
 
       {'dbError' in stats ? (

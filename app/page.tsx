@@ -83,6 +83,28 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* Why Families and Teachers Choose SproutTales */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h2 className="text-2xl sm:text-3xl font-bold text-center text-[#2D2D2D] mb-12">
+          Why families and teachers choose SproutTales
+        </h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          {[
+            { icon: '∞', title: 'No credits, no expiry', desc: 'Flat pricing, unlimited books, and creations that never expire. No credit meter, no monthly reset.' },
+            { icon: '📐', title: 'Print-ready for Amazon KDP', desc: 'Two separate spec-compliant PDFs — interior and full cover — with bleed, gutter and spine width handled for you.' },
+            { icon: '📖', title: 'Reading levels that actually teach', desc: 'GRL A–E leveled text with matched vocabulary, comprehension questions and a reading-progress view.' },
+          ].map((item) => (
+            <div key={item.title} className="apple-card p-8 text-center">
+              <div className="w-10 h-10 rounded-full bunny-gradient text-white flex items-center justify-center mx-auto mb-4 text-lg">
+                {item.icon}
+              </div>
+              <h3 className="font-semibold text-lg text-[#2D2D2D] mb-2">{item.title}</h3>
+              <p className="text-sm text-[#8E8E93] leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }

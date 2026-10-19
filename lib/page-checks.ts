@@ -5,18 +5,18 @@ import type { PageOutline, StyleLexicon } from '@/lib/types/book'
 
 /** 12 项生图检查表（文档 5.9 原文） */
 export const IMAGE_CHECKS: { key: string; label: string }[] = [
-  { key: 'protagonist-look', label: '主角外貌是否一致' },
-  { key: 'outfit-prop', label: '服装和标志性道具是否一致' },
-  { key: 'style-consistency', label: '画风是否统一' },
-  { key: 'eye-friendly-color', label: '色彩是否护眼' },
-  { key: 'page-emotion', label: '本页情绪是否准确' },
-  { key: 'page-action', label: '本页动作是否清楚' },
-  { key: 'core-elements', label: '核心视觉元素是否出现' },
-  { key: 'background-simplicity', label: '背景是否太复杂' },
-  { key: 'text-whitespace', label: '是否有文字留白' },
-  { key: 'extra-characters', label: '是否有多余人物' },
-  { key: 'ai-errors', label: '是否有 AI 错误（多手、多脚、五官错乱）' },
-  { key: 'book-fit', label: '是否适合放进整本绘本' },
+  { key: 'protagonist-look', label: 'Protagonist appearance consistent' },
+  { key: 'outfit-prop', label: 'Outfit and signature props consistent' },
+  { key: 'style-consistency', label: 'Art style consistent' },
+  { key: 'eye-friendly-color', label: 'Colors eye-friendly' },
+  { key: 'page-emotion', label: 'Page emotion accurate' },
+  { key: 'page-action', label: 'Page action clear' },
+  { key: 'core-elements', label: 'Core visual elements present' },
+  { key: 'background-simplicity', label: 'Background not too complex' },
+  { key: 'text-whitespace', label: 'Text whitespace reserved' },
+  { key: 'extra-characters', label: 'No extra characters' },
+  { key: 'ai-errors', label: 'No AI errors (extra hands/feet, distorted faces)' },
+  { key: 'book-fit', label: 'Fits the whole book' },
 ]
 
 export type CheckStatus = 'pass' | 'warn' | 'manual'
@@ -46,37 +46,37 @@ export function runImageChecks(
 
   const results: Record<string, { status: CheckStatus; detail: string }> = {
     'protagonist-look': hasConsistency && hasRef
-      ? { status: 'pass', detail: '已注入角色一致性固定句 + 参考图，主角外貌已锁定' }
-      : { status: 'warn', detail: '缺少一致性固定句或参考图，主角外貌可能漂移' },
+      ? { status: 'pass', detail: 'Character-consistency anchor line + reference image injected; protagonist appearance locked' }
+      : { status: 'warn', detail: 'Missing consistency anchor line or reference image; protagonist may drift' },
     'outfit-prop': hasConsistency && hasRef
-      ? { status: 'pass', detail: '一致性固定句已覆盖服装与标志性道具' }
-      : { status: 'warn', detail: '缺一致性约束，服装 / 道具可能每页不一致' },
+      ? { status: 'pass', detail: 'Consistency anchor line already covers outfit and signature props' }
+      : { status: 'warn', detail: 'No consistency constraint; outfit / props may vary per page' },
     'style-consistency': !all(p => nonEmpty(p.visualStyle))
-      ? { status: 'warn', detail: '存在页面缺少 visualStyle' }
+      ? { status: 'warn', detail: 'Some pages are missing visualStyle' }
       : !ctx.styleLexicon
-        ? { status: 'warn', detail: '未提供固定风格词库，画风可能漂移' }
+        ? { status: 'warn', detail: 'No fixed style lexicon provided; art style may drift' }
         : styleDistinct > 1
-          ? { status: 'warn', detail: `visualStyle 出现 ${styleDistinct} 种，需统一为同一画风` }
-          : { status: 'pass', detail: '全部页面 visualStyle 一致，且已固定风格词库' },
+          ? { status: 'warn', detail: `visualStyle has ${styleDistinct} variants; unify them into a single style` }
+          : { status: 'pass', detail: 'All pages share the same visualStyle and a fixed style lexicon is set' },
     'eye-friendly-color': all(p => nonEmpty(p.colorMood))
-      ? { status: 'pass', detail: '每页均定义色彩氛围（护眼配色）' }
-      : { status: 'warn', detail: '有页面缺少 colorMood，注意护眼配色' },
+      ? { status: 'pass', detail: 'Every page defines a color mood (eye-friendly palette)' }
+      : { status: 'warn', detail: 'Some pages are missing colorMood; check the eye-friendly palette' },
     'page-emotion': all(p => nonEmpty(p.characterEmotion))
-      ? { status: 'pass', detail: '每页均定义角色情绪' }
-      : { status: 'warn', detail: '有页面缺少 characterEmotion' },
+      ? { status: 'pass', detail: 'Every page defines character emotion' }
+      : { status: 'warn', detail: 'Some pages are missing characterEmotion' },
     'page-action': all(p => nonEmpty(p.characterAction))
-      ? { status: 'pass', detail: '每页均定义角色动作' }
-      : { status: 'warn', detail: '有页面缺少 characterAction' },
+      ? { status: 'pass', detail: 'Every page defines character action' }
+      : { status: 'warn', detail: 'Some pages are missing characterAction' },
     'core-elements': all(p => Array.isArray(p.coreVisualElements) && p.coreVisualElements.length > 0)
-      ? { status: 'pass', detail: '每页均定义核心视觉元素' }
-      : { status: 'warn', detail: '有页面缺少核心视觉元素' },
+      ? { status: 'pass', detail: 'Every page defines core visual elements' }
+      : { status: 'warn', detail: 'Some pages are missing core visual elements' },
     'text-whitespace': all(p => nonEmpty(p.textWhitespace))
-      ? { status: 'pass', detail: '每页均预留文字留白区域' }
-      : { status: 'warn', detail: '有页面缺少 textWhitespace，文字可能压住画面' },
-    'background-simplicity': { status: 'manual', detail: '需人工核对背景是否过于复杂' },
-    'extra-characters': { status: 'manual', detail: '需人工核对是否出现多余人物' },
-    'ai-errors': { status: 'manual', detail: '需人工核对多手 / 多脚 / 五官错乱等 AI 错误' },
-    'book-fit': { status: 'manual', detail: '需人工核对是否适合放进整本绘本' },
+      ? { status: 'pass', detail: 'Every page reserves a text-whitespace area' }
+      : { status: 'warn', detail: 'Some pages are missing textWhitespace; text may overlap the artwork' },
+    'background-simplicity': { status: 'manual', detail: 'Manual check: is the background too complex?' },
+    'extra-characters': { status: 'manual', detail: 'Manual check: are there any extra characters?' },
+    'ai-errors': { status: 'manual', detail: 'Manual check: AI errors such as extra hands / feet / distorted faces' },
+    'book-fit': { status: 'manual', detail: 'Manual check: does it fit the whole book?' },
   }
 
   return IMAGE_CHECKS.map(c => ({ ...c, ...results[c.key] }))
@@ -84,19 +84,19 @@ export function runImageChecks(
 
 /** 13 项三步流程检查表（文档 6.5 原文） */
 export const THREE_STEP_CHECKS: { key: string; label: string }[] = [
-  { key: 'theme', label: '已确定主题' },
-  { key: 'age', label: '已确定目标年龄' },
-  { key: 'style', label: '已确定绘本风格' },
-  { key: 'pages-aspect', label: '已确定页数和比例' },
-  { key: 'protagonist', label: '已确定主角设定' },
-  { key: 'outline-table', label: '已生成单页大纲表' },
-  { key: 'page-text', label: '每页有页面文字' },
-  { key: 'visual-content', label: '每页有画面内容' },
-  { key: 'layout-suggestion', label: '每页有排版建议' },
-  { key: 'style-elements', label: '每页有视觉风格和核心元素' },
-  { key: 'trial', label: '已试生成 4-5 页' },
-  { key: 'prompt-adjusted', label: '已根据效果调整提示词' },
-  { key: 'batch', label: '已开始 5 页一批生成' },
+  { key: 'theme', label: 'Theme decided' },
+  { key: 'age', label: 'Target age decided' },
+  { key: 'style', label: 'Picture-book style decided' },
+  { key: 'pages-aspect', label: 'Page count and aspect ratio decided' },
+  { key: 'protagonist', label: 'Protagonist setting decided' },
+  { key: 'outline-table', label: 'Single-page outline table generated' },
+  { key: 'page-text', label: 'Every page has page text' },
+  { key: 'visual-content', label: 'Every page has visual content' },
+  { key: 'layout-suggestion', label: 'Every page has a layout suggestion' },
+  { key: 'style-elements', label: 'Every page has visual style and core elements' },
+  { key: 'trial', label: '4-5 pages trial-generated' },
+  { key: 'prompt-adjusted', label: 'Prompt adjusted based on results' },
+  { key: 'batch', label: 'Batched 5-page generation started' },
 ]
 
 export interface ThreeStepCheckState {

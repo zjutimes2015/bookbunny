@@ -18,13 +18,13 @@ export const ASPECT_SIZE: Record<AspectRatio, string> = {
 
 export const DEFAULT_ASPECT: AspectRatio = '1:1'
 
-/** 画幅选项（前端下拉用，含中文说明） */
+/** 画幅选项（前端下拉用，label/desc 为英文，读者可见） */
 export const ASPECT_OPTIONS: { id: AspectRatio; label: string; desc: string }[] = [
-  { id: '1:1', label: '方形 1:1', desc: '新手推荐 · 最稳' },
-  { id: '4:3', label: '横版 4:3', desc: '风景 / 场景' },
-  { id: '3:4', label: '竖版 3:4', desc: '人物 / 特写' },
-  { id: '16:9', label: '宽屏 16:9', desc: '动画 / 视频' },
-  { id: 'a4', label: 'A4 竖版', desc: '打印 / 装订' },
+  { id: '1:1', label: 'Square 1:1', desc: 'Recommended' },
+  { id: '4:3', label: 'Landscape 4:3', desc: 'Scenery · landscape' },
+  { id: '3:4', label: 'Portrait 3:4', desc: 'Characters · close-ups' },
+  { id: '16:9', label: 'Widescreen 16:9', desc: 'Animation · video' },
+  { id: 'a4', label: 'A4 Portrait', desc: 'Print · binding' },
 ]
 
 export function normalizeAspect(raw: unknown): AspectRatio {
@@ -269,4 +269,71 @@ export function pagesToOutline(pages: string[]): PageOutline[] {
     imagePromptPoints: '',
     continuity: '',
   }))
+}
+
+/** 绘本内容语言（出海产品默认英语）。一本绘本只用一个语言，禁止中英混杂。 */
+export type BookLanguage =
+  | 'en'
+  | 'zh'
+  | 'zh-TW'
+  | 'es'
+  | 'fr'
+  | 'de'
+  | 'ja'
+  | 'ko'
+  | 'pt'
+  | 'it'
+
+export const DEFAULT_BOOK_LANGUAGE: BookLanguage = 'en'
+
+/** 语言下拉选项：label 为英文名，nativeLabel 为该语言的自称 */
+export interface LanguageOption {
+  id: BookLanguage
+  label: string
+  nativeLabel: string
+}
+
+export const BOOK_LANGUAGES: LanguageOption[] = [
+  { id: 'en', label: 'English', nativeLabel: 'English' },
+  { id: 'zh', label: 'Chinese (Simplified)', nativeLabel: '中文（简体）' },
+  { id: 'zh-TW', label: 'Chinese (Traditional)', nativeLabel: '繁體中文' },
+  { id: 'es', label: 'Spanish', nativeLabel: 'Español' },
+  { id: 'fr', label: 'French', nativeLabel: 'Français' },
+  { id: 'de', label: 'German', nativeLabel: 'Deutsch' },
+  { id: 'ja', label: 'Japanese', nativeLabel: '日本語' },
+  { id: 'ko', label: 'Korean', nativeLabel: '한국어' },
+  { id: 'pt', label: 'Portuguese', nativeLabel: 'Português' },
+  { id: 'it', label: 'Italian', nativeLabel: 'Italiano' },
+]
+
+const LANGUAGE_NAMES: Record<BookLanguage, string> = {
+  en: 'English',
+  zh: 'Simplified Chinese',
+  'zh-TW': 'Traditional Chinese',
+  es: 'Spanish',
+  fr: 'French',
+  de: 'German',
+  ja: 'Japanese',
+  ko: 'Korean',
+  pt: 'Portuguese',
+  it: 'Italian',
+}
+
+/** 供 prompt 使用的英文语言名（如 "English"） */
+export function languageName(lang?: BookLanguage | null): string {
+  return LANGUAGE_NAMES[lang as BookLanguage] || 'English'
+}
+
+/**
+ * 内容语言约束（注入 LLM prompt），保证一本书只出现一种语言：
+ * - 面向读者的文字（标题/正文/剧情/情绪/quiz）使用目标语言；
+ * - 面向生图模型的视觉字段保持英文，保证 FLUX 出图稳定。
+ */
+export function contentLanguageRule(lang?: BookLanguage | null): string {
+  const name = languageName(lang)
+  return (
+    `Write ALL reader-facing text (title, pageTheme, plotNode, characterAction, characterEmotion, pageText, continuity, and every quiz question/option) in ${name}. ` +
+    `Never mix languages within one book. ` +
+    `Write the image-facing fields (visualStyle, colorMood, composition, textWhitespace, imagePromptPoints, forbiddenElements) in English so the image model renders reliably.`
+  )
 }
