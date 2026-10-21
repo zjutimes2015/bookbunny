@@ -30,25 +30,26 @@ const ROWS: CompareRow[] = [
   {
     feature: 'Pricing model',
     bookbunny:
-      'Flat subscription. Starter is free; Pro is $9.99/mo; Commercial is $49/mo. No per-creation charges.',
+      'Free $0; Starter $12/mo ($108/yr); Creator $29/mo ($261/yr) with KDP export and commercial rights; Studio $59/mo ($531/yr). No per-creation charges.',
     readkidz:
       'Tiered monthly plans: Free $0, Standard $10/mo, Pro $30/mo ($25 annual), Mega $50/mo ($42 annual), Max $99/mo ($83 annual), plus Teams plans.',
   },
   {
     feature: 'Credits',
-    bookbunny: 'None. Unlimited books — creations never expire.',
+    bookbunny:
+      'Optional 5-book credit pack for $9. Credits never expire — they stay in your account until you use them.',
     readkidz:
       'Monthly plan credits that do not roll over and expire with the month. Creation steps draw credits, deducted at 50% off the listed cost.',
   },
   {
     feature: 'Free-plan export',
     bookbunny:
-      'Starter is preview-only: up to 3 book pages with 1 character style. Full exports are a paid Pro feature.',
+      'The Free plan is preview-only: one 8-page book with 3 art styles and a watermark. Watermark-free PDF export starts on Starter.',
     readkidz: 'Free-plan exports carry a watermark.',
   },
   {
     feature: 'Pages per book',
-    bookbunny: 'Up to 20 pages (Pro).',
+    bookbunny: '8 pages on Free; up to 12 on Starter, 20 on Creator, and 24 on Studio.',
     readkidz: '5 pages on the Free plan; paid tiers go to 50–60 pages per story.',
   },
   {
@@ -91,15 +92,15 @@ const ROWS: CompareRow[] = [
 const FAQS: { q: string; a: string }[] = [
   {
     q: 'Is SproutTales cheaper than ReadKidz?',
-    a: 'SproutTales is a flat subscription: Pro is $9.99/month with unlimited books and no credit meter, and Commercial is $49/month. ReadKidz offers a free tier and paid plans from $10/mo up to $99/mo that use monthly plan credits.',
+    a: 'SproutTales starts free. Starter is $12/month ($108/year) for 10 books a month; Creator is $29/month ($261/year) and adds KDP interior and cover PDFs plus a commercial license; Studio is $59/month ($531/year) for 100 books a month. ReadKidz offers a free tier and paid plans from $10/mo up to $99/mo that use monthly plan credits.',
   },
   {
     q: 'Do SproutTales books expire like monthly credits?',
-    a: 'No. SproutTales has no credit system — it is a flat subscription with unlimited books, and the books you create never expire.',
+    a: 'Your books never expire. Plan allowances reset monthly, and optional 5-book credit packs ($9) never expire at all.',
   },
   {
     q: 'Does SproutTales watermark free exports?',
-    a: 'SproutTales’s free Starter plan is preview-only: you can preview up to 3 book pages with one character style, and full exports are part of the paid Pro plan. ReadKidz’s free-plan exports carry a watermark.',
+    a: 'The Free plan is preview-only with a watermark — one 8-page book, three art styles, and no PDF export. Watermark-free PDF export starts on Starter at $12/month. ReadKidz’s free-plan exports carry a watermark.',
   },
   {
     q: 'Which is better if I want a printed hardcover book?',
@@ -111,7 +112,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'Can I publish books from either tool on Amazon KDP?',
-    a: 'ReadKidz’s Terms allow commercial use of output, such as publishing to Amazon KDP, and note that AI outputs are non-exclusive. SproutTales exports two print-ready PDFs for KDP — a separate interior and a full cover — with bleed, gutter, spine width, and an even page count of at least 24; commercial rights are part of SproutTales’s Commercial plan.',
+    a: 'ReadKidz’s Terms allow commercial use of output, such as publishing to Amazon KDP, and note that AI outputs are non-exclusive. SproutTales exports two print-ready PDFs for KDP — a separate interior and a full cover — with bleed, gutter, spine width, and an even page count of at least 24; commercial rights are included from the Creator plan at $29/month.',
   },
 ]
 
@@ -206,7 +207,7 @@ export default function VsReadKidzPage() {
               <h2 className="text-xl font-bold text-[#2D2D2D] mb-4">When SproutTales is the better fit</h2>
               <ul className="space-y-3">
                 {[
-                  'You want unlimited books on a flat plan, with no credits and nothing that expires.',
+                  'You want a monthly book allowance with optional credit packs that never expire.',
                   'You need the same character to look consistent on every single page.',
                   'You want leveled reading (GRL A–E) with comprehension questions and progress tracking.',
                   'You want a print-ready interior and full cover you can upload straight to Amazon KDP.',
@@ -243,7 +244,7 @@ export default function VsReadKidzPage() {
           Try SproutTales for yourself
         </h2>
         <p className="text-[#8E8E93] mb-8 max-w-md mx-auto">
-          Start free, then create unlimited books on a flat plan — no credits, no expiry.
+          Start free, then pick the plan that fits — credit packs never expire.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/create" className="apple-button text-base px-8 py-3.5 text-center">

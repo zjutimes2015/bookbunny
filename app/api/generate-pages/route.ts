@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
+import { neon } from '@neondatabase/serverless'
 import {
   pagesToOutline,
   ASPECT_SIZE,
@@ -7,11 +8,21 @@ import {
   type PageOutline,
   type StyleLexicon,
 } from '@/lib/types/book'
+import { getSessionUser, getClientIp } from '@/lib/auth'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { isR2Configured, uploadBase64Image, bookKey } from '@/lib/r2'
 
-const store = new Map<string, {
-  total: number; completed: number; status: string
-  pages: { index: number; status: string; imageB64?: string }[]
-}>()
+export const runtime = 'nodejs'
+export const maxDuration = 300
+
+const sql = neon(process.env.NEON_DATABASE_URL!)
+
+interface JobPage {
+  index: number
+  status: 'pending' | 'generating' | 'done' | 'failed'
+  imageUrl?: string
+  imageB64?: string
+}
 
 // 硬编码风格后缀：仅在既无 styleLexicon、也无 style 参数、也无 visualStyle 时兜底
 const FALLBACK_STYLE = ', childrens book illustration, soft watercolor style, warm colors, storybook quality'
@@ -92,8 +103,7 @@ async function callFlux(prompt: string, size: string, image?: string): Promise<s
 
 export async function POST(req: NextRequest) {
   try {
-    // language: 生图接口同样接受内容语言参数（仅用于接口统一，生图 prompt 恒为英文）
-    const { outline, pages, characterImageB64, refSeed, style, styleLexicon, consistencyLine, aspect, language } =
+    const { outline, pages, characterImageB64, style, styleLexicon, consistencyLine, aspect, language, bookId } =
       await req.json()
     void language
 
@@ -105,61 +115,113 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     }
 
+    // 鉴权 + 限流：付费用户额度最高，登录免费用户次之，游客只能跑一次试生成
+    const user = await getSessionUser(req)
+    const limit = user
+      ? user.isPaid || user.tier !== 'free' ? 300 : 20
+      : 5
+    const rateKey = user ? `gen:user:${user.id}:day` : `gen:ip:${getClientIp(req)}:day`
+    const rate = await checkRateLimit(rateKey, limit, 86400)
+    if (!rate.allowed) {
+      return NextResponse.json(
+        {
+          error: user
+            ? 'Daily illustration limit reached. Try again tomorrow or upgrade your plan.'
+            : 'Free trial limit reached. Sign in to keep creating books.',
+          code: 'rate_limited',
+        },
+        { status: 429 },
+      )
+    }
+
     const size = ASPECT_SIZE[normalizeAspect(aspect)] ?? ASPECT_SIZE[DEFAULT_ASPECT]
     const genId = `gen_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-    store.set(genId, {
-      total: pageOutline.length, completed: 0, status: 'running',
-      // index 采用绝对页码 outline[i].pageNumber（而非数组下标），
-      // 便于客户端分批提交子集后按绝对页码合并到整本图片数组
-      pages: pageOutline.map(p => ({ index: p.pageNumber, status: 'pending' })),
-    })
+    const jobPages: JobPage[] = pageOutline.map(p => ({
+      index: p.pageNumber,
+      status: 'pending',
+    }))
 
-    // Fire and forget
-    runGeneration(genId, pageOutline, characterImageB64, style, styleLexicon, consistencyLine, size)
-      .catch(console.error)
+    await sql`
+      INSERT INTO generation_jobs (id, book_id, status, total, completed, pages)
+      VALUES (${genId}, ${bookId || null}, 'running', ${pageOutline.length}, 0, ${JSON.stringify(jobPages)}::jsonb)
+    `
+
+    // 响应返回后继续执行（Vercel 上不会被立即冻结）
+    after(
+      runGeneration({
+        genId,
+        bookId: typeof bookId === 'string' ? bookId : null,
+        outline: pageOutline,
+        characterImageB64,
+        style,
+        styleLexicon,
+        consistencyLine,
+        size,
+      }),
+    )
 
     return NextResponse.json({ genId, total: pageOutline.length, size })
   } catch (err) {
+    console.error('Generate pages error:', err)
     return NextResponse.json({ error: 'Generation failed' }, { status: 500 })
   }
 }
 
 export async function GET(req: NextRequest) {
   const genId = req.nextUrl.searchParams.get('genId')
-  const state = genId ? store.get(genId) : null
-  if (!state) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!genId) return NextResponse.json({ error: 'Missing genId' }, { status: 400 })
 
-  const done = state.status === 'done' || state.status === 'error'
-  const result = {
-    status: state.status, total: state.total, completed: state.completed,
-    pages: state.pages.map(p => ({
-      index: p.index, status: p.status,
+  const rows = await sql`
+    SELECT status, total, completed, pages
+    FROM generation_jobs
+    WHERE id = ${genId}
+    LIMIT 1
+  `
+  const job = rows[0]
+  if (!job) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  const jobPages = (job.pages || []) as JobPage[]
+  return NextResponse.json({
+    status: job.status,
+    total: job.total,
+    completed: job.completed,
+    pages: jobPages.map(p => ({
+      index: p.index,
+      status: p.status,
+      imageUrl: p.status === 'done' ? p.imageUrl : undefined,
       imageB64: p.status === 'done' ? p.imageB64 : undefined,
     })),
-  }
-
-  if (done && genId) setTimeout(() => store.delete(genId), 10000)
-  return NextResponse.json(result)
+  })
 }
 
-async function runGeneration(
-  genId: string,
-  outline: PageOutline[],
-  characterImageB64?: string,
-  providedStyle?: string,
-  styleLexicon?: StyleLexicon,
-  consistencyLine?: string,
-  size: string = ASPECT_SIZE[DEFAULT_ASPECT],
-) {
-  const state = store.get(genId)
-  if (!state) return
-
+async function runGeneration(opts: {
+  genId: string
+  bookId: string | null
+  outline: PageOutline[]
+  characterImageB64?: string
+  style?: string
+  styleLexicon?: StyleLexicon
+  consistencyLine?: string
+  size: string
+}) {
+  const { genId, bookId, outline, characterImageB64, style, styleLexicon, consistencyLine, size } = opts
+  const pages: JobPage[] = outline.map(p => ({ index: p.pageNumber, status: 'pending' }))
   const refImage = characterImageB64 ? `data:image/png;base64,${characterImageB64}` : undefined
+  const canUpload = isR2Configured() && !!bookId
+  let completed = 0
+
+  const flush = async (status: 'running' | 'done' | 'error') => {
+    await sql`
+      UPDATE generation_jobs
+      SET status = ${status}, completed = ${completed}, pages = ${JSON.stringify(pages)}::jsonb, updated_at = NOW()
+      WHERE id = ${genId}
+    `
+  }
 
   for (let i = 0; i < outline.length; i++) {
-    const prompt = buildPrompt(outline[i], providedStyle, styleLexicon, consistencyLine)
-    const pageNo = outline[i].pageNumber
-    state.pages[i] = { index: pageNo, status: 'generating' }
+    const prompt = buildPrompt(outline[i], style, styleLexicon, consistencyLine)
+    pages[i] = { index: outline[i].pageNumber, status: 'generating' }
+    await flush('running')
 
     try {
       let b64: string
@@ -173,13 +235,54 @@ async function runGeneration(
           throw err
         }
       }
-      state.pages[i] = { index: pageNo, status: 'done', imageB64: b64 }
+
+      let imageUrl: string | undefined
+      if (canUpload) {
+        try {
+          imageUrl = await uploadBase64Image(
+            bookKey(bookId!, 'page', outline[i].pageNumber),
+            `data:image/png;base64,${b64}`,
+          )
+        } catch (err) {
+          console.error('R2 upload failed for page', outline[i].pageNumber, err)
+        }
+      }
+
+      pages[i] = imageUrl
+        ? { index: outline[i].pageNumber, status: 'done', imageUrl }
+        : { index: outline[i].pageNumber, status: 'done', imageB64: b64 }
     } catch {
-      state.pages[i] = { index: pageNo, status: 'failed' }
+      pages[i] = { index: outline[i].pageNumber, status: 'failed' }
     }
 
-    state.completed = state.pages.filter(p => p.status === 'done' || p.status === 'failed').length
+    completed = pages.filter(p => p.status === 'done' || p.status === 'failed').length
+    await flush('running')
   }
 
-  state.status = state.pages.every(p => p.status === 'done') ? 'done' : 'error'
+  const allDone = pages.every(p => p.status === 'done')
+  await flush(allDone ? 'done' : 'error')
+
+  if (bookId) {
+    await persistBookImages(bookId, pages)
+  }
+}
+
+/** 把本批图片 URL 按「页码-1」写入 books.page_image_urls（保留其它批次已有值） */
+async function persistBookImages(bookId: string, pages: JobPage[]) {
+  try {
+    const rows = await sql`SELECT page_image_urls FROM books WHERE id = ${bookId} LIMIT 1`
+    if (rows.length === 0) return
+
+    const urls: string[] = Array.isArray(rows[0].page_image_urls) ? [...rows[0].page_image_urls] : []
+    for (const p of pages) {
+      if (!p.imageUrl) continue
+      const idx = Math.max(0, p.index - 1)
+      while (urls.length <= idx) urls.push('')
+      urls[idx] = p.imageUrl
+    }
+
+    await sql`UPDATE books SET page_image_urls = ${urls} WHERE id = ${bookId}`
+  } catch (err) {
+    console.error('Persist book images failed:', err)
+  }
 }

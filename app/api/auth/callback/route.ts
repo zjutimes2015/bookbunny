@@ -59,8 +59,10 @@ export async function GET(req: NextRequest) {
       VALUES (${sessionToken}, ${userId}, NOW() + INTERVAL '7 days')
     `
 
-    // Redirect with session cookie
-    const response = NextResponse.redirect(new URL('/?welcome=true', req.url))
+    // Redirect with session cookie（state 带回登录前的站内目标，如 /pricing）
+    const rawNext = req.nextUrl.searchParams.get('state') || ''
+    const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/?welcome=true'
+    const response = NextResponse.redirect(new URL(next, req.url))
     response.cookies.set('auth_token', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

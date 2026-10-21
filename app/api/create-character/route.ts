@@ -1,29 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { neon } from '@neondatabase/serverless'
 import { generateCharacterCard } from '@/lib/api/character'
 import { hasConsent } from '@/lib/compliance/consent'
+import { getSessionUser, getClientIp } from '@/lib/auth'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { isR2Configured, uploadBase64Image } from '@/lib/r2'
 import type { CharacterCard, StyleLexicon, BookLanguage } from '@/lib/types/book'
 
 const PHOTO_USAGES: CharacterCard['photoUsage'][] = ['illustrated', 'photo-family', 'photo-public']
-
-const sql = neon(process.env.NEON_DATABASE_URL!)
-
-async function getUserId(req: NextRequest): Promise<string | null> {
-  const token = req.cookies.get('auth_token')?.value
-  if (!token) return null
-  try {
-    const result = await sql`
-      SELECT u.id
-      FROM bookbunny_users u
-      JOIN auth_sessions s ON s.user_id = u.id
-      WHERE s.token = ${token} AND s.expires_at > NOW()
-      LIMIT 1
-    `
-    return result[0]?.id || null
-  } catch {
-    return null
-  }
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -46,16 +29,32 @@ export async function POST(req: NextRequest) {
       try { styleLexicon = JSON.parse(lexiconRaw) as StyleLexicon } catch { /* ignore */ }
     }
 
+    // 鉴权 + 限流：角色卡会消耗 LLM 与生图额度
+    const user = await getSessionUser(req)
+    const limit = user ? (user.isPaid || user.tier !== 'free' ? 30 : 10) : 1
+    const rateKey = user ? `char:user:${user.id}:day` : `char:ip:${getClientIp(req)}:day`
+    const rate = await checkRateLimit(rateKey, limit, 86400)
+    if (!rate.allowed) {
+      return NextResponse.json(
+        {
+          error: user
+            ? 'Daily character limit reached. Try again tomorrow.'
+            : 'Free trial limit reached. Sign in to keep creating characters.',
+          code: 'rate_limited',
+        },
+        { status: 429 },
+      )
+    }
+
     // 儿童照片属于个人信息：没有生效的家长同意就绝不处理。
     if (photo && typeof photo.size === 'number' && photo.size > 0) {
-      const userId = await getUserId(req)
-      if (!userId) {
+      if (!user) {
         return NextResponse.json(
           { error: 'A parent or guardian account is required before a child\u2019s photograph can be used' },
           { status: 401 },
         )
       }
-      if (!(await hasConsent(userId))) {
+      if (!(await hasConsent(user.id))) {
         return NextResponse.json(
           { error: 'Parental consent is required before a child\u2019s photograph can be used' },
           { status: 403 },
@@ -82,7 +81,20 @@ export async function POST(req: NextRequest) {
       language, // 可选：内容语言（缺省英语）
     })
 
-    return NextResponse.json({ name, ...result })
+    // 角色参考图落 R2（未配置时跳过，客户端仍可拿到 base64 参考图）
+    let imageUrl: string | undefined
+    if (result.imageB64 && isR2Configured()) {
+      try {
+        imageUrl = await uploadBase64Image(
+          `characters/${globalThis.crypto.randomUUID()}/portrait.png`,
+          `data:image/png;base64,${result.imageB64}`,
+        )
+      } catch (err) {
+        console.error('Character upload to R2 failed:', err)
+      }
+    }
+
+    return NextResponse.json({ name, ...result, imageUrl })
   } catch (err) {
     console.error('Character creation error:', err)
     return NextResponse.json(

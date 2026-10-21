@@ -114,6 +114,38 @@ body {
   animation: bunny-bounce 3s ease-in-out infinite;
 }
 
+/* Homepage hero carousel — CSS-only, 3 slides × 4s */
+@keyframes home-slide {
+  0% { opacity: 0; }
+  3% { opacity: 1; }
+  30% { opacity: 1; }
+  33.33% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.home-slide {
+  opacity: 0;
+  animation: home-slide 12s linear infinite;
+}
+.home-slide-1 { animation-delay: 0s; }
+.home-slide-2 { animation-delay: -8s; }
+.home-slide-3 { animation-delay: -4s; }
+
+.home-dot > span {
+  opacity: 0;
+  animation: home-slide 12s linear infinite;
+}
+.home-dot-1 > span { animation-delay: 0s; }
+.home-dot-2 > span { animation-delay: -8s; }
+.home-dot-3 > span { animation-delay: -4s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .home-slide,
+  .home-dot > span { animation: none; }
+  .home-slide-1,
+  .home-dot-1 > span { opacity: 1; }
+}
+
 /* Page transitions */
 .page-enter {
   opacity: 0;

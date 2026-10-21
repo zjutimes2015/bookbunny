@@ -23,6 +23,7 @@ interface BookDetail {
   theme: string
   level: string | null
   quiz: { questions: QuizQuestion[] } | null
+  pageImageUrls?: string[] | null
   createdAt: string
 }
 
@@ -142,6 +143,16 @@ export default function BookDetailPage() {
             }`}
           >
             <span className="text-[10px] text-[#C8A2E8] font-semibold">PAGE {i + 1}</span>
+            {book.pageImageUrls?.[i] && (
+              <div
+                className="aspect-[4/3] rounded-lg mt-1.5 bg-[#FFF5EE]"
+                style={{
+                  backgroundImage: `url(${book.pageImageUrls[i]})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              />
+            )}
             <p className="text-sm text-[#2D2D2D] leading-relaxed mt-1.5">{page.pageText}</p>
           </div>
         ))}

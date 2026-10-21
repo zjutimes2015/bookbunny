@@ -25,22 +25,95 @@ export function isWaffoConfigured(): boolean {
   return !!merchantId && !!privateKey
 }
 
-// 套餐配置 —— productId 需与 Waffo 后台创建的 Product 对应
+export type SubscriptionTier = 'free' | 'starter' | 'creator' | 'studio' | 'credits'
+
+export interface WaffoPlan {
+  /** Waffo 后台创建的 Product ID */
+  productId: string
+  name: string
+  /** 写入 bookbunny_users.subscription_tier 的档位 */
+  tier: SubscriptionTier
+  price: number
+  currency: string
+  cycle: 'month' | 'year' | 'once'
+  description: string
+}
+
+/** 4 档订阅 + 额度包（productId 需与 Waffo 后台 Product 一一对应） */
 export const WAFFO_PLANS = {
-  pro: {
-    productId: process.env.WAFFO_PRO_PRODUCT_ID || '',
-    name: 'Pro',
-    price: 9.99,
+  starter_monthly: {
+    productId: process.env.WAFFO_STARTER_MONTHLY_PRODUCT_ID || '',
+    name: 'Starter',
+    tier: 'starter',
+    price: 12,
     currency: 'USD',
-    description: 'Unlimited books, photo-to-character, KDP export',
+    cycle: 'month',
+    description: '10 books per month, no watermark, PDF export',
   },
-  commercial: {
-    productId: process.env.WAFFO_COMMERCIAL_PRODUCT_ID || '',
-    name: 'Commercial',
-    price: 49,
+  starter_annual: {
+    productId: process.env.WAFFO_STARTER_ANNUAL_PRODUCT_ID || '',
+    name: 'Starter',
+    tier: 'starter',
+    price: 108,
     currency: 'USD',
-    description: 'Everything in Pro + commercial rights + multi-character',
+    cycle: 'year',
+    description: '10 books per month, no watermark, PDF export — 2 months free',
   },
-} as const
+  creator_monthly: {
+    productId: process.env.WAFFO_CREATOR_MONTHLY_PRODUCT_ID || '',
+    name: 'Creator',
+    tier: 'creator',
+    price: 29,
+    currency: 'USD',
+    cycle: 'month',
+    description: '30 books per month, KDP dual PDF, commercial license',
+  },
+  creator_annual: {
+    productId: process.env.WAFFO_CREATOR_ANNUAL_PRODUCT_ID || '',
+    name: 'Creator',
+    tier: 'creator',
+    price: 261,
+    currency: 'USD',
+    cycle: 'year',
+    description: '30 books per month, KDP dual PDF, commercial license — 3 months free',
+  },
+  studio_monthly: {
+    productId: process.env.WAFFO_STUDIO_MONTHLY_PRODUCT_ID || '',
+    name: 'Studio',
+    tier: 'studio',
+    price: 59,
+    currency: 'USD',
+    cycle: 'month',
+    description: '100 books per month, 3 concurrent jobs, batch generation',
+  },
+  studio_annual: {
+    productId: process.env.WAFFO_STUDIO_ANNUAL_PRODUCT_ID || '',
+    name: 'Studio',
+    tier: 'studio',
+    price: 531,
+    currency: 'USD',
+    cycle: 'year',
+    description: '100 books per month, 3 concurrent jobs, batch generation — 3 months free',
+  },
+  credits_5: {
+    productId: process.env.WAFFO_CREDITS_PRODUCT_ID || '',
+    name: '5-Book Credit Pack',
+    tier: 'credits',
+    price: 9,
+    currency: 'USD',
+    cycle: 'once',
+    description: '5 book credits that never expire',
+  },
+} as const satisfies Record<string, WaffoPlan>
 
 export type WaffoPlanKey = keyof typeof WAFFO_PLANS
+
+/** 套餐 key 对应的订阅档位（webhook / checkout 共用，避免各处硬编码） */
+export function planTier(planKey: string): SubscriptionTier {
+  const plan = WAFFO_PLANS[planKey as WaffoPlanKey]
+  return plan ? plan.tier : 'starter'
+}
+
+export function getPlan(planKey: string): WaffoPlan | null {
+  return WAFFO_PLANS[planKey as WaffoPlanKey] || null
+}

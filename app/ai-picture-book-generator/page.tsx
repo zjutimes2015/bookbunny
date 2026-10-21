@@ -5,7 +5,7 @@ import { SITE_URL, SITE_NAME } from '@/lib/site'
 
 const TITLE = 'AI Picture Book Generator — Create Illustrated Children’s Books with Consistent Characters'
 const DESCRIPTION =
-  'SproutTales is an AI picture book generator that turns an idea into a fully illustrated children’s storybook — consistent characters, leveled text, and a print-ready PDF. No credits, unlimited books.'
+  'SproutTales is an AI picture book generator that turns an idea into a fully illustrated children’s storybook — consistent characters, leveled text, and a print-ready PDF. Start free, then pick the plan that fits.'
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -40,8 +40,8 @@ const WHAT_YOU_GET = [
 const DIFFERENTIATORS = [
   {
     icon: '∞',
-    title: 'No credits, no expiry',
-    desc: 'A flat subscription — never a credit meter. Create unlimited books and your creations never expire.',
+    title: 'No wasted credits, no expiry',
+    desc: 'Every plan includes a monthly book allowance, and optional credit packs never expire — nothing you buy disappears at month end.',
   },
   {
     icon: '★',
@@ -88,7 +88,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'Is there a credit system, and do my books expire?',
-    a: 'No credits and no expiry. SproutTales uses a flat subscription with unlimited books, and the books you create stay in your library without expiring.',
+    a: 'Your books never expire. Each plan includes a monthly book allowance; if you need more, a $9 five-book credit pack never expires.',
   },
 ]
 
@@ -211,7 +211,7 @@ export default function AiPictureBookGeneratorPage() {
           Make your first picture book today
         </h2>
         <p className="text-[#8E8E93] mb-8 max-w-md mx-auto">
-          Start free, then create unlimited books on a flat plan — your creations never expire.
+          Start free, then pick the plan that fits — your books stay yours and credit packs never expire.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/create" className="apple-button text-base px-8 py-3.5 text-center">

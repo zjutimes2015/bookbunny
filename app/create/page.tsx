@@ -13,6 +13,7 @@ import { STYLE_LIBRARY } from '@/data/style-library'
 import { runImageChecks, runThreeStepChecks } from '@/lib/page-checks'
 import { buildInteriorPdf, buildCoverPdf, type KdpPageInput } from '@/lib/kdp/export'
 import { KDP_TRIM, padToKdpPageCount, interiorDimsIn, coverDimsIn } from '@/lib/kdp/spec'
+import { useAuth } from '@/lib/auth-context'
 
 // 阶段6：至简三步状态机（设定 → 生成大纲 → 按纲生图）
 type Step = 'setup' | 'outline' | 'illustrate'
@@ -91,6 +92,11 @@ function downloadBytes(bytes: Uint8Array, filename: string) {
 }
 
 export default function CreatePage() {
+  const { user } = useAuth()
+  // 套餐页数上限：Free 8 / Starter 12 / Creator 20 / Studio 24
+  const tier = user?.subscriptionTier
+  const maxPages =
+    tier === 'studio' || tier === 'commercial' ? 24 : tier === 'creator' ? 20 : tier === 'starter' ? 12 : 8
   const [step, setStep] = useState<Step>('setup')
   const [characters, setCharacters] = useState<CharData[]>([])
   const [story, setStory] = useState<{
@@ -126,6 +132,7 @@ export default function CreatePage() {
   const [ageGroup, setAgeGroup] = useState('3-5')
   const [level, setLevel] = useState('C')
   const [pageCount, setPageCount] = useState(20) // 第一步：页数
+  const effectivePages = Math.min(pageCount, maxPages)
 
   // 绘本内容语言（出海默认英语，一本只用一种语言）
   const [language, setLanguage] = useState<BookLanguage>(DEFAULT_BOOK_LANGUAGE)
@@ -255,7 +262,7 @@ export default function CreatePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          theme, ageGroup, characterName: charNames, pages: pageCount, level,
+          theme, ageGroup, characterName: charNames, pages: effectivePages, level,
           language,
           styleLexicon, styleCard,
           characterCards: characters.map(c => c.card).filter(Boolean), // 阶段3：角色一致性
@@ -273,7 +280,7 @@ export default function CreatePage() {
   }
 
   // 提交一批（子集）生图并轮询；按绝对页码 p.index 合并到整本图片数组
-  const runBatch = async (subset: PageOutline[]) => {
+  const runBatch = async (subset: PageOutline[], bookId: string | null) => {
     if (!story || subset.length === 0) return
     try {
       const res = await fetch('/api/generate-pages', {
@@ -282,6 +289,7 @@ export default function CreatePage() {
         body: JSON.stringify({
           title: story.title,
           outline: subset,                              // 子集：带真实 pageNumber
+          bookId,                                       // 服务端据此把图片写入 R2 与 books.page_image_urls
           characterImageB64: refChar?.imageB64 || null, // 阶段3：参考图
           refSeed: refChar?.refSeed || null,
           consistencyLine,                              // 阶段3：每页注入
@@ -291,7 +299,7 @@ export default function CreatePage() {
         }),
       })
       const data = await res.json()
-      if (data.error) throw new Error(data.error)
+      if (!res.ok || data.error) throw new Error(data.error || 'Generation failed')
       const gid: string = data.genId
 
       await new Promise<void>((resolve) => {
@@ -300,11 +308,12 @@ export default function CreatePage() {
             const r = await fetch(`/api/generate-pages?genId=${gid}`)
             const d = await r.json()
             setGenProgress(d)
-            // index 已是绝对页码，直接合并
+            // index 已是绝对页码，直接合并（R2 模式返回 URL，未配置 R2 时回退 base64）
             setPageImages(prev => {
               const next = { ...prev }
               for (const p of d.pages || []) {
                 if (p.imageB64) next[p.index] = `data:image/png;base64,${p.imageB64}`
+                else if (p.imageUrl) next[p.index] = p.imageUrl
               }
               return next
             })
@@ -325,12 +334,13 @@ export default function CreatePage() {
     if (!story || generating) return
     setGenerating(true)
     setStep('illustrate')
+    // 先落库拿到 bookId，生图期间即可把图片写入 R2 与 books.page_image_urls
+    const bookId = savedBookId || await saveBook()
     const trialNums = pickTrialPages(story.outline)
     const trialSet = new Set(trialNums)
     setPendingPages(story.outline.map(p => p.pageNumber).filter(n => !trialSet.has(n)))
-    await runBatch(story.outline.filter(p => trialSet.has(p.pageNumber)))
+    await runBatch(story.outline.filter(p => trialSet.has(p.pageNumber)), bookId)
     setTrialDone(true)
-    saveBook()
     setGenerating(false)
   }
 
@@ -343,15 +353,15 @@ export default function CreatePage() {
     while (remaining.length > 0) {
       const batch = remaining.slice(0, 5)
       remaining = remaining.slice(5)
-      await runBatch(story.outline.filter(p => batch.includes(p.pageNumber)))
+      await runBatch(story.outline.filter(p => batch.includes(p.pageNumber)), savedBookId)
       setPendingPages(remaining)
     }
     setGenerating(false)
   }
 
-  // Save the generated story + book to the database
-  const saveBook = async () => {
-    if (!story || savedBookId) return
+  // Save the generated story + book to the database（返回 bookId 供生图持久化使用）
+  const saveBook = async (): Promise<string | null> => {
+    if (!story || savedBookId) return savedBookId
     try {
       const res = await fetch('/api/books', {
         method: 'POST',
@@ -368,22 +378,54 @@ export default function CreatePage() {
         }),
       })
       const data = await res.json()
-      if (data.bookId) setSavedBookId(data.bookId)
+      if (data.bookId) {
+        setSavedBookId(data.bookId)
+        return data.bookId as string
+      }
     } catch (err) {
       console.warn('Save book failed (non-blocking):', err)
     }
+    return null
+  }
+
+  /** 把 R2 图片 URL 转成 data URL，供客户端 PDF 导出使用 */
+  const hydrateImages = async (images: Record<number, string>): Promise<Record<number, string>> => {
+    const entries = Object.entries(images).filter(([, v]) => !v.startsWith('data:'))
+    if (entries.length === 0) return images
+
+    const next = { ...images }
+    await Promise.all(
+      entries.map(async ([key, url]) => {
+        try {
+          const res = await fetch(url)
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          const blob = await res.blob()
+          const dataUrl: string = await new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(String(reader.result))
+            reader.onerror = () => reject(reader.error)
+            reader.readAsDataURL(blob)
+          })
+          next[Number(key)] = dataUrl
+        } catch (err) {
+          console.warn('Image hydrate failed:', url, err)
+        }
+      }),
+    )
+    setPageImages(next)
+    return next
   }
 
   // 由页面 outline + 已生成的 pageImages 构造 KdpPageInput[]（images key 为绝对页码）
-  const buildPageInputs = (): KdpPageInput[] => {
+  const buildPageInputs = (images: Record<number, string> = pageImages): KdpPageInput[] => {
     if (!story) return []
     const byNum = new Map(story.outline.map(p => [p.pageNumber, p]))
     const maxOutline = story.outline.reduce((m, p) => Math.max(m, p.pageNumber), 0)
-    const maxImage = Object.keys(pageImages).reduce((m, k) => Math.max(m, Number(k) || 0), 0)
+    const maxImage = Object.keys(images).reduce((m, k) => Math.max(m, Number(k) || 0), 0)
     const maxNo = Math.max(maxOutline, maxImage, 1)
     const inputs: KdpPageInput[] = []
     for (let n = 1; n <= maxNo; n++) {
-      inputs.push({ text: byNum.get(n)?.pageText, imageDataUrl: pageImages[n] })
+      inputs.push({ text: byNum.get(n)?.pageText, imageDataUrl: images[n] })
     }
     return inputs
   }
@@ -393,16 +435,28 @@ export default function CreatePage() {
   const interiorIn = interiorDimsIn(trim)
   const coverIn = coverDimsIn(trim, kdpPageCount)
 
+  // 导出权限：Starter 及以上导出内页，Creator 及以上导出 KDP 封面
+  const canExport = !!user && (user.isPaid || (tier !== undefined && tier !== 'free'))
+  const canKdp = !!user && (tier === 'creator' || tier === 'studio' || tier === 'commercial')
+
+  const requirePlan = (allowed: boolean, message: string) => {
+    if (allowed) return true
+    if (confirm(`${message}\n\nView plans?`)) window.location.href = '/pricing'
+    return false
+  }
+
   // Export KDP-ready interior PDF — generated in the browser (images live client-side)
   const handleExportPDF = async () => {
     if (!story) return
+    if (!requirePlan(canExport, 'PDF export is available on Starter and above.')) return
     setLoading(true)
     try {
+      const images = await hydrateImages(pageImages)
       const author = characters.map(c => c.name).join(' & ')
       const bytes = await buildInteriorPdf({
         title: story.title,
         author,
-        pages: buildPageInputs(),
+        pages: buildPageInputs(images),
         trim,
         paper: 'white',
       })
@@ -417,10 +471,12 @@ export default function CreatePage() {
   // Export KDP-ready full cover PDF (back cover + spine + front cover)
   const handleExportCover = async () => {
     if (!story) return
+    if (!requirePlan(canKdp, 'KDP interior + cover PDFs are available on Creator and above.')) return
     setLoading(true)
     try {
+      const images = await hydrateImages(pageImages)
       const author = characters.map(c => c.name).join(' & ')
-      const pages = buildPageInputs()
+      const pages = buildPageInputs(images)
       const coverPage = story.outline.find(p => p.pageFunction === 'cover')
       const backPage = story.outline.find(p => p.pageFunction === 'back-cover')
       const bytes = await buildCoverPdf({
@@ -429,8 +485,8 @@ export default function CreatePage() {
         pages: padToKdpPageCount(pages.length),
         trim,
         paper: 'white',
-        frontImageDataUrl: coverPage ? pageImages[coverPage.pageNumber] : undefined,
-        backImageDataUrl: backPage ? pageImages[backPage.pageNumber] : undefined,
+        frontImageDataUrl: coverPage ? images[coverPage.pageNumber] : undefined,
+        backImageDataUrl: backPage ? images[backPage.pageNumber] : undefined,
         blurb: backPage?.pageText,
       })
       downloadBytes(bytes, `${slugify(story.title)}-cover.pdf`)
@@ -483,7 +539,7 @@ export default function CreatePage() {
     theme,
     ageGroup,
     styleChosen: !!styleCard || !!styleId,
-    pages: pageCount,
+    pages: effectivePages,
     aspect,
     protagonist: characters.length > 0,
     hasOutline: !!story,
@@ -628,21 +684,30 @@ export default function CreatePage() {
                 <div>
                   <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Page Count</label>
                   <div className="grid grid-cols-4 gap-2">
-                    {[12, 16, 20, 24].map(n => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setPageCount(n)}
-                        className={`rounded-xl border px-2 py-2 text-center transition-all ${
-                          pageCount === n
-                            ? 'border-[#FF6B8A] bg-[#FFF5EE] ring-1 ring-[#FF6B8A]'
-                            : 'border-[#E5E5EA] bg-white hover:border-[#C8A2E8]'
-                        }`}
-                      >
-                        <span className="block text-sm font-bold text-[#2D2D2D]">{n}</span>
-                        <span className="block text-[10px] text-[#8E8E93]">{n === 20 ? 'pages · Recommended' : 'pages'}</span>
-                      </button>
-                    ))}
+                    {[8, 12, 20, 24].map(n => {
+                      const locked = n > maxPages
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          disabled={locked}
+                          onClick={() => !locked && setPageCount(n)}
+                          title={locked ? `Upgrade your plan for ${n}-page books` : undefined}
+                          className={`rounded-xl border px-2 py-2 text-center transition-all ${
+                            locked
+                              ? 'border-[#F2F2F7] bg-[#FAFAFB] opacity-45 cursor-not-allowed'
+                              : effectivePages === n
+                              ? 'border-[#FF6B8A] bg-[#FFF5EE] ring-1 ring-[#FF6B8A]'
+                              : 'border-[#E5E5EA] bg-white hover:border-[#C8A2E8]'
+                          }`}
+                        >
+                          <span className="block text-sm font-bold text-[#2D2D2D]">{n}</span>
+                          <span className="block text-[10px] text-[#8E8E93]">
+                            {locked ? 'upgrade' : n === 20 ? 'pages · Recommended' : 'pages'}
+                          </span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
                 <div>

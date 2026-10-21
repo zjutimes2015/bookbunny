@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateStory } from '@/lib/api/story'
+import { getSessionUser, getClientIp } from '@/lib/auth'
+import { checkRateLimit } from '@/lib/rate-limit'
+
+/** 套餐页数上限：游客/Free 8 / Starter 12 / Creator 20 / Studio 24 */
+function maxPagesFor(tier: string | undefined, isPaid: boolean): number {
+  if (!tier && !isPaid) return 8
+  if (tier === 'studio' || tier === 'commercial') return 24
+  if (tier === 'creator') return 20
+  if (tier === 'starter') return 12
+  return 8
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,11 +20,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    const user = await getSessionUser(req)
+    const limit = user ? (user.isPaid || user.tier !== 'free' ? 100 : 30) : 10
+    const rateKey = user ? `story:user:${user.id}:day` : `story:ip:${getClientIp(req)}:day`
+    const rate = await checkRateLimit(rateKey, limit, 86400)
+    if (!rate.allowed) {
+      return NextResponse.json(
+        {
+          error: user
+            ? 'Daily story limit reached. Try again tomorrow.'
+            : 'Free trial limit reached. Sign in to keep creating books.',
+          code: 'rate_limited',
+        },
+        { status: 429 },
+      )
+    }
+
+    // 服务端兜底：页数不得超过当前套餐上限
+    const maxPages = maxPagesFor(user?.tier, user?.isPaid ?? false)
+    const pageCount = Math.min(Math.max(Number(pages) || 8, 4), maxPages)
+
     const story = await generateStory({
       theme,
       ageGroup,
       characterName,
-      pages: pages || 20,
+      pages: pageCount,
       level, // 可选：GRL 分级（'A' - 'E'）
       styleLexicon, // 可选：风格层（固定风格词库）
       styleCard, // 可选：风格设定卡

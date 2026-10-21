@@ -19,6 +19,7 @@ export async function GET(
         b.title,
         b.level,
         b.aspect,
+        b.page_image_urls,
         b.created_at,
         s.content AS pages,
         s.outline AS outline,
@@ -54,6 +55,7 @@ export async function GET(
       theme: row.theme || '',
       level: row.level || null,
       aspect: row.aspect || null,
+      pageImageUrls: row.page_image_urls || [],
       quiz,
       createdAt: row.created_at,
     })

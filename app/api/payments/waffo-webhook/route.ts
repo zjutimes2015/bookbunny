@@ -6,7 +6,7 @@ import {
   type WebhookEvent,
   type WebhookEventData,
 } from '@waffo/pancake-ts'
-import { WAFFO_ENVIRONMENT } from '@/lib/payments/waffo'
+import { WAFFO_ENVIRONMENT, planTier } from '@/lib/payments/waffo'
 
 export async function POST(request: Request) {
   const rawBody = await request.text()
@@ -23,8 +23,9 @@ export async function POST(request: Request) {
   try {
     const d = event.data
     const sql = neon(process.env.NEON_DATABASE_URL!)
-    const userId = d.merchantProvidedBuyerIdentity || ''
-    const plan = d.orderMetadata?.plan || 'pro'
+    const userId = d.merchantProvidedBuyerIdentity || d.orderMetadata?.userId || ''
+    const plan = d.orderMetadata?.plan || 'starter_monthly'
+    const tier = planTier(plan)
 
     switch (event.eventType) {
       case WebhookEventType.OrderCompleted:
@@ -35,16 +36,31 @@ export async function POST(request: Request) {
           VALUES (${d.orderId}, ${userId}, ${plan}, ${amount}, ${d.currency || 'USD'}, 'completed', NOW())
           ON CONFLICT (id) DO NOTHING
         `
-        if (userId) {
+        if (tier === 'credits') {
+          // 额度包：一次性加 5 本，永久有效
+          if (userId) {
+            await sql`
+              UPDATE bookbunny_users
+              SET credits = COALESCE(credits, 0) + 5, updated_at = NOW()
+              WHERE id = ${userId}
+            `
+          } else if (d.buyerEmail) {
+            await sql`
+              UPDATE bookbunny_users
+              SET credits = COALESCE(credits, 0) + 5, updated_at = NOW()
+              WHERE email = ${d.buyerEmail}
+            `
+          }
+        } else if (userId) {
           await sql`
             UPDATE bookbunny_users
-            SET is_paid = TRUE, subscription_tier = ${plan}, updated_at = NOW()
+            SET is_paid = TRUE, subscription_tier = ${tier}, updated_at = NOW()
             WHERE id = ${userId}
           `
         } else if (d.buyerEmail) {
           await sql`
             UPDATE bookbunny_users
-            SET is_paid = TRUE, subscription_tier = ${plan}, updated_at = NOW()
+            SET is_paid = TRUE, subscription_tier = ${tier}, updated_at = NOW()
             WHERE email = ${d.buyerEmail}
           `
         }

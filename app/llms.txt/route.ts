@@ -14,7 +14,8 @@ export function GET() {
 
 ## What makes it different
 
-- No credit system. A flat subscription, unlimited books — creations never expire.
+- No wasted credits. Each plan includes a monthly book allowance, optional 5-book credit
+  packs never expire, and every book you create stays in your library.
 - Character consistency is enforced on every page through a reusable consistency line
   plus a stored reference character card.
 - Two photo privacy schemes: Option A builds the character with no real photo at all;

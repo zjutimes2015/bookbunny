@@ -45,7 +45,7 @@ export function FreeUserView({ children }: { children?: React.ReactNode }) {
               <span className="text-xs bg-[#98D8C8]/20 text-[#4A9E8E] px-2 py-0.5 rounded-full font-medium">Active</span>
             </div>
             <p className="text-sm text-[#8E8E93] mt-0.5">
-              You have <strong>3 free books</strong>. Upgrade for unlimited stories &amp; commercial rights.
+              You have <strong>1 free book</strong> with a watermarked preview. Upgrade for watermark-free exports.
             </p>
           </div>
           <div className="flex gap-2">
@@ -64,7 +64,21 @@ export function FreeUserView({ children }: { children?: React.ReactNode }) {
 export function PaidUserView({ children }: { children?: React.ReactNode }) {
   const { user, logout } = useAuth()
 
-  const tierLabel = user?.subscriptionTier === 'pro' ? 'Pro' : 'Commercial'
+  const tierLabel =
+    user?.subscriptionTier === 'studio'
+      ? 'Studio'
+      : user?.subscriptionTier === 'creator'
+      ? 'Creator'
+      : user?.subscriptionTier === 'starter'
+      ? 'Starter'
+      : 'Paid'
+
+  const tierDetail =
+    user?.subscriptionTier === 'studio'
+      ? '100 books a month, 3 concurrent jobs & batch generation.'
+      : user?.subscriptionTier === 'creator'
+      ? '30 books a month, KDP export & commercial rights.'
+      : '10 books a month, watermark-free PDF export.'
 
   return (
     <div className="space-y-4">
@@ -78,7 +92,7 @@ export function PaidUserView({ children }: { children?: React.ReactNode }) {
               <span className="text-xs bg-[#FFD700]/20 text-[#B8960F] px-2 py-0.5 rounded-full font-medium">Premium</span>
             </div>
             <p className="text-sm text-[#8E8E93] mt-0.5">
-              Unlimited books, multi-character, KDP export &amp; commercial rights.
+              {tierDetail}
             </p>
           </div>
           <div className="flex items-center gap-3">

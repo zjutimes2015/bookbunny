@@ -27,15 +27,17 @@ export function isR2Configured(): boolean {
   return !!(ACCOUNT_ID && ACCESS_KEY && SECRET_KEY)
 }
 
-/** Upload a file to R2. Returns the public URL or CDN URL */
+/**
+ * Upload a file to R2. Returns a same-origin asset URL.
+ * Callers must check isR2Configured() first — this throws rather than faking a URL.
+ */
 export async function uploadFile(
   key: string,
   body: Buffer | Uint8Array | string,
   contentType: string,
 ): Promise<string> {
   if (!isR2Configured()) {
-    console.log(`[R2 DEV] Skipping upload: ${key} (${contentType}, ${body.length} bytes)`)
-    return `/api/file/${key}` // Dev fallback
+    throw new Error('R2 is not configured')
   }
 
   const cmd = new PutObjectCommand({
@@ -47,11 +49,33 @@ export async function uploadFile(
 
   await getClient().send(cmd)
 
-  // Return CDN URL if configured, otherwise R2.dev URL
-  if (PUBLIC_URL) {
-    return `${PUBLIC_URL}/${key}`
+  // 同源代理地址：避免自定义域名未配置 CORS 时浏览器端取图失败
+  return assetUrl(key)
+}
+
+/** 资源访问地址：优先 CDN 自定义域名，否则走同源代理路由 */
+export function assetUrl(key: string): string {
+  if (PUBLIC_URL) return `${PUBLIC_URL.replace(/\/+$/, '')}/${key}`
+  return `/api/assets/${key}`
+}
+
+/** 读取对象（供 /api/assets 同源代理路由使用） */
+export async function getObjectFile(
+  key: string,
+): Promise<{ body: Uint8Array; contentType: string } | null> {
+  if (!isR2Configured()) return null
+
+  try {
+    const res = await getClient().send(new GetObjectCommand({ Bucket: BUCKET, Key: key }))
+    const bytes = await res.Body?.transformToByteArray()
+    if (!bytes) return null
+    return {
+      body: bytes,
+      contentType: res.ContentType || 'application/octet-stream',
+    }
+  } catch {
+    return null
   }
-  return `https://${BUCKET}.${ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`
 }
 
 /** Upload a base64 image */
