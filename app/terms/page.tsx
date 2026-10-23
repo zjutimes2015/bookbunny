@@ -6,6 +6,7 @@ import {
   SITE_NAME,
   LEGAL_ENTITY,
   LEGAL_CONTACT_EMAIL,
+  LEGAL_JURISDICTION,
   POLICY_VERSION,
 } from '@/lib/site'
 
@@ -31,7 +32,6 @@ const LIST = 'space-y-2'
 const ITEM = 'flex items-start gap-2'
 const DOT = 'text-[#FF6B8A] mt-0.5'
 const STRONG = 'text-[#2D2D2D] font-medium'
-const PLACEHOLDER = 'text-[#2D2D2D] font-medium italic'
 
 type Section = {
   id: string
@@ -157,6 +157,102 @@ const SECTIONS: Section[] = [
             <span>
               You must not upload content that is unlawful, infringing, or that depicts any person
               without the necessary rights.
+            </span>
+          </li>
+        </ul>
+      </>
+    ),
+  },
+  {
+    id: 'prohibited-content',
+    title: 'Content standards and prohibited generations',
+    body: (
+      <>
+        <p>
+          SproutTales generates illustrations, story text, and narration with AI. You may not use the
+          Service to create, upload, request, store, or share any of the following, and we do not
+          permit such output to be produced or published through the Service:
+        </p>
+        <ul className={LIST}>
+          <li className={ITEM}>
+            <span className={DOT}>•</span>
+            <span>
+              <span className={STRONG}>Sexual or NSFW content.</span> Pornography, sexualised
+              depictions of any person, and any sexual content involving minors.
+            </span>
+          </li>
+          <li className={ITEM}>
+            <span className={DOT}>•</span>
+            <span>
+              <span className={STRONG}>Violence or gore.</span> Graphic violence, mutilation,
+              sadistic or gratuitous injury, and content that promotes self-harm.
+            </span>
+          </li>
+          <li className={ITEM}>
+            <span className={DOT}>•</span>
+            <span>
+              <span className={STRONG}>Hate speech.</span> Content that promotes hatred, harassment,
+              or discrimination against people based on race, ethnicity, religion, disability, gender,
+              or sexual orientation.
+            </span>
+          </li>
+          <li className={ITEM}>
+            <span className={DOT}>•</span>
+            <span>
+              <span className={STRONG}>Child-unsafe content.</span> Child sexual abuse material
+              (CSAM) in any form, content that sexualises or endangers a child, and any depiction of a
+              child that is unlawful in your jurisdiction. We report apparent CSAM to the relevant
+              authorities.
+            </span>
+          </li>
+          <li className={ITEM}>
+            <span className={DOT}>•</span>
+            <span>
+              <span className={STRONG}>Deepfakes and impersonation.</span> Content that depicts a
+              real, identifiable person without their consent, or that is intended to deceive others
+              about a person&apos;s identity, statements, or actions.
+            </span>
+          </li>
+          <li className={ITEM}>
+            <span className={DOT}>•</span>
+            <span>
+              <span className={STRONG}>Copyright or trademark infringement.</span> Reproducing
+              protected characters, artwork, lyrics, or brands you do not have the rights to use.
+            </span>
+          </li>
+        </ul>
+        <p className={SUBHEAD}>Reporting violations</p>
+        <p>
+          Anyone can report content or a prompt that breaches these standards, without needing an
+          account, by emailing{' '}
+          <a href={`mailto:${LEGAL_CONTACT_EMAIL}?subject=Content%20report`} className={STRONG}>
+            {LEGAL_CONTACT_EMAIL}
+          </a>{' '}
+          with the subject line &ldquo;Content report&rdquo; and, where possible, the book link or
+          generation ID. We acknowledge reports within two business days.
+        </p>
+        <p className={SUBHEAD}>How we review and act</p>
+        <ul className={LIST}>
+          <li className={ITEM}>
+            <span className={DOT}>•</span>
+            <span>
+              Prompts and uploads are screened automatically, and reported content is reviewed by a
+              human before any decision is taken.
+            </span>
+          </li>
+          <li className={ITEM}>
+            <span className={DOT}>•</span>
+            <span>
+              Where a breach is confirmed we remove the content, block the generation, and may
+              suspend or terminate the account. Repeat or severe breaches lead to immediate
+              termination.
+            </span>
+          </li>
+          <li className={ITEM}>
+            <span className={DOT}>•</span>
+            <span>
+              We keep a record of reports and actions taken, and we cooperate with law enforcement
+              where the law requires it.
             </span>
           </li>
         </ul>
@@ -320,11 +416,10 @@ const SECTIONS: Section[] = [
     body: (
       <p>
         These Terms are governed by the laws of{' '}
-        <span className={PLACEHOLDER}>
-          [the jurisdiction in which the operator is established]
-        </span>
-        , without regard to its conflict-of-laws rules. This placeholder must be completed by
-        qualified counsel before launch.
+        <span className={STRONG}>{LEGAL_JURISDICTION}</span>, without regard to its
+        conflict-of-laws rules. Any dispute arising from these Terms or the Service is subject to
+        the exclusive jurisdiction of the courts located there, unless mandatory consumer law in
+        your country of residence gives you the right to bring proceedings elsewhere.
       </p>
     ),
   },
@@ -389,9 +484,12 @@ export default function TermsPage() {
       <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="apple-card p-8">
           <p className="text-sm text-[#2D2D2D] leading-relaxed">
-            This page describes our terms. It is not legal advice. Before launch, the operator should
-            have qualified legal counsel review these Terms and complete the governing-law
-            placeholder above.
+            This page describes our terms. It is not legal advice. Questions about these Terms,
+            content reports, or data requests can be sent to{' '}
+            <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="text-[#FF6B8A] font-medium">
+              {LEGAL_CONTACT_EMAIL}
+            </a>
+            .
           </p>
           <p className="mt-4 text-sm text-[#8E8E93] leading-relaxed">
             See also our{' '}

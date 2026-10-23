@@ -6,6 +6,9 @@ export interface SessionUser {
   email: string
   tier: string
   isPaid: boolean
+  credits: number
+  allowanceRemaining: number | null
+  allowanceResetAt: Date | null
 }
 
 /**
@@ -19,7 +22,8 @@ export async function getSessionUser(req: NextRequest): Promise<SessionUser | nu
   try {
     const sql = neon(process.env.NEON_DATABASE_URL!)
     const rows = await sql`
-      SELECT u.id, u.email, u.subscription_tier, u.is_paid
+      SELECT u.id, u.email, u.subscription_tier, u.is_paid,
+             u.credits, u.monthly_allowance_remaining, u.allowance_reset_at
       FROM bookbunny_users u
       JOIN auth_sessions s ON s.user_id = u.id
       WHERE s.token = ${token} AND s.expires_at > NOW()
@@ -32,6 +36,9 @@ export async function getSessionUser(req: NextRequest): Promise<SessionUser | nu
       email: row.email as string,
       tier: (row.subscription_tier as string) || 'free',
       isPaid: Boolean(row.is_paid),
+      credits: (row.credits as number) ?? 0,
+      allowanceRemaining: row.monthly_allowance_remaining as number | null,
+      allowanceResetAt: row.allowance_reset_at as Date | null,
     }
   } catch {
     return null

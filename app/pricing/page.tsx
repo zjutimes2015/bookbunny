@@ -159,7 +159,9 @@ export default function PricingPage() {
       return
     }
 
-    const planKey = annual ? `${plan.key}_annual` : `${plan.key}_monthly`
+    const planKey = plan.key === 'credits'
+      ? 'credits_5'
+      : annual ? `${plan.key}_annual` : `${plan.key}_monthly`
     setCheckingOut(plan.key)
     try {
       const res = await fetch('/api/payments/waffo-checkout', {

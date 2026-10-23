@@ -13,7 +13,9 @@ import { STYLE_LIBRARY } from '@/data/style-library'
 import { runImageChecks, runThreeStepChecks } from '@/lib/page-checks'
 import { buildInteriorPdf, buildCoverPdf, type KdpPageInput } from '@/lib/kdp/export'
 import { KDP_TRIM, padToKdpPageCount, interiorDimsIn, coverDimsIn } from '@/lib/kdp/spec'
+import { KdpChecklist } from '@/components/KdpChecklist'
 import { useAuth } from '@/lib/auth-context'
+import { analyzeStoryForGRL, type GrlReport } from '@/lib/grl/analyzer'
 
 // 阶段6：至简三步状态机（设定 → 生成大纲 → 按纲生图）
 type Step = 'setup' | 'outline' | 'illustrate'
@@ -127,6 +129,8 @@ export default function CreatePage() {
   const [generating, setGenerating] = useState(false)
   const [manualChecks, setManualChecks] = useState<Record<string, boolean>>({})
   const [savedBookId, setSavedBookId] = useState<string | null>(null)
+  const [grlOpen, setGrlOpen] = useState(false)
+  const [grlReport, setGrlReport] = useState<GrlReport | null>(null)
 
   const [theme, setTheme] = useState('')
   const [ageGroup, setAgeGroup] = useState('3-5')
@@ -272,6 +276,19 @@ export default function CreatePage() {
       if (data.error) throw new Error(data.error)
       setStory(data)
       setStep('outline')
+
+      // 生成 GRL 可解释报告（异步，不阻塞主流程）
+      if (data.level && Array.isArray(data.outline)) {
+        const fullText = data.outline
+          .map((p: PageOutline) => p.pageText || '')
+          .join(' ')
+        try {
+          const report = analyzeStoryForGRL(fullText, data.level)
+          setGrlReport(report)
+        } catch {
+          setGrlReport(null)
+        }
+      }
     } catch (err: unknown) {
       alert('Failed: ' + (err instanceof Error ? err.message : 'Error'))
     } finally {
@@ -497,20 +514,68 @@ export default function CreatePage() {
     }
   }
 
-  const handleExportVideo = async () => {
+  // ==== 启发 #3: Web Speech + 漫画分镜导出 ====
+
+  /** 朗读整本书（Web Speech API） */
+  const handleListen = () => {
     if (!story) return
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      alert('Sorry, your browser does not support text-to-speech. Try Chrome or Edge.')
+      return
+    }
+    window.speechSynthesis.cancel() // 停止之前的朗读
+    const pages = story.outline.filter(p => p.pageFunction === 'body')
+    for (const page of pages) {
+      const text = page.pageText || ''
+      if (!text.trim()) continue
+      const u = new SpeechSynthesisUtterance(text)
+      u.rate = 0.9
+      u.pitch = 1.0
+      u.lang = language === 'zh' ? 'zh-CN' : 'en-US'
+      window.speechSynthesis.speak(u)
+    }
+  }
+
+  /** 取消朗读 */
+  const handleStopListen = () => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+    }
+  }
+
+  /** 导出漫画分镜：每页图片 + 文本 → 批量下载 */
+  const handleExportComicPages = async () => {
+    if (!story) return
+    const pages = story.outline.filter(p => p.pageFunction !== 'cover')
+    if (pages.length === 0) return
     setLoading(true)
     try {
-      const res = await fetch('/api/export-video', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: story.title, outline: story.outline }),
-      })
-      if (!res.ok) throw new Error('Export failed')
-      const blob = await res.blob()
-      window.open(URL.createObjectURL(blob), '_blank')
+      // 1. 下载每页图片（如果有图片的话）
+      for (const page of pages) {
+        const imgData = pageImages[page.pageNumber]
+        if (imgData) {
+          const a = document.createElement('a')
+          a.href = imgData
+          a.download = `${slugify(story.title)}-page-${String(page.pageNumber).padStart(2, '0')}.png`
+          document.body.appendChild(a)
+          a.click()
+          a.remove()
+          await new Promise(r => setTimeout(r, 200)) // 避免浏览器拦截批量下载
+        }
+      }
+      // 2. 同时导出一个文本脚本（家长可用任何 TTS 朗读）
+      const scriptText = story.outline
+        .filter(p => p.pageFunction === 'body')
+        .map(p => `[Page ${p.pageNumber}]\n${p.pageText || ''}`)
+        .join('\n\n')
+      const blob = new Blob([`🎙️ Listen to "${story.title}"\n\n${scriptText}`], { type: 'text/plain' })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `${slugify(story.title)}-listen-script.txt`
+      a.click()
+      URL.revokeObjectURL(a.href)
     } catch (err: unknown) {
-      alert('Video export failed: ' + (err instanceof Error ? err.message : 'Error'))
+      alert('Export failed: ' + (err instanceof Error ? err.message : 'Error'))
     } finally {
       setLoading(false)
     }
@@ -923,6 +988,89 @@ export default function CreatePage() {
                       </span>
                     )}
                   </p>
+                  {/* GRL 可解释报告展开面板 */}
+                  {grlReport && (
+                    <div className="mt-3">
+                      <button
+                        type="button"
+                        onClick={() => setGrlOpen(v => !v)}
+                        className="text-xs font-medium text-[#FF6B8A] hover:text-[#e05877] underline-offset-2 hover:underline"
+                      >
+                        {grlOpen ? 'Hide' : 'Show'} GRL {grlReport.grl} Readability Report (score: {grlReport.overallScore}/100)
+                      </button>
+                      {grlOpen && (
+                        <div className="mt-3 p-4 rounded-xl bg-[#FAFAFA] border border-[#E5E5EA]">
+                          {/* Verdict */}
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold ${
+                              grlReport.overallVerdict === 'excellent' ? 'bg-[#3E9C7A]' :
+                              grlReport.overallVerdict === 'good' ? 'bg-[#4EA3F5]' :
+                              grlReport.overallVerdict === 'fair' ? 'bg-amber-500' : 'bg-[#FF6B8A]'
+                            }`}>
+                              {grlReport.overallVerdict === 'excellent' ? 'A' :
+                               grlReport.overallVerdict === 'good' ? 'B' :
+                               grlReport.overallVerdict === 'fair' ? 'C' : 'D'}
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold text-[#2D2D2D]">
+                                {grlReport.overallVerdict === 'excellent' ? 'Excellent match' :
+                                 grlReport.overallVerdict === 'good' ? 'Good match' :
+                                 grlReport.overallVerdict === 'fair' ? 'Fair — consider simpler words' : 'Needs revision'}
+                              </div>
+                              <div className="text-xs text-[#8E8E93]">
+                                GRL {grlReport.grl} · ages {grlReport.ageRange}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Dimensions bar */}
+                          <div className="space-y-2 mb-3">
+                            {grlReport.dimensions.map(d => (
+                              <div key={d.name}>
+                                <div className="flex justify-between text-xs text-[#555] mb-0.5">
+                                  <span>{d.name}</span>
+                                  <span className="text-[#8E8E93]">{d.actual} / {d.target}</span>
+                                </div>
+                                <div className="h-1.5 rounded-full bg-[#E5E5EA] overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${
+                                      d.score >= 80 ? 'bg-[#3E9C7A]' : d.score >= 60 ? 'bg-[#4EA3F5]' : d.score >= 40 ? 'bg-amber-500' : 'bg-[#FF6B8A]'
+                                    }`}
+                                    style={{ width: `${d.score}%` }}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Over-level words */}
+                          {grlReport.overLevelWords.length > 0 && (
+                            <div className="mb-3">
+                              <div className="text-xs font-medium text-[#2D2D2D] mb-1">Advanced words ({grlReport.overLevelWords.length}):</div>
+                              <div className="flex flex-wrap gap-1">
+                                {grlReport.overLevelWords.slice(0, 12).map(w => (
+                                  <span key={w} className="px-1.5 py-0.5 text-[10px] rounded bg-amber-50 text-amber-700">{w}</span>
+                                ))}
+                                {grlReport.overLevelWords.length > 12 && (
+                                  <span className="text-[10px] text-[#8E8E93]">+{grlReport.overLevelWords.length - 12} more</span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Top words */}
+                          <div>
+                            <div className="text-xs font-medium text-[#2D2D2D] mb-1">Most-used words:</div>
+                            <div className="flex flex-wrap gap-1">
+                              {grlReport.topWords.slice(0, 8).map(w => (
+                                <span key={w.word} className="px-1.5 py-0.5 text-[10px] rounded bg-[#F2F2F7] text-[#555]">{w.word} ×{w.count}</span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
                   {savedBookId && (
@@ -940,8 +1088,12 @@ export default function CreatePage() {
                     {loading ? '...' : '🖼️ Download KDP Cover'}
                   </button>
                   <button className="apple-button-secondary text-sm px-4 py-2.5 flex-1 sm:flex-none disabled:opacity-50"
-                          disabled={loading} onClick={handleExportVideo}>
-                    {loading ? '...' : '🎬 Video'}
+                          disabled={loading} onClick={handleListen}>
+                    🔊 Listen
+                  </button>
+                  <button className="apple-button-secondary text-sm px-4 py-2.5 flex-1 sm:flex-none disabled:opacity-50"
+                          disabled={loading} onClick={handleExportComicPages}>
+                    {loading ? '...' : '📚 Comic Pages'}
                   </button>
                 </div>
               </div>
@@ -960,6 +1112,16 @@ export default function CreatePage() {
                   {' · '}{kdpPageCount} pages
                   {' · '}cover {coverIn.widthIn.toFixed(2)} × {coverIn.heightIn.toFixed(2)} in
                 </span>
+              </div>
+
+              {/* KDP upload checklist — auto-validates against Amazon KDP requirements */}
+              <div className="mb-6">
+                <KdpChecklist
+                  trimKey={trim}
+                  pageCount={story.outline.length}
+                  title={story.title}
+                  paper="white"
+                />
               </div>
 
               {/* Full page grid with images（按绝对页码取图） */}

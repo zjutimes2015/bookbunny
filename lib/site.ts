@@ -19,6 +19,9 @@ export const LEGAL_ENTITY = process.env.LEGAL_ENTITY || 'SproutTales'
  */
 export const LEGAL_CONTACT_EMAIL = process.env.LEGAL_CONTACT_EMAIL || 'privacy@sprouttales.com'
 
+/** Jurisdiction whose law governs the Terms; drives the governing-law clause. */
+export const LEGAL_JURISDICTION = process.env.LEGAL_JURISDICTION || "the People's Republic of China"
+
 /**
  * Version of the privacy policy and parental-consent notice.
  * Bump this whenever the policy text changes: every stored consent record

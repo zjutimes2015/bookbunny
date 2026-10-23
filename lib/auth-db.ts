@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
-import { pgTable, text, boolean, timestamp, pgSchema } from 'drizzle-orm/pg-core'
+import { pgTable, text, boolean, timestamp, integer, pgSchema } from 'drizzle-orm/pg-core'
 
 const sql = neon(process.env.NEON_DATABASE_URL!)
 export const db = drizzle(sql)
@@ -16,7 +16,10 @@ sql`
     subscription_tier TEXT DEFAULT 'free',
     google_id TEXT UNIQUE,
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at TIMESTAMP DEFAULT NOW(),
+    credits INTEGER DEFAULT 0,
+    monthly_allowance_remaining INTEGER,
+    allowance_reset_at TIMESTAMPTZ
   )
 `.catch(() => {})
 
@@ -30,4 +33,7 @@ export const users = pgTable('bookbunny_users', {
   googleId: text('google_id').unique(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+  credits: integer('credits').default(0),
+  monthlyAllowanceRemaining: integer('monthly_allowance_remaining'),
+  allowanceResetAt: timestamp('allowance_reset_at', { withTimezone: true }),
 })

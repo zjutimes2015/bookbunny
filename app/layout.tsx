@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import '@/styles/globals.css'
 import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 import CrispChat from '@/components/CrispChat'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 import { AuthProvider } from '@/lib/auth-context'
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="pt-16">
             {children}
           </main>
+          <Footer />
         </AuthProvider>
       </body>
     </html>

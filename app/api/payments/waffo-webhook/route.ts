@@ -6,16 +6,31 @@ import {
   type WebhookEvent,
   type WebhookEventData,
 } from '@waffo/pancake-ts'
-import { WAFFO_ENVIRONMENT, planTier } from '@/lib/payments/waffo'
+import { planTier } from '@/lib/payments/waffo'
+
+/** 各订阅档位的月度书籍 allowance（credits 档不走这里） */
+const TIER_ALLOWANCE: Record<string, number> = {
+  starter: 10,
+  creator: 30,
+  studio: 100,
+}
+
+/** 下一次 allowance 重置时间（下个月 1 号 00:00 UTC） */
+function nextResetAt() {
+  const d = new Date()
+  d.setUTCMonth(d.getUTCMonth() + 1, 1)
+  d.setUTCHours(0, 0, 0, 0)
+  return d
+}
 
 export async function POST(request: Request) {
   const rawBody = await request.text()
   const signature = request.headers.get('x-waffo-signature')
 
-  // SDK 内置测试/生产公钥，无需自己管理 webhook secret；自带重放保护
+  // SDK 内置测试/生产公钥，无需自己管理 webhook secret；不指定 environment 时自动识别测试/生产事件
   let event: WebhookEvent<WebhookEventData>
   try {
-    event = verifyWebhook<WebhookEventData>(rawBody, signature, { environment: WAFFO_ENVIRONMENT })
+    event = verifyWebhook<WebhookEventData>(rawBody, signature)
   } catch {
     return new Response('Invalid signature', { status: 401 })
   }
@@ -52,17 +67,43 @@ export async function POST(request: Request) {
             `
           }
         } else if (userId) {
-          await sql`
-            UPDATE bookbunny_users
-            SET is_paid = TRUE, subscription_tier = ${tier}, updated_at = NOW()
-            WHERE id = ${userId}
-          `
+          const allowance = TIER_ALLOWANCE[tier] ?? null
+          if (allowance !== null) {
+            await sql`
+              UPDATE bookbunny_users
+              SET is_paid = TRUE,
+                  subscription_tier = ${tier},
+                  monthly_allowance_remaining = ${allowance},
+                  allowance_reset_at = ${nextResetAt()},
+                  updated_at = NOW()
+              WHERE id = ${userId}
+            `
+          } else {
+            await sql`
+              UPDATE bookbunny_users
+              SET is_paid = TRUE, subscription_tier = ${tier}, updated_at = NOW()
+              WHERE id = ${userId}
+            `
+          }
         } else if (d.buyerEmail) {
-          await sql`
-            UPDATE bookbunny_users
-            SET is_paid = TRUE, subscription_tier = ${tier}, updated_at = NOW()
-            WHERE email = ${d.buyerEmail}
-          `
+          const allowance = TIER_ALLOWANCE[tier] ?? null
+          if (allowance !== null) {
+            await sql`
+              UPDATE bookbunny_users
+              SET is_paid = TRUE,
+                  subscription_tier = ${tier},
+                  monthly_allowance_remaining = ${allowance},
+                  allowance_reset_at = ${nextResetAt()},
+                  updated_at = NOW()
+              WHERE email = ${d.buyerEmail}
+            `
+          } else {
+            await sql`
+              UPDATE bookbunny_users
+              SET is_paid = TRUE, subscription_tier = ${tier}, updated_at = NOW()
+              WHERE email = ${d.buyerEmail}
+            `
+          }
         }
         console.log(`✅ Waffo payment: ${d.buyerEmail} -> ${plan} (${d.orderId})`)
         break
@@ -73,13 +114,21 @@ export async function POST(request: Request) {
         if (userId) {
           await sql`
             UPDATE bookbunny_users
-            SET is_paid = FALSE, subscription_tier = 'free', updated_at = NOW()
+            SET is_paid = FALSE,
+                subscription_tier = 'free',
+                monthly_allowance_remaining = NULL,
+                allowance_reset_at = NULL,
+                updated_at = NOW()
             WHERE id = ${userId}
           `
         } else if (d.buyerEmail) {
           await sql`
             UPDATE bookbunny_users
-            SET is_paid = FALSE, subscription_tier = 'free', updated_at = NOW()
+            SET is_paid = FALSE,
+                subscription_tier = 'free',
+                monthly_allowance_remaining = NULL,
+                allowance_reset_at = NULL,
+                updated_at = NOW()
             WHERE email = ${d.buyerEmail}
           `
         }
