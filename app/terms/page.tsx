@@ -15,9 +15,9 @@ const DESCRIPTION =
   'The terms that govern SproutTales: eligibility for parents and guardians, content rules for photographs of children, AI-output disclaimers, ownership and licensing, payments, and more.'
 
 export const metadata: Metadata = {
-  title: TITLE,
+  title: { absolute: TITLE },
   description: DESCRIPTION,
-  alternates: { canonical: '/terms' },
+  alternates: { canonical: `${SITE_URL}/terms` },
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,

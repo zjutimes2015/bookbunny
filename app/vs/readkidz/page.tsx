@@ -2,13 +2,14 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
+import { breadcrumbJsonLd } from '@/lib/jsonld'
 
 const TITLE = 'SproutTales vs ReadKidz — AI Children’s Picture Book Generator Comparison'
 const DESCRIPTION =
   'An honest comparison of SproutTales and ReadKidz: pricing model, credits, free-plan exports, pages per book, character consistency, photo privacy, and print-ready PDF export.'
 
 export const metadata: Metadata = {
-  title: TITLE,
+  title: { absolute: TITLE },
   description: DESCRIPTION,
   alternates: { canonical: `${SITE_URL}/vs/readkidz` },
   openGraph: {
@@ -126,12 +127,20 @@ export default function VsReadKidzPage() {
       acceptedAnswer: { '@type': 'Answer', text: a },
     })),
   }
+  const crumbsJsonLd = breadcrumbJsonLd([
+    { name: 'Home', path: '/' },
+    { name: 'SproutTales vs ReadKidz', path: '/vs/readkidz' },
+  ])
 
   return (
     <div className="min-h-screen">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbsJsonLd) }}
       />
 
       {/* Hero */}

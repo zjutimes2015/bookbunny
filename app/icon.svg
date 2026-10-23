@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- SproutTales mark: a green sprout growing out of an open picture book -->
+  <rect width="512" height="512" rx="112" fill="#FFF1E2"/>
+  <!-- open book -->
+  <path d="M256 356 C 214 322 152 310 92 324 L92 176 C 152 162 214 174 256 208 Z" fill="#FFFFFF" stroke="#C8A2E8" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M256 356 C 298 322 360 310 420 324 L420 176 C 360 162 298 174 256 208 Z" fill="#FFFFFF" stroke="#C8A2E8" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M256 208 L256 356" stroke="#C8A2E8" stroke-width="8" stroke-linecap="round"/>
+  <!-- stem -->
+  <path d="M256 208 C 256 176 256 156 256 132" stroke="#4A9E8E" stroke-width="16" fill="none" stroke-linecap="round"/>
+  <!-- leaves -->
+  <path d="M256 140 C 214 140 186 114 182 72 C 222 76 252 100 256 140 Z" fill="#98D8C8" stroke="#4A9E8E" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M256 128 C 292 124 316 102 320 64 C 284 70 258 92 256 128 Z" fill="#6FBF73" stroke="#4A9E8E" stroke-width="8" stroke-linejoin="round"/>
+</svg>

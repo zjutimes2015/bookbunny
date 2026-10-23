@@ -2,13 +2,14 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
+import { breadcrumbJsonLd as breadcrumbJsonLdBuilder } from '@/lib/jsonld'
 
 const TITLE = 'AI Picture Book Generator — Create Illustrated Children’s Books with Consistent Characters'
 const DESCRIPTION =
   'SproutTales is an AI picture book generator that turns an idea into a fully illustrated children’s storybook — consistent characters, leveled text, and a print-ready PDF. Start free, then pick the plan that fits.'
 
 export const metadata: Metadata = {
-  title: TITLE,
+  title: { absolute: TITLE },
   description: DESCRIPTION,
   alternates: { canonical: `${SITE_URL}/ai-picture-book-generator` },
   openGraph: {
@@ -102,12 +103,20 @@ export default function AiPictureBookGeneratorPage() {
       acceptedAnswer: { '@type': 'Answer', text: a },
     })),
   }
+  const breadcrumbJsonLd = breadcrumbJsonLdBuilder([
+    { name: 'Home', path: '/' },
+    { name: 'AI Picture Book Generator', path: '/ai-picture-book-generator' },
+  ])
 
   return (
     <div className="min-h-screen">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       {/* Hero */}

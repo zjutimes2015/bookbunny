@@ -11,9 +11,9 @@ const DESCRIPTION =
   'How SproutTales protects children: verifiable parental consent before any child photo or biometric data is processed, COPPA-aligned data minimization, and audit logs you can request.'
 
 export const metadata: Metadata = {
-  title: TITLE,
+  title: { absolute: TITLE },
   description: DESCRIPTION,
-  alternates: { canonical: '/safety' },
+  alternates: { canonical: `${SITE_URL}/safety` },
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,

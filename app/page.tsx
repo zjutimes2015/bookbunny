@@ -1,5 +1,14 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { SITE_URL, SITE_DESCRIPTION } from '@/lib/site'
+import { softwareApplicationJsonLd, faqPageJsonLd } from '@/lib/jsonld'
+
+export const metadata: Metadata = {
+  title: { absolute: 'SproutTales — Create Magical Children\'s Books with AI' },
+  description: SITE_DESCRIPTION,
+  alternates: { canonical: `${SITE_URL}/` },
+}
 
 type SceneVariant = 'meadow' | 'stream' | 'garden'
 type CoverVariant = 'moon' | 'lila' | 'kai'
@@ -368,6 +377,14 @@ const SectionLabel = ({ children }: { children: ReactNode }) => (
 export default function HomePage() {
   return (
     <div className="bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd()) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageJsonLd(FAQS)) }}
+      />
       {/* 01 · Hero */}
       <section className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 lg:px-8 lg:pb-24 lg:pt-16">
         <div className="grid items-center gap-12 lg:grid-cols-[1.02fr_1fr] lg:gap-14">

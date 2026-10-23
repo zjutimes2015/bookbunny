@@ -1,27 +1,23 @@
 'use client'
 
-import { useEffect } from 'react'
+import Script from 'next/script'
 
-declare global {
-  interface Window {
-    $crisp: unknown[]
-    CRISP_WEBSITE_ID: string
-  }
-}
-
+/**
+ * Crisp is a support widget, never needed for first paint, so it loads with
+ * next/script's lazyOnload strategy (browser idle time) instead of on mount.
+ * The inline bootstrap keeps the vendor's own injection snippet untouched.
+ */
 export default function CrispChat() {
-  useEffect(() => {
-    const websiteId = process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID
-    if (!websiteId || document.querySelector('script[src*="crisp"]')) return
+  const websiteId = process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID
+  if (!websiteId) return null
 
-    window.$crisp = []
-    window.CRISP_WEBSITE_ID = websiteId
-
-    const script = document.createElement('script')
-    script.src = 'https://client.crisp.chat/l.js'
-    script.async = true
-    document.head.appendChild(script)
-  }, [])
-
-  return null
+  return (
+    <Script
+      id="crisp-chat"
+      strategy="lazyOnload"
+      dangerouslySetInnerHTML={{
+        __html: `window.$crisp=[];window.CRISP_WEBSITE_ID="${websiteId}";(function(){var d=document;var s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();`,
+      }}
+    />
+  )
 }

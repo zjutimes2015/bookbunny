@@ -14,9 +14,9 @@ const DESCRIPTION =
   'How SproutTales collects, uses, and protects parent and child personal information — verifiable parental consent, our service providers, retention limits, and how to withdraw consent.'
 
 export const metadata: Metadata = {
-  title: TITLE,
+  title: { absolute: TITLE },
   description: DESCRIPTION,
-  alternates: { canonical: '/privacy' },
+  alternates: { canonical: `${SITE_URL}/privacy` },
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
