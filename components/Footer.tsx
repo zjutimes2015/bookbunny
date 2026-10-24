@@ -25,6 +25,9 @@ export default function Footer() {
               <Link href="/pricing" className="block text-[#8E8E93] hover:text-[#FF6B8A]">
                 Pricing
               </Link>
+              <Link href="/affiliate" className="block text-[#8E8E93] hover:text-[#FF6B8A]">
+                Affiliate program
+              </Link>
             </div>
             <div className="space-y-3">
               <p className="font-semibold text-[#2D2D2D]">Legal</p>

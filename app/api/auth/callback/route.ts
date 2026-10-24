@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
+import { REFERRAL_COOKIE, attributeReferral } from '@/lib/affiliate'
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || ''
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || ''
@@ -36,6 +37,7 @@ export async function GET(req: NextRequest) {
     const existing = await sql`SELECT * FROM bookbunny_users WHERE email = ${googleUser.email}`
 
     let userId: string
+    let isNewUser = false
     if (existing.length > 0) {
       userId = existing[0].id
       await sql`
@@ -50,6 +52,13 @@ export async function GET(req: NextRequest) {
         RETURNING id
       `
       userId = result[0].id
+      isNewUser = true
+    }
+
+    // Affiliate attribution only applies to brand-new signups, never to existing accounts.
+    const refCode = req.cookies.get(REFERRAL_COOKIE)?.value
+    if (isNewUser && refCode) {
+      await attributeReferral(sql, { userId, code: refCode })
     }
 
     // Create session (simple token-based)

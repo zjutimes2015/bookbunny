@@ -33,6 +33,9 @@ export default function Header() {
             <Link href="/pricing" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
               Pricing
             </Link>
+            <Link href="/affiliate" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
+              Affiliates
+            </Link>
             <Link href="/create" className="bg-[#2D2D2D] text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:opacity-85 transition-all hover:scale-[1.02]">
               Create Book
             </Link>
@@ -64,6 +67,10 @@ export default function Header() {
             <Link href="/pricing" className="block px-3 py-2 rounded-xl text-sm text-[#8E8E93] hover:bg-[#F2F2F7]"
                   onClick={() => setMenuOpen(false)}>
               Pricing
+            </Link>
+            <Link href="/affiliate" className="block px-3 py-2 rounded-xl text-sm text-[#8E8E93] hover:bg-[#F2F2F7]"
+                  onClick={() => setMenuOpen(false)}>
+              Affiliates
             </Link>
             <Link href="/create" className="block px-3 py-2 rounded-xl text-sm font-medium text-white bg-[#2D2D2D] text-center"
                   onClick={() => setMenuOpen(false)}>

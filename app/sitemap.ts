@@ -33,6 +33,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
+      url: `${SITE_URL}/affiliate`,
+      ...monthly(),
+      priority: 0.6,
+    },
+    {
       url: `${SITE_URL}/safety`,
       ...monthly(),
       priority: 0.6,

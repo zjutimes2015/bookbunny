@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: '/admin/users', label: 'Users', icon: '👥' },
   { href: '/admin/books', label: 'Books', icon: '📚' },
   { href: '/admin/analytics', label: 'Analytics', icon: '📈' },
+  { href: '/admin/affiliates', label: 'Affiliates', icon: '🤝' },
 ]
 
 export default function AdminShell({

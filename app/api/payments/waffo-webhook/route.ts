@@ -7,6 +7,7 @@ import {
   type WebhookEventData,
 } from '@waffo/pancake-ts'
 import { planTier } from '@/lib/payments/waffo'
+import { recordCommissionForPayment } from '@/lib/affiliate'
 
 /** 各订阅档位的月度书籍 allowance（credits 档不走这里） */
 const TIER_ALLOWANCE: Record<string, number> = {
@@ -51,6 +52,17 @@ export async function POST(request: Request) {
           VALUES (${d.orderId}, ${userId}, ${plan}, ${amount}, ${d.currency || 'USD'}, 'completed', NOW())
           ON CONFLICT (id) DO NOTHING
         `
+        // Affiliate commission (idempotent per payment_id; never blocks payment handling)
+        try {
+          await recordCommissionForPayment(sql, {
+            userId: userId || null,
+            email: d.buyerEmail,
+            paymentId: d.orderId,
+            grossCents: amount,
+          })
+        } catch (commissionErr) {
+          console.error('Affiliate commission error:', commissionErr)
+        }
         if (tier === 'credits') {
           // 额度包：一次性加 5 本，永久有效
           if (userId) {

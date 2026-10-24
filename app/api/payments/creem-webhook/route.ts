@@ -3,6 +3,7 @@ import { neon } from '@neondatabase/serverless'
 import crypto from 'node:crypto'
 import { VPC_METHODS, recordConsent, type VpcMethodId } from '@/lib/compliance/consent'
 import { VPC_VERIFICATION } from '@/lib/payments/creem'
+import { recordCommissionForPayment } from '@/lib/affiliate'
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text()
@@ -60,6 +61,18 @@ export async function POST(req: NextRequest) {
         VALUES (${orderId}, ${userId}, ${plan}, ${amount}, ${obj.order?.currency || 'USD'}, 'completed', NOW())
         ON CONFLICT (id) DO NOTHING
       `
+
+      // Affiliate commission (idempotent per payment_id; never blocks payment handling)
+      try {
+        await recordCommissionForPayment(sql, {
+          userId: userId || null,
+          email: customerEmail,
+          paymentId: orderId,
+          grossCents: Number(amount) || 0,
+        })
+      } catch (commissionErr) {
+        console.error('Affiliate commission error:', commissionErr)
+      }
 
       // Update user subscription
       if (userId) {

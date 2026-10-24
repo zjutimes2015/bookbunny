@@ -4,6 +4,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import CrispChat from '@/components/CrispChat'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+import ReferralCapture from '@/components/ReferralCapture'
 import { AuthProvider } from '@/lib/auth-context'
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '@/lib/site'
 
@@ -124,6 +125,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <CrispChat />
         <GoogleAnalytics />
+        <ReferralCapture />
         <AuthProvider>
           <main className="pt-16">
             {children}
