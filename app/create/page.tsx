@@ -95,10 +95,10 @@ function downloadBytes(bytes: Uint8Array, filename: string) {
 
 export default function CreatePage() {
   const { user } = useAuth()
-  // 套餐页数上限：Free 8 / Starter 12 / Creator 20 / Studio 24
+  // 套餐页数上限：Free 8 / Creator 20 / Studio 24
   const tier = user?.subscriptionTier
   const maxPages =
-    tier === 'studio' || tier === 'commercial' ? 24 : tier === 'creator' ? 20 : tier === 'starter' ? 12 : 8
+    tier === 'studio' || tier === 'commercial' ? 24 : tier === 'creator' ? 20 : 8
   const [step, setStep] = useState<Step>('setup')
   const [characters, setCharacters] = useState<CharData[]>([])
   const [story, setStory] = useState<{
@@ -472,7 +472,7 @@ export default function CreatePage() {
   const interiorIn = interiorDimsIn(trim)
   const coverIn = coverDimsIn(trim, kdpPageCount)
 
-  // 导出权限：Starter 及以上导出内页，Creator 及以上导出 KDP 封面
+  // 导出权限：Creator 及以上导出内页与 KDP 封面
   const canExport = !!user && (user.isPaid || (tier !== undefined && tier !== 'free'))
   const canKdp = !!user && (tier === 'creator' || tier === 'studio' || tier === 'commercial')
 
@@ -485,7 +485,7 @@ export default function CreatePage() {
   // Export KDP-ready interior PDF — generated in the browser (images live client-side)
   const handleExportPDF = async () => {
     if (!story) return
-    if (!requirePlan(canExport, 'PDF export is available on Starter and above.')) return
+    if (!requirePlan(canExport, 'PDF export is available on Creator and Studio.')) return
     setLoading(true)
     try {
       const images = await hydrateImages(pageImages)

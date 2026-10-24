@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getWaffo, getPlan, isWaffoConfigured, planTier } from '@/lib/payments/waffo'
+import { getWaffo, getPlan, isWaffoConfigured } from '@/lib/payments/waffo'
 import { getSessionUser } from '@/lib/auth'
 import { neon } from '@neondatabase/serverless'
 
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     const siteUrl = process.env.SITE_URL || 'http://localhost:3000'
-    const tier = planTier(plan)
+    const tier = selected.tier
 
     // 未配置密钥时：开发态模拟成功支付
     if (!isWaffoConfigured()) {
@@ -30,6 +30,8 @@ export async function POST(req: NextRequest) {
       `
       if (tier === 'credits') {
         await sql`UPDATE bookbunny_users SET credits = COALESCE(credits, 0) + 5, updated_at = NOW() WHERE id = ${user.id}`
+      } else if (tier === 'pro-anim') {
+        await sql`UPDATE bookbunny_users SET pro_animation_credits = COALESCE(pro_animation_credits, 0) + 5, updated_at = NOW() WHERE id = ${user.id}`
       } else {
         await sql`
           UPDATE bookbunny_users

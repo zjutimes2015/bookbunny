@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
-const TITLE = "Pricing — Free & Paid Plans for AI Children's Books | SproutTales"
+const TITLE = "Pricing — Free, Creator $29, Studio $79 & Pro Animation Packs | SproutTales"
 const DESCRIPTION =
-  'SproutTales pricing: Free plan (1 book), Starter $12/mo, Creator $29/mo with KDP export and commercial license, Studio $59/mo. Optional credit packs never expire. Annual billing saves up to 25%.'
+  'SproutTales pricing: Free plan (3 books/month), Creator $29/mo with KDP export and commercial license, Studio $79/mo with 100 books plus 10 Pro animated books. Pro Animation Packs from $12 for 5 books. Packs never expire. Annual billing saves up to 25%.'
 
 export const metadata: Metadata = {
   title: TITLE,

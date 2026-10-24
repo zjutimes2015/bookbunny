@@ -51,26 +51,26 @@ const ROWS: CompareRow[] = [
   {
     feature: 'Pricing model',
     bookbunny:
-      'Free $0; Starter $12/mo ($108/yr); Creator $29/mo ($261/yr) with KDP export and commercial rights; Studio $59/mo ($531/yr). No per-creation charges.',
+      'Free $0 (3 books/mo); Creator $29/mo ($261/yr) with KDP export and commercial rights; Studio $79/mo ($711/yr) with 100 books plus 10 Pro animated books. No per-creation charges.',
     readkidz:
       'Tiered monthly plans: Free $0, Standard $10/mo, Pro $30/mo ($25 annual), Mega $50/mo ($42 annual), Max $99/mo ($83 annual), plus Teams plans.',
   },
   {
     feature: 'Credits',
     bookbunny:
-      'Optional 5-book credit pack for $9. Credits never expire — they stay in your account until you use them.',
+      'Pro Animation Packs: 5 animated books for $12 or 10 for $20. Packs never expire — they stay in your account until you use them.',
     readkidz:
       'Monthly plan credits that do not roll over and expire with the month. Creation steps draw credits, deducted at 50% off the listed cost.',
   },
   {
     feature: 'Free-plan export',
     bookbunny:
-      'The Free plan is preview-only: one 8-page book with 3 art styles and a watermark. Watermark-free PDF export starts on Starter.',
+      'The Free plan is preview-only: 3 eight-page books a month with 3 art styles and a watermark. Watermark-free PDF export starts on Creator.',
     readkidz: 'Free-plan exports carry a watermark.',
   },
   {
     feature: 'Pages per book',
-    bookbunny: '8 pages on Free; up to 12 on Starter, 20 on Creator, and 24 on Studio.',
+    bookbunny: '8 pages on Free; up to 20 on Creator and 24 on Studio.',
     readkidz: '5 pages on the Free plan; paid tiers go to 50–60 pages per story.',
   },
   {
@@ -113,15 +113,15 @@ const ROWS: CompareRow[] = [
 const FAQS: { q: string; a: string }[] = [
   {
     q: 'Is SproutTales cheaper than ReadKidz?',
-    a: 'SproutTales starts free. Starter is $12/month ($108/year) for 10 books a month; Creator is $29/month ($261/year) and adds KDP interior and cover PDFs plus a commercial license; Studio is $59/month ($531/year) for 100 books a month. ReadKidz offers a free tier and paid plans from $10/mo up to $99/mo that use monthly plan credits.',
+    a: 'SproutTales starts free with 3 books a month. Creator is $29/month ($261/year) for 30 books and adds KDP interior and cover PDFs plus a commercial license; Studio is $79/month ($711/year) for 100 books plus 10 Pro animated books. ReadKidz offers a free tier and paid plans from $10/mo up to $99/mo that use monthly plan credits.',
   },
   {
     q: 'Do SproutTales books expire like monthly credits?',
-    a: 'Your books never expire. Plan allowances reset monthly, and optional 5-book credit packs ($9) never expire at all.',
+    a: 'Your books never expire. Plan allowances reset monthly, and Pro Animation Packs ($12 for 5 books, $20 for 10) never expire at all.',
   },
   {
     q: 'Does SproutTales watermark free exports?',
-    a: 'The Free plan is preview-only with a watermark — one 8-page book, three art styles, and no PDF export. Watermark-free PDF export starts on Starter at $12/month. ReadKidz\'s free-plan exports carry a watermark.',
+    a: 'The Free plan is preview-only with a watermark — 3 eight-page books a month, three art styles, and no PDF export. Watermark-free PDF export starts on Creator at $29/month. ReadKidz\'s free-plan exports carry a watermark.',
   },
   {
     q: 'Which is better if I want a printed hardcover book?',
@@ -129,7 +129,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'Which is better for animated videos, dubbing, and music?',
-    a: 'ReadKidz is the better fit if you mainly want animation, voice dubbing, and background music — they offer picture books plus animated output. SproutTales focuses on illustrated picture books, leveled reading, and print-ready PDFs.',
+    a: 'Both offer animated output. SproutTales adds an optional Pro Animation Pack — 5 animated books for $12 or 10 for $20 — that renders per-page video, AI voiceover, original music and word-level captions, and those packs never expire. ReadKidz bundles animation, dubbing and background music inside its monthly plans.',
   },
   {
     q: 'Can I publish books from either tool on Amazon KDP?',
@@ -228,7 +228,7 @@ export default function VsReadKidzPage() {
               <h2 className="text-xl font-bold text-[#2D2D2D] mb-4">When SproutTales is the better fit</h2>
               <ul className="space-y-3">
                 {[
-                  'You want a monthly book allowance with optional credit packs that never expire.',
+                  'You want a monthly book allowance with Pro Animation Packs that never expire.',
                   'You need the same character to look consistent on every single page.',
                   'You want leveled reading (GRL A–E) with comprehension questions and progress tracking.',
                   'You want a print-ready interior and full cover you can upload straight to Amazon KDP.',
@@ -265,7 +265,7 @@ export default function VsReadKidzPage() {
           Try SproutTales for yourself
         </h2>
         <p className="text-[#8E8E93] mb-8 max-w-md mx-auto">
-          Start free, then pick the plan that fits — credit packs never expire.
+          Start free, then pick the plan that fits — Pro Animation Packs never expire.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/create" className="apple-button text-base px-8 py-3.5 text-center">

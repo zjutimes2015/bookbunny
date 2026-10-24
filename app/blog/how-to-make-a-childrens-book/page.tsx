@@ -92,7 +92,7 @@ const STEPS = [
 const FAQS = [
   {
     q: 'How do I make a children\'s book with AI for free?',
-    a: 'SproutTales offers a Free plan that lets you create one 8-page book at no cost. You can preview the story and illustrations before upgrading to Starter ($12/month) for watermark-free PDF export.',
+    a: 'SproutTales offers a Free plan that creates three 8-page books a month at no cost. You can preview the story and illustrations before upgrading to Creator ($29/month) for watermark-free PDF export.',
   },
   {
     q: 'Can I make a personalized book for my child?',
@@ -207,7 +207,7 @@ export default function HowToMakeChildrensBookPage() {
               <tr>
                 <td className="py-3 text-[#8E8E93]">Print-ready PDF export (KDP)</td>
                 <td className="py-3 text-[#8E8E93]">1 click download</td>
-                <td className="py-3 text-[#8E8E93]">Starter $12/mo+</td>
+                <td className="py-3 text-[#8E8E93]">Creator $29/mo+</td>
               </tr>
             </tbody>
           </table>
@@ -241,7 +241,7 @@ export default function HowToMakeChildrensBookPage() {
             Ready to make your first book?
           </h2>
           <p className="text-[#8E8E93] mb-8 max-w-md mx-auto">
-            Start free with one book. Upgrade anytime for KDP export, more styles, and unlimited credit packs.
+            Start free with three books a month. Upgrade anytime for KDP export, more styles, and Pro Animation Packs that never expire.
           </p>
           <Link href="/create" className="apple-button text-base px-8 py-3.5 inline-block">
             Create Your First Book →

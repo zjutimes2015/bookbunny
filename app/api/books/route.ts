@@ -52,8 +52,7 @@ async function getUserId(req: NextRequest): Promise<{
 
 /** 各订阅档位的月度书籍 allowance */
 const TIER_ALLOWANCE: Record<string, number> = {
-  free: 1,
-  starter: 10,
+  free: 3,
   creator: 30,
   studio: 100,
 }

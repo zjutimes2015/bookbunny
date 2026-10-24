@@ -9,7 +9,9 @@ interface User {
   image?: string
   isPaid: boolean
   isAdmin: boolean
-  subscriptionTier: 'free' | 'starter' | 'creator' | 'studio' | 'pro' | 'commercial'
+  subscriptionTier: 'free' | 'starter' | 'creator' | 'studio' | 'pro' | 'commercial' | 'credits' | 'pro-anim'
+  /** Pro 动画面包剩余额度（独立商品额度池） */
+  proCredits?: number
   createdAt: string
 }
 

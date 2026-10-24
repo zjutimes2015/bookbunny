@@ -29,13 +29,13 @@ declare namespace NodeJS {
     WAFFO_MERCHANT_ID?: string
     WAFFO_PRIVATE_KEY?: string
     WAFFO_TEST_MODE?: string
-    WAFFO_STARTER_MONTHLY_PRODUCT_ID?: string
-    WAFFO_STARTER_ANNUAL_PRODUCT_ID?: string
+    WAFFO_STORE_ID?: string
     WAFFO_CREATOR_MONTHLY_PRODUCT_ID?: string
     WAFFO_CREATOR_ANNUAL_PRODUCT_ID?: string
     WAFFO_STUDIO_MONTHLY_PRODUCT_ID?: string
     WAFFO_STUDIO_ANNUAL_PRODUCT_ID?: string
-    WAFFO_CREDITS_PRODUCT_ID?: string
+    WAFFO_PRO_ANIM_5_PRODUCT_ID?: string
+    WAFFO_PRO_ANIM_10_PRODUCT_ID?: string
 
     // 支付：Creem（旧通道）
     CREEM_API_KEY?: string

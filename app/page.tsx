@@ -371,10 +371,9 @@ const COVERS: {
 ]
 
 const TIERS = [
-  { name: 'Free', amount: '$0', note: '1 book · watermarked preview' },
-  { name: 'Starter', amount: '$12', note: 'per month · 10 books' },
-  { name: 'Creator', amount: '$29', note: 'per month · KDP + commercial license', featured: true },
-  { name: 'Studio', amount: '$59', note: 'per month · 100 books' },
+  { name: 'Free', amount: '$0', note: '3 books a month · watermarked preview' },
+  { name: 'Creator', amount: '$29', note: 'per month · 30 books + KDP + commercial license', featured: true },
+  { name: 'Studio', amount: '$79', note: 'per month · 100 books + 10 Pro animated' },
 ]
 
 const LANGUAGES = ['EN', 'ZH', 'ZH-TW', 'ES', 'FR', 'DE', 'JA', 'KO', 'PT', 'IT']
@@ -393,11 +392,11 @@ const FAQS = [
   },
   {
     q: 'Do my books or credits expire?',
-    a: 'Books never expire. Plan allowances reset monthly; optional credit packs never expire.',
+    a: 'Books never expire. Plan allowances reset monthly; Pro Animation Packs never expire.',
   },
   {
     q: 'What exactly is included in the free plan?',
-    a: 'One complete 8-page book with a watermarked preview and three art styles. PDF export starts on Starter.',
+    a: 'Three complete 8-page books each month with a watermarked preview and three art styles. Watermark-free PDF export starts on Creator.',
   },
   {
     q: 'Do I need design or writing skills?',
@@ -767,7 +766,7 @@ export default function HomePage() {
             },
             {
               title: 'Your books stay yours',
-              body: 'The library never expires. Optional credit packs never expire either.',
+              body: 'The library never expires. Pro Animation Packs never expire either.',
             },
           ].map((item) => (
             <div key={item.title} className="border-t-2 border-[#2D2D2D] pt-4">
@@ -814,7 +813,7 @@ export default function HomePage() {
             >
               Compare all plans →
             </Link>
-            <span>5-book credit pack · $9 · never expires</span>
+            <span>Pro Animation Pack · 5 books for $12 · never expires</span>
           </div>
         </div>
       </section>

@@ -69,16 +69,14 @@ export function PaidUserView({ children }: { children?: React.ReactNode }) {
       ? 'Studio'
       : user?.subscriptionTier === 'creator'
       ? 'Creator'
-      : user?.subscriptionTier === 'starter'
-      ? 'Starter'
       : 'Paid'
 
   const tierDetail =
     user?.subscriptionTier === 'studio'
-      ? '100 books a month, 3 concurrent jobs & batch generation.'
+      ? '100 books a month, 10 Pro animated books & batch generation.'
       : user?.subscriptionTier === 'creator'
       ? '30 books a month, KDP export & commercial rights.'
-      : '10 books a month, watermark-free PDF export.'
+      : 'Your plan is active.'
 
   return (
     <div className="space-y-4">

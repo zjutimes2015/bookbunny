@@ -14,8 +14,9 @@ export function GET() {
 
 ## What makes it different
 
-- No wasted credits. Each plan includes a monthly book allowance, optional 5-book credit
-  packs never expire, and every book you create stays in your library.
+- No wasted credits. Every plan includes a monthly book allowance (Free 3, Creator 30,
+  Studio 100 books), optional Pro Animation Packs never expire, and every book you
+  create stays in your library.
 - Character consistency is enforced on every page through a reusable consistency line
   plus a stored reference character card.
 - Two photo privacy schemes: Option A builds the character with no real photo at all;

@@ -45,3 +45,21 @@ export const books = pgTable('books', {
   aspect: text('aspect'),  // 画幅比例: 1:1 / 4:3 / 3:4 / 16:9 / a4
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
+
+// Pro 动画导出任务表（animate-pro API 使用）
+sql`
+  CREATE TABLE IF NOT EXISTS pro_animation_jobs (
+    id TEXT PRIMARY KEY,
+    book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES bookbunny_users(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'pending',  -- pending / running / done / error
+    total_pages INTEGER NOT NULL DEFAULT 0,
+    completed_pages INTEGER NOT NULL DEFAULT 0,
+    pages JSONB NOT NULL DEFAULT '[]'::jsonb,
+    music_url TEXT,
+    cover_url TEXT,
+    final_video_url TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+  )
+`.catch(() => {})

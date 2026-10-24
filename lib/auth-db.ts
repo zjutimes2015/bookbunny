@@ -18,10 +18,14 @@ sql`
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     credits INTEGER DEFAULT 0,
+    pro_animation_credits INTEGER DEFAULT 0,
     monthly_allowance_remaining INTEGER,
     allowance_reset_at TIMESTAMPTZ
   )
 `.catch(() => {})
+
+// 存量库补列（Pro 动画面包是独立商品，额度池与普通 credits 分离）
+sql`ALTER TABLE bookbunny_users ADD COLUMN IF NOT EXISTS pro_animation_credits INTEGER DEFAULT 0`.catch(() => {})
 
 export const users = pgTable('bookbunny_users', {
   id: text('id').primaryKey(),
@@ -34,6 +38,7 @@ export const users = pgTable('bookbunny_users', {
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
   credits: integer('credits').default(0),
+  proAnimationCredits: integer('pro_animation_credits').default(0),
   monthlyAllowanceRemaining: integer('monthly_allowance_remaining'),
   allowanceResetAt: timestamp('allowance_reset_at', { withTimezone: true }),
 })

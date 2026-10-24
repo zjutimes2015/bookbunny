@@ -71,74 +71,72 @@ describe('POST /api/payments/waffo-webhook', () => {
     })
   })
 
-  describe('credits pack purchase', () => {
-    it('adds 5 credits when plan is credits_5', async () => {
+  describe('Pro animation pack purchase', () => {
+    it('adds 15 Pro credits for a 5-book pack', async () => {
       mockEvent = {
         eventType: 'order.completed',
         data: {
-          orderId: 'o-credits',
-          orderMetadata: { plan: 'credits_5', userId: 'u1' },
-          chargedAmount: '9.00',
+          orderId: 'o-pro5',
+          orderMetadata: { plan: 'pro_anim_5', userId: 'u1' },
+          chargedAmount: '12.00',
           currency: 'USD',
           buyerEmail: 'buyer@test.com',
         },
       }
-      // INSERT payments, then UPDATE credits
-      responseQueue.push([], [])
+      // INSERT payments RETURNING id, then UPDATE pro_animation_credits
+      responseQueue.push([{ id: 'o-pro5' }], [])
       const res = await POST(makeRequest('{}'))
       expect(res.status).toBe(200)
 
-      const creditUpdate = callLog.find(q => q.includes('SET credits = COALESCE(credits, 0) + 5'))
+      const creditUpdate = callLog.find(q => q.includes('SET pro_animation_credits = COALESCE(pro_animation_credits, 0) + ?'))
       expect(creditUpdate).toBeDefined()
-      // Should target by userId, not email
       expect(creditUpdate).toContain('WHERE id = ?')
+      // 通用 credits 不应被污染
+      expect(callLog.some(q => q.includes('SET credits = COALESCE'))).toBe(false)
     })
 
-    it('falls back to email when userId is missing', async () => {
+    it('adds 30 Pro credits for a 10-book pack', async () => {
       mockEvent = {
         eventType: 'order.completed',
         data: {
-          orderId: 'o-credits-email',
-          orderMetadata: { plan: 'credits_5' },
-          chargedAmount: '9.00',
+          orderId: 'o-pro10',
+          orderMetadata: { plan: 'pro_anim_10', userId: 'u1' },
+          chargedAmount: '20.00',
+          currency: 'USD',
           buyerEmail: 'buyer@test.com',
         },
       }
-      responseQueue.push([], [])
+      responseQueue.push([{ id: 'o-pro10' }], [])
       await POST(makeRequest('{}'))
 
-      const creditUpdate = callLog.find(q => q.includes('SET credits = COALESCE(credits, 0) + 5'))
-      expect(creditUpdate).toBeDefined()
-      expect(creditUpdate).toContain('WHERE email = ?')
+      expect(callLog.some(q => q.includes('SET pro_animation_credits = COALESCE(pro_animation_credits, 0) + ?'))).toBe(true)
+      // 不写入订阅档位
+      expect(callLog.some(q => q.includes('subscription_tier = ?'))).toBe(false)
     })
-  })
 
-  describe('subscription activation', () => {
-    it('sets tier, allowance, and reset_at for starter_monthly', async () => {
+    it('is idempotent — a duplicate order grants nothing', async () => {
       mockEvent = {
-        eventType: 'subscription.activated',
+        eventType: 'order.completed',
         data: {
-          orderId: 'o-starter',
-          orderMetadata: { plan: 'starter_monthly', userId: 'u1' },
+          orderId: 'o-pro-dup',
+          orderMetadata: { plan: 'pro_anim_5', userId: 'u1' },
           chargedAmount: '12.00',
           buyerEmail: 'buyer@test.com',
         },
       }
-      // INSERT payments + UPDATE user
-      responseQueue.push([], [])
-      await POST(makeRequest('{}'))
-
-      const userUpdate = callLog.find(q => q.includes('subscription_tier = ?'))
-      expect(userUpdate).toBeDefined()
-      // starter allowance = 10
-      expect(userUpdate).toContain('monthly_allowance_remaining = ?')
-      expect(userUpdate).toContain('allowance_reset_at = ?')
-      expect(userUpdate).toContain('is_paid = TRUE')
+      // INSERT ... ON CONFLICT DO NOTHING RETURNING id → 空数组表示重复事件
+      responseQueue.push([])
+      const res = await POST(makeRequest('{}'))
+      expect(res.status).toBe(200)
+      expect(await res.json()).toMatchObject({ duplicate: true })
+      expect(callLog.some(q => q.includes('UPDATE bookbunny_users'))).toBe(false)
     })
+  })
 
-    it('sets creator allowance to 30', async () => {
+  describe('subscription activation', () => {
+    it('sets Creator tier with a 30-book allowance', async () => {
       mockEvent = {
-        eventType: 'order.completed',
+        eventType: 'subscription.activated',
         data: {
           orderId: 'o-creator',
           orderMetadata: { plan: 'creator_monthly', userId: 'u1' },
@@ -146,48 +144,66 @@ describe('POST /api/payments/waffo-webhook', () => {
           buyerEmail: 'buyer@test.com',
         },
       }
-      responseQueue.push([], [])
+      responseQueue.push([{ id: 'o-creator' }], [])
       await POST(makeRequest('{}'))
 
-      // The update should set allowance; we verify the query was the allowance-setting one
-      const updates = callLog.filter(q => q.includes('UPDATE bookbunny_users'))
-      expect(updates.length).toBe(1)
-      expect(updates[0]).toContain('monthly_allowance_remaining = ?')
-      expect(updates[0]).toContain('subscription_tier = ?')
+      const userUpdate = callLog.find(q => q.includes('subscription_tier = ?'))
+      expect(userUpdate).toBeDefined()
+      expect(userUpdate).toContain('monthly_allowance_remaining = ?')
+      expect(userUpdate).toContain('allowance_reset_at = ?')
+      expect(userUpdate).toContain('is_paid = TRUE')
     })
 
-    it('defaults to starter_monthly when plan metadata is absent', async () => {
+    it('grants Studio its 10 included Pro animated books', async () => {
       mockEvent = {
         eventType: 'order.completed',
         data: {
-          orderId: 'o-default',
+          orderId: 'o-studio',
+          orderMetadata: { plan: 'studio_monthly', userId: 'u1' },
+          chargedAmount: '79.00',
+          buyerEmail: 'buyer@test.com',
+        },
+      }
+      responseQueue.push([{ id: 'o-studio' }], [])
+      await POST(makeRequest('{}'))
+
+      const userUpdate = callLog.find(q => q.includes('subscription_tier = ?'))
+      expect(userUpdate).toBeDefined()
+      expect(userUpdate).toContain('pro_animation_credits = COALESCE(pro_animation_credits, 0) + ?')
+    })
+
+    it('records payment but grants nothing for an unknown plan', async () => {
+      mockEvent = {
+        eventType: 'order.completed',
+        data: {
+          orderId: 'o-unknown',
+          orderMetadata: { plan: 'starter_monthly', userId: 'u1' },
           chargedAmount: '12.00',
           buyerEmail: 'buyer@test.com',
         },
       }
-      responseQueue.push([], [])
-      await POST(makeRequest('{}'))
+      responseQueue.push([{ id: 'o-unknown' }])
+      const res = await POST(makeRequest('{}'))
+      expect(res.status).toBe(200)
 
-      // Should still process (default plan = starter_monthly)
-      const userUpdate = callLog.find(q => q.includes('UPDATE bookbunny_users'))
-      expect(userUpdate).toBeDefined()
+      expect(callLog.some(q => q.includes('INSERT INTO payments'))).toBe(true)
+      expect(callLog.some(q => q.includes('UPDATE bookbunny_users'))).toBe(false)
     })
 
-    it('updates by email when userId is missing', async () => {
+    it('skips grants when no user identity is present', async () => {
       mockEvent = {
         eventType: 'subscription.activated',
         data: {
-          orderId: 'o-email',
+          orderId: 'o-no-user',
           orderMetadata: { plan: 'creator_monthly' },
           chargedAmount: '29.00',
           buyerEmail: 'buyer@test.com',
         },
       }
-      responseQueue.push([], [])
+      responseQueue.push([{ id: 'o-no-user' }])
       await POST(makeRequest('{}'))
 
-      const userUpdate = callLog.find(q => q.includes('UPDATE bookbunny_users'))
-      expect(userUpdate).toContain('WHERE email = ?')
+      expect(callLog.some(q => q.includes('UPDATE bookbunny_users'))).toBe(false)
     })
   })
 
@@ -253,8 +269,8 @@ describe('POST /api/payments/waffo-webhook', () => {
         eventType: 'order.completed',
         data: {
           orderId: 'o-pay',
-          orderMetadata: { plan: 'credits_5', userId: 'u1' },
-          chargedAmount: '9.00',
+          orderMetadata: { plan: 'creator_monthly', userId: 'u1' },
+          chargedAmount: '29.00',
           currency: 'USD',
           buyerEmail: 'buyer@test.com',
         },

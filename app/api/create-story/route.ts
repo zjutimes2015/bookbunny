@@ -4,12 +4,11 @@ import { getSessionUser, getClientIp } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { requireHuman, attachPassCookie, humanCheckFailedResponse } from '@/lib/turnstile'
 
-/** 套餐页数上限：游客/Free 8 / Starter 12 / Creator 20 / Studio 24 */
+/** 套餐页数上限：游客/Free 8 / Creator 20 / Studio 24 */
 function maxPagesFor(tier: string | undefined, isPaid: boolean): number {
   if (!tier && !isPaid) return 8
   if (tier === 'studio' || tier === 'commercial') return 24
   if (tier === 'creator') return 20
-  if (tier === 'starter') return 12
   return 8
 }
 

@@ -67,7 +67,7 @@ const DIFFERENTIATORS = [
   {
     icon: '∞',
     title: 'No wasted credits, no expiry',
-    desc: 'Every plan includes a monthly book allowance, and optional credit packs never expire — nothing you buy disappears at month end.',
+    desc: 'Every plan includes a monthly book allowance, and Pro Animation Packs never expire — nothing you buy disappears at month end.',
   },
   {
     icon: '★',
@@ -118,11 +118,11 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'Is there a free AI picture book generator?',
-    a: 'Yes. SproutTales offers a Free plan that lets you create 1 eight-page book with three art styles. Watermark-free PDF export and KDP-ready files start on the Starter plan at $12/month.',
+    a: 'Yes. SproutTales offers a Free plan that creates 3 eight-page books a month with three art styles. Watermark-free PDF export and KDP-ready files start on the Creator plan at $29/month.',
   },
   {
     q: 'Is there a credit system, and do my books expire?',
-    a: 'Your books never expire. Each plan includes a monthly book allowance; if you need more, a $9 five-book credit pack never expires.',
+    a: 'Your books never expire. Each plan includes a monthly book allowance (3 on Free, 30 on Creator, 100 on Studio); Studio also includes 10 Pro animated books a month, and extra Pro Animation Packs never expire.',
   },
 ]
 
@@ -245,7 +245,7 @@ export default function AiPictureBookGeneratorPage() {
           Make your first picture book today
         </h2>
         <p className="text-[#8E8E93] mb-8 max-w-md mx-auto">
-          Start free, then pick the plan that fits — your books stay yours and credit packs never expire.
+          Start free, then pick the plan that fits — your books stay yours and Pro Animation Packs never expire.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/create" className="apple-button text-base px-8 py-3.5 text-center">

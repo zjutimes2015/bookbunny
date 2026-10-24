@@ -10,7 +10,8 @@ export async function GET(req: NextRequest) {
     const sql = neon(process.env.NEON_DATABASE_URL!)
     const result = await sql`
       SELECT u.id, u.name, u.email, u.image, u.is_paid, u.subscription_tier,
-             u.credits, u.monthly_allowance_remaining, u.allowance_reset_at,
+             u.credits, u.pro_animation_credits,
+             u.monthly_allowance_remaining, u.allowance_reset_at,
              u.created_at
       FROM bookbunny_users u
       JOIN auth_sessions s ON s.user_id = u.id
@@ -31,6 +32,7 @@ export async function GET(req: NextRequest) {
         subscriptionTier: u.subscription_tier,
         isAdmin: isAdminEmail(u.email),
         credits: u.credits ?? 0,
+        proCredits: u.pro_animation_credits ?? 0,
         allowanceRemaining: u.monthly_allowance_remaining ?? null,
         allowanceResetAt: u.allowance_reset_at ?? null,
         createdAt: u.created_at,

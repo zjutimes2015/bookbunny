@@ -1,19 +1,13 @@
 'use client'
 
 import { Fragment, useState } from 'react'
-import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
-
-const TITLE = "AI Picture Book Generator — Free Plan + $12/mo Starter | SproutTales Pricing"
-const DESCRIPTION =
-  "Start free with 1 AI children's book. Starter plan is just $12/month with KDP export, commercial license, and 10 books/month. Creator $29, Studio $59. Credit packs never expire."
 
 type MatrixValue = string | boolean
 
 interface MatrixRow {
   label: string
   free: MatrixValue
-  starter: MatrixValue
   creator: MatrixValue
   studio: MatrixValue
 }
@@ -22,36 +16,38 @@ const MATRIX: { title: string; rows: MatrixRow[] }[] = [
   {
     title: 'Create',
     rows: [
-      { label: 'Books per month', free: '1 book total', starter: '10', creator: '30', studio: '100' },
-      { label: 'Pages per book', free: '8 pages', starter: 'Up to 12', creator: 'Up to 20', studio: 'Up to 24' },
-      { label: 'Picture-book art styles', free: '3 styles', starter: 'All 15 styles', creator: 'All 15 styles', studio: 'All 15 styles' },
-      { label: 'Characters per book', free: '1', starter: '3', creator: '5', studio: '5' },
-      { label: 'Book languages', free: '1', starter: '2', creator: 'All 10', studio: 'All 10' },
-      { label: 'Photo-to-character', free: false, starter: true, creator: true, studio: true },
-      { label: 'Watermark-free pages', free: false, starter: true, creator: true, studio: true },
+      { label: 'Books per month', free: '3', creator: '30', studio: '100' },
+      { label: 'Pro animated books', free: false, creator: 'Add-on packs', studio: '10 included' },
+      { label: 'Pages per book', free: '8 pages', creator: 'Up to 20', studio: 'Up to 24' },
+      { label: 'Picture-book art styles', free: '3 styles', creator: 'All 15 styles', studio: 'All 15 styles' },
+      { label: 'Characters per book', free: '1', creator: '5', studio: '5' },
+      { label: 'Book languages', free: '1', creator: 'All 10', studio: 'All 10' },
+      { label: 'Photo-to-character', free: false, creator: true, studio: true },
+      { label: 'Watermark-free pages', free: false, creator: true, studio: true },
     ],
   },
   {
     title: 'Export & publish',
     rows: [
-      { label: 'PDF export', free: 'Preview only', starter: true, creator: true, studio: true },
-      { label: 'KDP interior + cover PDFs', free: false, starter: false, creator: true, studio: true },
-      { label: 'Commercial license', free: false, starter: false, creator: true, studio: true },
-      { label: 'Narration & background music', free: false, starter: false, creator: true, studio: true },
-      { label: 'Batch generation', free: false, starter: false, creator: false, studio: true },
+      { label: 'PDF export', free: 'Preview only', creator: true, studio: true },
+      { label: 'KDP interior + cover PDFs', free: false, creator: true, studio: true },
+      { label: 'Commercial license', free: false, creator: true, studio: true },
+      { label: 'Narration & background music', free: false, creator: true, studio: true },
+      { label: 'Animated video (Wan 3 + voice + music)', free: false, creator: 'Add-on packs', studio: '10 included' },
+      { label: 'Batch generation', free: false, creator: false, studio: true },
     ],
   },
   {
     title: 'Service',
     rows: [
-      { label: 'Concurrent jobs', free: '1', starter: '1', creator: '2', studio: '3' },
-      { label: 'Generation queue', free: 'Standard', starter: 'Standard', creator: 'Priority', studio: 'Priority' },
-      { label: 'Support', free: 'Community', starter: 'Email', creator: 'Priority email', studio: 'Priority email' },
+      { label: 'Concurrent jobs', free: '1', creator: '2', studio: '3' },
+      { label: 'Generation queue', free: 'Standard', creator: 'Priority', studio: 'Priority' },
+      { label: 'Support', free: 'Community', creator: 'Priority email', studio: 'Priority email' },
     ],
   },
 ]
 
-const COLUMNS = ['Free', 'Starter', 'Creator', 'Studio'] as const
+const COLUMNS = ['Free', 'Creator', 'Studio'] as const
 
 function MatrixCell({ value, highlight }: { value: MatrixValue; highlight: boolean }) {
   const base = highlight ? 'bg-[#FFF9F7]' : ''
@@ -80,30 +76,13 @@ const PLANS: PlanCard[] = [
     annualTotal: null,
     desc: 'Try the whole flow',
     features: [
-      '1 book to explore the creator',
+      '3 books per month',
       '8-page book, 3 art styles',
       'Watermarked preview',
       '1 character, 1 language',
     ],
     cta: 'Start free',
     checkout: false,
-  },
-  {
-    key: 'starter',
-    name: 'Starter',
-    monthly: 12,
-    annualTotal: 108,
-    desc: 'For families making books together',
-    features: [
-      '10 books per month',
-      'Up to 12 pages per book',
-      'No watermark · PDF export',
-      '3 characters · 2 languages',
-      'Photo-to-character',
-      'All 15 art styles',
-    ],
-    cta: 'Choose Starter',
-    checkout: true,
   },
   {
     key: 'creator',
@@ -127,11 +106,12 @@ const PLANS: PlanCard[] = [
   {
     key: 'studio',
     name: 'Studio',
-    monthly: 59,
-    annualTotal: 531,
+    monthly: 79,
+    annualTotal: 711,
     desc: 'For teams shipping books at volume',
     features: [
       '100 books per month',
+      '10 Pro animated books included',
       'Up to 24 pages per book',
       '3 concurrent generation jobs',
       'Batch generation',
@@ -141,6 +121,20 @@ const PLANS: PlanCard[] = [
     cta: 'Choose Studio',
     checkout: true,
   },
+]
+
+/** 一次性 Pro 动画面包（独立商品，不进订阅） */
+interface PackCard {
+  key: string
+  name: string
+  price: number
+  books: number
+  badge?: string
+}
+
+const PRO_PACKS: PackCard[] = [
+  { key: 'pro_anim_5', name: 'Pro Animation Pack', price: 12, books: 5 },
+  { key: 'pro_anim_10', name: 'Pro Animation Pack ×2', price: 20, books: 10, badge: 'Best value' },
 ]
 
 function priceLabel(plan: PlanCard, annual: boolean) {
@@ -157,16 +151,8 @@ export default function PricingPage() {
   const [annual, setAnnual] = useState(false)
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
 
-  const handleSelect = async (plan: PlanCard) => {
-    if (!plan.checkout) {
-      window.location.href = '/create'
-      return
-    }
-
-    const planKey = plan.key === 'credits'
-      ? 'credits_5'
-      : annual ? `${plan.key}_annual` : `${plan.key}_monthly`
-    setCheckingOut(plan.key)
+  const handleSelect = async (planKey: string, displayKey: string) => {
+    setCheckingOut(displayKey)
     try {
       const res = await fetch('/api/payments/waffo-checkout', {
         method: 'POST',
@@ -187,12 +173,20 @@ export default function PricingPage() {
     }
   }
 
+  const selectPlan = (plan: PlanCard) => {
+    if (!plan.checkout) {
+      window.location.href = '/create'
+      return
+    }
+    handleSelect(annual ? `${plan.key}_annual` : `${plan.key}_monthly`, plan.key)
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div className="text-center mb-10">
         <BunnyMascot size={60} />
         <h1 className="text-3xl sm:text-4xl font-bold text-[#2D2D2D] mt-4">Simple Pricing</h1>
-        <p className="text-[#8E8E93] mt-2">Books your child will keep. Credits that never expire.</p>
+        <p className="text-[#8E8E93] mt-2">Books your child will keep. Packs that never expire.</p>
       </div>
 
       {/* Billing cycle toggle */}
@@ -218,7 +212,7 @@ export default function PricingPage() {
         </button>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {PLANS.map((plan) => {
           const price = priceLabel(plan, annual)
           return (
@@ -252,7 +246,7 @@ export default function PricingPage() {
               </ul>
               <button
                 type="button"
-                onClick={() => handleSelect(plan)}
+                onClick={() => selectPlan(plan)}
                 disabled={checkingOut !== null}
                 className={`mt-6 text-center text-sm font-medium px-5 py-3 rounded-xl transition-all disabled:opacity-50 ${
                   plan.featured
@@ -267,31 +261,56 @@ export default function PricingPage() {
         })}
       </div>
 
-      {/* Credit pack */}
-      <div className="apple-card mt-6 p-6 flex flex-col sm:flex-row sm:items-center gap-6">
-        <div className="flex-1">
-          <h3 className="text-base font-semibold text-[#2D2D2D]">Need more books without a subscription?</h3>
-          <p className="text-sm text-[#8E8E93] mt-1">
-            Buy a 5-book credit pack for $9. Credits never expire — use them whenever inspiration strikes.
-          </p>
+      {/* Pro Animation Packs */}
+      <div id="pro-animation" className="apple-card mt-6 p-6 scroll-mt-24 ring-1 ring-[#C8A2E8]/30">
+        <div className="flex items-center gap-2">
+          <h3 className="text-base font-semibold text-[#2D2D2D]">✨ Pro Animation Packs</h3>
+          <span className="text-[10px] font-semibold text-white bg-[#7B3FBF] px-2 py-0.5 rounded-full">Add-on</span>
         </div>
-        <button
-          type="button"
-          onClick={() => handleSelect({
-            key: 'credits',
-            name: '5-Book Credit Pack',
-            monthly: 9,
-            annualTotal: null,
-            desc: '',
-            features: [],
-            cta: 'Buy 5 credits',
-            checkout: true,
-          })}
-          disabled={checkingOut !== null}
-          className="apple-button text-sm px-5 py-2.5 shrink-0 disabled:opacity-50"
-        >
-          {checkingOut === 'credits' ? 'Opening checkout…' : 'Buy 5 credits · $9'}
-        </button>
+        <p className="text-sm text-[#8E8E93] mt-1">
+          Turn any finished book into an animated video with AI voiceover, original music and word highlighting.
+          One-time purchase, never expires. Works with every plan.
+        </p>
+        <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1">
+          {['Wan 3 video clips per page', 'Inworld TTS 2 voiceover', 'MiniMax original music', 'Whisper word-level captions'].map((f) => (
+            <li key={f} className="text-xs text-[#2D2D2D] flex items-center gap-1.5">
+              <span className="text-[#C8A2E8]">✓</span> {f}
+            </li>
+          ))}
+        </ul>
+
+        <div className="grid sm:grid-cols-2 gap-4 mt-5">
+          {PRO_PACKS.map((pack) => (
+            <div
+              key={pack.key}
+              className={`rounded-2xl border p-5 flex items-center justify-between gap-4 ${
+                pack.badge ? 'border-[#7B3FBF]/40 bg-[#7B3FBF]/[0.04]' : 'border-[#E5E5EA]'
+              }`}
+            >
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-[#2D2D2D]">{pack.books} animated books</span>
+                  {pack.badge && (
+                    <span className="text-[10px] font-semibold text-[#7B3FBF] bg-[#C8A2E8]/20 px-2 py-0.5 rounded-full">
+                      {pack.badge}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[#8E8E93] mt-1">
+                  ${(pack.price / pack.books).toFixed(2)} per animated book · never expires
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleSelect(pack.key, pack.key)}
+                disabled={checkingOut !== null}
+                className="text-sm font-medium px-4 py-2.5 rounded-xl shrink-0 text-white bg-[#7B3FBF] hover:bg-[#6A2FB0] transition-all disabled:opacity-50"
+              >
+                {checkingOut === pack.key ? 'Opening…' : `Buy · $${pack.price}`}
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Feature comparison matrix */}
@@ -303,7 +322,7 @@ export default function PricingPage() {
 
         <div className="apple-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[680px] text-sm border-collapse">
+            <table className="w-full min-w-[560px] text-sm border-collapse">
               <thead>
                 <tr className="border-b border-[#E5E5EA]">
                   <th className="w-1/3 px-5 py-4 text-left font-semibold text-[#2D2D2D]">Feature</th>
@@ -327,7 +346,7 @@ export default function PricingPage() {
                   <Fragment key={section.title}>
                     <tr className="bg-[#FAFAFB]">
                       <td
-                        colSpan={5}
+                        colSpan={4}
                         className="px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-[#8E8E93]"
                       >
                         {section.title}
@@ -337,7 +356,6 @@ export default function PricingPage() {
                       <tr key={row.label} className="border-b border-[#F2F2F7] last:border-0">
                         <td className="px-5 py-3 text-[#2D2D2D]">{row.label}</td>
                         <MatrixCell value={row.free} highlight={false} />
-                        <MatrixCell value={row.starter} highlight={false} />
                         <MatrixCell value={row.creator} highlight />
                         <MatrixCell value={row.studio} highlight={false} />
                       </tr>
@@ -352,7 +370,7 @@ export default function PricingPage() {
 
       <div className="text-center mt-10">
         <p className="text-xs text-[#8E8E93]">
-          Cancel anytime. Credits never expire and are never resold as "unlimited".
+          Cancel anytime. Pro Animation Packs never expire and are never resold as &quot;unlimited&quot;.
         </p>
       </div>
     </div>
