@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 
-const sql = neon(process.env.NEON_DATABASE_URL!)
-
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const sql = neon(process.env.NEON_DATABASE_URL!)
     const { id: bookId } = await params
     if (!bookId) {
       return NextResponse.json({ error: 'Missing book id' }, { status: 400 })
