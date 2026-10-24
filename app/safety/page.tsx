@@ -45,8 +45,8 @@ const FEATURES: Feature[] = [
   },
   {
     icon: '📋',
-    title: 'Audit trail you can inspect',
-    body: 'Every consent event, data use, and deletion request is logged with timestamps. Parents can request a full audit report of their child\'s data activity via privacy@sprouttales.com.',
+    title: 'A consent record you can request',
+    body: 'Every consent is stored with a timestamp, the IP address it was granted from, and the reference of the verification step. Parents can ask us for that record by email. We do not offer a self-serve audit dashboard yet, and we do not log your child\u2019s reading activity.',
   },
   {
     icon: '✏️',
@@ -70,7 +70,7 @@ const STEPS: Step[] = [
   {
     n: '02',
     title: 'Verified consent stored securely',
-    body: 'Consent is stored with a timestamp, IP address, and signed audit record. It is separate from the child\'s creative data and only used to prove compliance.',
+    body: 'Consent is stored with a timestamp, the IP address it was granted from, and the reference of the verification step. It is separate from the child\'s creative data and only used to prove compliance.',
   },
   {
     n: '03',
@@ -80,7 +80,7 @@ const STEPS: Step[] = [
   {
     n: '04',
     title: 'Withdraw anytime',
-    body: 'A parent can revoke consent and request deletion of all child-related data at any time. Deletion is completed within 72 hours and confirmed by email.',
+    body: 'A parent can revoke consent at any time. Revoking also deletes the books, story text and stored illustrations we generated for that account — immediately, not on a 72-hour queue.',
   },
 ]
 
@@ -195,7 +195,7 @@ export default function SafetyPage() {
           </div>
           {[
             ['Verifiable parental consent before any child image processing', '✓ Built in', '⚠ Mentioned only', '✗ None'],
-            ['Consent audit log + exportable report', '✓ Yes', '✗ No', '✗ No'],
+            ['Consent record available on request', '✓ Yes', '⚠ Not stated', '⚠ Not stated'],
             ['Delete all child data with one click', '✓ Yes', '⚠ Email only', '✗ No'],
             ['Works without any child photo', '✓ Look-alike characters', '✓ Yes', '✗ Photo-first'],
           ].map(([feature, ours, c1, c2], idx) => (

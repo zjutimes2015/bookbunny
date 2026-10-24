@@ -6,6 +6,7 @@ import {
   getActiveConsent,
   revokeConsent,
 } from '@/lib/compliance/consent'
+import { deleteFiles, keyFromAssetUrl } from '@/lib/r2'
 import { POLICY_VERSION } from '@/lib/site'
 
 const sql = neon(process.env.NEON_DATABASE_URL!)
@@ -64,9 +65,22 @@ export async function DELETE(req: NextRequest) {
   }
 
   const owned = await sql`
-    SELECT story_id FROM books WHERE user_id = ${userId} AND story_id IS NOT NULL
+    SELECT id, story_id, page_image_urls
+    FROM books
+    WHERE user_id = ${userId}
   `
   const storyIds = owned.map((row) => row.story_id).filter(Boolean) as string[]
+
+  // 先删对象存储里的插画，再删数据库记录：顺序反了就拿不到 key 了
+  const assetKeys: string[] = []
+  for (const row of owned) {
+    const urls = (row.page_image_urls || []) as string[]
+    for (const url of urls) {
+      const key = keyFromAssetUrl(url)
+      if (key) assetKeys.push(key)
+    }
+  }
+  const deletedImages = await deleteFiles(assetKeys)
 
   const deleted = await sql`DELETE FROM books WHERE user_id = ${userId} RETURNING id`
 
@@ -74,5 +88,5 @@ export async function DELETE(req: NextRequest) {
     await sql`DELETE FROM stories WHERE id = ANY(${storyIds})`
   }
 
-  return NextResponse.json({ withdrawn: true, deletedBooks: deleted.length })
+  return NextResponse.json({ withdrawn: true, deletedBooks: deleted.length, deletedImages })
 }

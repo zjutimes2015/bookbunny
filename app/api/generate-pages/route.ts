@@ -11,6 +11,7 @@ import {
 import { getSessionUser, getClientIp } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { isR2Configured, uploadBase64Image, bookKey } from '@/lib/r2'
+import { requireHuman, attachPassCookie, humanCheckFailedResponse } from '@/lib/turnstile'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -103,7 +104,7 @@ async function callFlux(prompt: string, size: string, image?: string): Promise<s
 
 export async function POST(req: NextRequest) {
   try {
-    const { outline, pages, characterImageB64, style, styleLexicon, consistencyLine, aspect, language, bookId } =
+    const { outline, pages, characterImageB64, style, styleLexicon, consistencyLine, aspect, language, bookId, turnstileToken } =
       await req.json()
     void language
 
@@ -114,6 +115,10 @@ export async function POST(req: NextRequest) {
     if (pageOutline.length === 0) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     }
+
+    // 人机校验：生图是最贵的一步，必须挡在服务端
+    const human = await requireHuman(req, turnstileToken)
+    if (!human.ok) return humanCheckFailedResponse()
 
     // 鉴权 + 限流：付费用户额度最高，登录免费用户次之，游客只能跑一次试生成
     const user = await getSessionUser(req)
@@ -160,7 +165,8 @@ export async function POST(req: NextRequest) {
       }),
     )
 
-    return NextResponse.json({ genId, total: pageOutline.length, size })
+    const res = NextResponse.json({ genId, total: pageOutline.length, size })
+    return human.issued ? attachPassCookie(res) : res
   } catch (err) {
     console.error('Generate pages error:', err)
     return NextResponse.json({ error: 'Generation failed' }, { status: 500 })

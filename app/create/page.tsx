@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 import MultiCharacterManager from '@/components/MultiCharacterManager'
@@ -189,6 +189,30 @@ export default function CreatePage() {
     { grl: 'E', label: 'Level E', age: '7-8', desc: 'Confident · 5-16 words per sentence' },
   ]
 
+  // 人机校验通行证：Turnstile token 是一次性的，先换成 2 小时有效的 bb_human cookie，
+  // 后续 create-character / create-story / generate-pages 都靠这张 cookie 通过服务端校验。
+  // token 同时存 ref：子组件可能在首次渲染时就缓存了回调，读 state 会拿到旧值。
+  const turnstileTokenRef = useRef<string | null>(null)
+  const humanPassed = useRef(false)
+  const ensureHumanPass = async (): Promise<boolean> => {
+    if (humanPassed.current) return true
+    const token = turnstileTokenRef.current || turnstileToken
+    if (!token) return false
+    try {
+      const res = await fetch('/api/verify-turnstile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        humanPassed.current = true
+        return true
+      }
+    } catch { /* 网络异常走下面的失败分支 */ }
+    return false
+  }
+
   // Multi-character：加入后立即生成「角色设定卡 + 一致性固定句 + 角色参考图」
   const handleAddCharacter = async (name: string, photo?: File) => {
     // 儿童照片属于个人信息：没有生效的家长同意就绝不处理。
@@ -197,6 +221,10 @@ export default function CreatePage() {
       return
     }
     setConsentBlocked(false)
+    if (!(await ensureHumanPass())) {
+      setTurnstileError(true)
+      return
+    }
     const id = `char_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
     const draft: CharData = { id, name, generating: true }
     if (photo) draft.photoPreview = URL.createObjectURL(photo)
@@ -210,6 +238,7 @@ export default function CreatePage() {
       fd.append('ageGroup', ageGroup)
       fd.append('photoUsage', photoUsage)
       fd.append('language', language)
+      fd.append('turnstileToken', turnstileToken || '')
       if (styleCard?.mainStyle) fd.append('styleName', styleCard.mainStyle)
       if (styleLexicon) fd.append('styleLexicon', JSON.stringify(styleLexicon))
 
@@ -241,23 +270,12 @@ export default function CreatePage() {
   const handleGenerateStory = async () => {
     if (!theme || characters.length === 0) return
 
-    // Verify Turnstile
-    if (!turnstileToken) {
+    // 人机校验：token 已换成 bb_human cookie，这里只需确认已通过
+    if (!(await ensureHumanPass())) {
       setTurnstileError(true)
       return
     }
     setTurnstileError(false)
-
-    const verifyRes = await fetch('/api/verify-turnstile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: turnstileToken }),
-    })
-    const verifyData = await verifyRes.json()
-    if (!verifyData.success) {
-      setTurnstileError(true)
-      return
-    }
 
     setLoading(true)
     try {
@@ -270,6 +288,7 @@ export default function CreatePage() {
           language,
           styleLexicon, styleCard,
           characterCards: characters.map(c => c.card).filter(Boolean), // 阶段3：角色一致性
+          turnstileToken: turnstileToken || '', // cookie 缺失时的兜底
         }),
       })
       const data = await res.json()
@@ -313,6 +332,7 @@ export default function CreatePage() {
           aspect,                                       // 阶段3：画幅比例
           styleLexicon,
           language,
+          turnstileToken: turnstileToken || '',          // cookie 缺失时的兜底
         }),
       })
       const data = await res.json()
@@ -656,6 +676,22 @@ export default function CreatePage() {
               step above, or add the character without a photo.
             </p>
           )}
+          {/* 人机校验组件必须常驻：第一个角色的创建请求也要带通行证 */}
+          <TurnstileWidget
+            onVerify={(token) => {
+              turnstileTokenRef.current = token
+              setTurnstileToken(token)
+            }}
+            onExpire={() => {
+              turnstileTokenRef.current = null
+              setTurnstileToken(null)
+            }}
+            onError={() => setTurnstileError(true)}
+            className="my-3"
+          />
+          {turnstileError && (
+            <p className="text-xs text-red-400 text-center mb-3">Please complete the verification</p>
+          )}
           <div className="space-y-6">
             <MultiCharacterManager
               characters={characters}
@@ -807,15 +843,6 @@ export default function CreatePage() {
                     Option A builds an illustrated character from name + theme. Option B uses your baby's photo as an AI reference image (note the privacy scope).
                   </p>
                 </div>
-                {turnstileError && (
-                  <p className="text-xs text-red-400 text-center">Please complete the verification</p>
-                )}
-                <TurnstileWidget
-                  onVerify={(token) => setTurnstileToken(token)}
-                  onExpire={() => setTurnstileToken(null)}
-                  onError={() => setTurnstileError(true)}
-                  className="my-3"
-                />
                 <button className="apple-button w-full disabled:opacity-50"
                         disabled={!theme || characters.length === 0 || loading}
                         onClick={handleGenerateStory}>

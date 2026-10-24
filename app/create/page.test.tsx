@@ -26,7 +26,8 @@ vi.mock('@/components/AIPromptBox', () => ({
 vi.mock('@/components/MultiCharacterManager', () => ({
   default: ({ onAdd }: { onAdd: (name: string) => void }) => {
     if (typeof window !== 'undefined') {
-      setTimeout(() => onAdd('Luna'), 0)
+      // 延后于人机校验 token 就绪，避免角色创建因人机门槛被拒
+      setTimeout(() => onAdd('Luna'), 150)
     }
     return <div data-testid="char-manager" />
   },

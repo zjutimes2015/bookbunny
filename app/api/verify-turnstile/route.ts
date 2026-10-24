@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { attachPassCookie, isTurnstileConfigured, verifyTurnstileToken } from '@/lib/turnstile'
 
+/**
+ * 校验 Turnstile token 并下发短时通行证（bb_human）。
+ * 三个生成接口随后只认这张通行证，避免一次性 token 被复用。
+ */
 export async function POST(req: NextRequest) {
   try {
     const { token } = await req.json()
@@ -7,22 +12,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Missing token' }, { status: 400 })
     }
 
-    const secret = process.env.TURNSTILE_SECRET_KEY
-    if (!secret) {
-      if (token.startsWith('1x') || token.startsWith('2x') || token.startsWith('3x')) {
-        return NextResponse.json({ success: true })
-      }
-      return NextResponse.json({ success: false, error: 'Not configured' }, { status: 500 })
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    const valid = await verifyTurnstileToken(token, ip)
+    if (!valid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: isTurnstileConfigured() ? 'Verification failed' : 'Verification is not configured',
+        },
+        { status: 403 },
+      )
     }
 
-    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ secret, response: token }),
-    })
-    const data = await res.json()
-    return NextResponse.json({ success: data.success })
+    return attachPassCookie(NextResponse.json({ success: true }))
   } catch (err) {
+    console.error('Turnstile verify error:', err)
     return NextResponse.json({ success: false, error: 'Verification failed' }, { status: 500 })
   }
 }

@@ -4,18 +4,18 @@ async function getStats() {
   try {
     const sql = neon(process.env.NEON_DATABASE_URL!)
 
-    const [userCount, bookCount, charCount, recentUsers, recentBooks] = await Promise.all([
-      sql`SELECT COUNT(*) as count FROM "user"`,
+    const [userCount, bookCount, paidCount, recentUsers, recentBooks] = await Promise.all([
+      sql`SELECT COUNT(*) as count FROM bookbunny_users`,
       sql`SELECT COUNT(*) as count FROM books`,
-      sql`SELECT COUNT(*) as count FROM characters`,
-      sql`SELECT name, created_at FROM characters ORDER BY created_at DESC LIMIT 5`,
+      sql`SELECT COUNT(*) as count FROM bookbunny_users WHERE is_paid = TRUE`,
+      sql`SELECT name, created_at FROM bookbunny_users ORDER BY created_at DESC LIMIT 5`,
       sql`SELECT title, status, created_at FROM books ORDER BY created_at DESC LIMIT 5`,
     ])
 
     return {
       users: Number(userCount[0]?.count || 0),
       books: Number(bookCount[0]?.count || 0),
-      characters: Number(charCount[0]?.count || 0),
+      paidUsers: Number(paidCount[0]?.count || 0),
       recentUsers: (recentUsers as Record<string, any>[]).map((u: Record<string, any>) => ({
         name: u.name,
         date: new Date(u.created_at).toLocaleDateString(),
@@ -28,7 +28,7 @@ async function getStats() {
     }
   } catch {
     return {
-      users: 0, books: 0, characters: 0,
+      users: 0, books: 0, paidUsers: 0,
       recentUsers: [], recentBooks: [],
       dbError: 'Database not configured yet. Add NEON_DATABASE_URL to .env.local',
     }
@@ -56,8 +56,8 @@ export default async function AdminDashboard() {
           {/* Stat cards */}
           <div className="grid sm:grid-cols-3 gap-4 mb-8">
             <StatCard icon="👥" label="Total Users" value={stats.users} color="#FF6B8A" />
+            <StatCard icon="💳" label="Paid Users" value={stats.paidUsers} color="#FFDAB9" />
             <StatCard icon="📚" label="Total Books" value={stats.books} color="#C8A2E8" />
-            <StatCard icon="🐰" label="Characters" value={stats.characters} color="#98D8C8" />
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">

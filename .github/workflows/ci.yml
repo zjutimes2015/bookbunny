@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Typecheck · Test · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # 构建期只需要占位值：运行时才真正连库/调第三方
+      NEON_DATABASE_URL: postgresql://user:pass@ep-ci.neon.tech/db?sslmode=require
+      OPENROUTER_API_KEY: ci-placeholder
+      SITE_URL: https://example.com
+      TURNSTILE_SECRET_KEY: ci-placeholder
+      ADMIN_EMAILS: ci@example.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Unit & integration tests
+        run: npm test
+
+      - name: Build
+        run: npm run build

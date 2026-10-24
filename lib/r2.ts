@@ -118,6 +118,42 @@ export async function deleteFile(key: string): Promise<void> {
   await getClient().send(cmd)
 }
 
+/**
+ * 从资源地址反推 R2 key。
+ * 支持两种形式：自定义 CDN 域名（R2_PUBLIC_URL）与同源代理 /api/assets/*。
+ * 外部地址与 data URI 返回 null（不是我们存的对象）。
+ */
+export function keyFromAssetUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+
+  const publicBase = PUBLIC_URL.replace(/\/+$/, '')
+  if (publicBase && url.startsWith(`${publicBase}/`)) {
+    return url.slice(publicBase.length + 1)
+  }
+
+  const proxy = '/api/assets/'
+  const idx = url.indexOf(proxy)
+  if (idx >= 0) return url.slice(idx + proxy.length)
+
+  return null
+}
+
+/** 批量删除对象；单个失败不阻断整体（用于隐私删除链路） */
+export async function deleteFiles(keys: string[]): Promise<number> {
+  if (!isR2Configured()) return 0
+
+  let deleted = 0
+  for (const key of keys) {
+    try {
+      await deleteFile(key)
+      deleted++
+    } catch (err) {
+      console.error(`R2 delete failed for ${key}:`, err)
+    }
+  }
+  return deleted
+}
+
 /** Utility: generate a unique key for book assets */
 export function bookKey(bookId: string, type: 'cover' | 'page' | 'pdf' | 'video', index?: number): string {
   const base = `books/${bookId}/${type}`

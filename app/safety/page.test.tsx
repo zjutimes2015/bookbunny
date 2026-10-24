@@ -33,7 +33,7 @@ describe('SafetyPage (COPPA)', () => {
     expect(screen.getByText('Four non-negotiable commitments')).toBeInTheDocument()
     expect(screen.getByText('Verifiable parental consent — always first')).toBeInTheDocument()
     expect(screen.getByText('Data minimization by design')).toBeInTheDocument()
-    expect(screen.getByText('Audit trail you can inspect')).toBeInTheDocument()
+    expect(screen.getByText('A consent record you can request')).toBeInTheDocument()
     expect(screen.getByText('No photo — still make a book')).toBeInTheDocument()
   })
 

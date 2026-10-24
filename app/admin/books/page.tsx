@@ -4,17 +4,17 @@ async function getBooks() {
   try {
     const sql = neon(process.env.NEON_DATABASE_URL!)
     const books = await sql`
-      SELECT 
+      SELECT
         b.title,
         b.status,
         b.created_at,
-        c.name as character_name
+        u.email as owner_email
       FROM books b
-      LEFT JOIN characters c ON c.id = b.character_id
+      LEFT JOIN bookbunny_users u ON u.id = b.user_id
       ORDER BY b.created_at DESC
       LIMIT 50
     `
-    return books as { title: string; status: string; created_at: Date; character_name: string | null }[]
+    return books as { title: string; status: string; created_at: Date; owner_email: string | null }[]
   } catch {
     return []
   }
@@ -43,7 +43,7 @@ export default async function AdminBooks() {
             <thead>
               <tr className="border-b border-[#E5E5EA] bg-[#F8F8FA]">
                 <th className="text-left px-5 py-3 font-medium text-[#8E8E93]">Title</th>
-                <th className="text-left px-5 py-3 font-medium text-[#8E8E93]">Character</th>
+                <th className="text-left px-5 py-3 font-medium text-[#8E8E93]">Owner</th>
                 <th className="text-left px-5 py-3 font-medium text-[#8E8E93]">Created</th>
                 <th className="text-center px-5 py-3 font-medium text-[#8E8E93]">Status</th>
                 <th className="text-center px-5 py-3 font-medium text-[#8E8E93]">Actions</th>
@@ -57,7 +57,7 @@ export default async function AdminBooks() {
                 return (
                   <tr key={i} className="border-b border-[#E5E5EA] hover:bg-[#F8F8FA] transition-colors">
                     <td className="px-5 py-3.5 font-medium text-[#2D2D2D]">{b.title}</td>
-                    <td className="px-5 py-3.5 text-[#8E8E93]">{b.character_name || '—'}</td>
+                    <td className="px-5 py-3.5 text-[#8E8E93]">{b.owner_email || '—'}</td>
                     <td className="px-5 py-3.5 text-[#8E8E93]">{new Date(b.created_at).toLocaleDateString()}</td>
                     <td className="px-5 py-3.5 text-center">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.color}`}>

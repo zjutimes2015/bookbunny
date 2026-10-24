@@ -4,6 +4,7 @@ import { hasConsent } from '@/lib/compliance/consent'
 import { getSessionUser, getClientIp } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { isR2Configured, uploadBase64Image } from '@/lib/r2'
+import { requireHuman, attachPassCookie, humanCheckFailedResponse } from '@/lib/turnstile'
 import type { CharacterCard, StyleLexicon, BookLanguage } from '@/lib/types/book'
 
 const PHOTO_USAGES: CharacterCard['photoUsage'][] = ['illustrated', 'photo-family', 'photo-public']
@@ -28,6 +29,10 @@ export async function POST(req: NextRequest) {
     if (lexiconRaw) {
       try { styleLexicon = JSON.parse(lexiconRaw) as StyleLexicon } catch { /* ignore */ }
     }
+
+    // 人机校验：角色卡会同时消耗 LLM 与生图额度
+    const human = await requireHuman(req, formData.get('turnstileToken') as string | null)
+    if (!human.ok) return humanCheckFailedResponse()
 
     // 鉴权 + 限流：角色卡会消耗 LLM 与生图额度
     const user = await getSessionUser(req)
@@ -94,7 +99,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ name, ...result, imageUrl })
+    const res = NextResponse.json({ name, ...result, imageUrl })
+    return human.issued ? attachPassCookie(res) : res
   } catch (err) {
     console.error('Character creation error:', err)
     return NextResponse.json(

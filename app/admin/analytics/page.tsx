@@ -12,7 +12,7 @@ async function getAnalyticsData() {
       `,
       sql`
         SELECT DATE(created_at) as day, COUNT(*) as count
-        FROM characters GROUP BY day ORDER BY day DESC LIMIT 14
+        FROM bookbunny_users GROUP BY day ORDER BY day DESC LIMIT 14
       `,
       sql`
         SELECT status, COUNT(*) as count

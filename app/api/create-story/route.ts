@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateStory } from '@/lib/api/story'
 import { getSessionUser, getClientIp } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { requireHuman, attachPassCookie, humanCheckFailedResponse } from '@/lib/turnstile'
 
 /** 套餐页数上限：游客/Free 8 / Starter 12 / Creator 20 / Studio 24 */
 function maxPagesFor(tier: string | undefined, isPaid: boolean): number {
@@ -14,11 +15,15 @@ function maxPagesFor(tier: string | undefined, isPaid: boolean): number {
 
 export async function POST(req: NextRequest) {
   try {
-    const { theme, ageGroup, characterName, pages, level, styleLexicon, styleCard, characterCards, language } = await req.json()
+    const { theme, ageGroup, characterName, pages, level, styleLexicon, styleCard, characterCards, language, turnstileToken } = await req.json()
 
     if (!theme || !ageGroup || !characterName) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
+
+    // 人机校验：Turnstile 不是前端装饰，LLM 成本必须挡在服务端
+    const human = await requireHuman(req, turnstileToken)
+    if (!human.ok) return humanCheckFailedResponse()
 
     const user = await getSessionUser(req)
     const limit = user ? (user.isPaid || user.tier !== 'free' ? 100 : 30) : 10
@@ -52,7 +57,9 @@ export async function POST(req: NextRequest) {
       language, // 可选：内容语言（缺省英语）
     })
 
-    return NextResponse.json(story)
+    const res = NextResponse.json(story)
+    // 本次是用 token 换来的通行证 → 写回 cookie，后续接口直接复用
+    return human.issued ? attachPassCookie(res) : res
   } catch (err) {
     console.error('Story generation error:', err)
     return NextResponse.json(
