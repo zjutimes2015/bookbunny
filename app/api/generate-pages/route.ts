@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from 'next/server'
-import { neon } from '@neondatabase/serverless'
+import { sql } from '@/lib/neon'
 import {
   pagesToOutline,
   ASPECT_SIZE,
@@ -15,8 +15,6 @@ import { requireHuman, attachPassCookie, humanCheckFailedResponse } from '@/lib/
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
-
-const sql = neon(process.env.NEON_DATABASE_URL!)
 
 /** 单次生图请求的页数上限（客户端传入的 outline 必须封顶，否则一次请求就能烧掉整月毛利） */
 const MAX_PAGES_PER_REQUEST = 24

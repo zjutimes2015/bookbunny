@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { neon } from '@neondatabase/serverless'
+import { sql } from '@/lib/neon'
 import { outlineToPages, type CharacterCard, type PageOutline, type StyleLexicon } from '@/lib/types/book'
 import { consumeBookAllocation, bookCostUnits } from '@/lib/allocation'
 import { createSeries } from '@/lib/series'
 import { getWorld, toWorldSnapshot } from '@/lib/worlds'
 import { isR2Configured, uploadBase64Image, characterKey } from '@/lib/r2'
-
-const sql = neon(process.env.NEON_DATABASE_URL!)
 
 /** 主角档案：只在创建者账户内保存，绝不进入共享池 */
 interface CharacterPayload {
