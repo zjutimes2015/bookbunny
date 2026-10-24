@@ -3,6 +3,7 @@ import { neon } from '@neondatabase/serverless'
 import { outlineToPages, type CharacterCard, type PageOutline, type StyleLexicon } from '@/lib/types/book'
 import { consumeBookAllocation } from '@/lib/allocation'
 import { createSeries } from '@/lib/series'
+import { getWorld, toWorldSnapshot } from '@/lib/worlds'
 import { isR2Configured, uploadBase64Image, characterKey } from '@/lib/r2'
 
 const sql = neon(process.env.NEON_DATABASE_URL!)
@@ -27,6 +28,10 @@ interface SaveBookBody {
   quiz?: unknown | null
   aspect?: string | null
   character?: CharacterPayload | null
+  /** 官方世界（第 1 集从世界库进入时带上）：服务端按 id 取档案并冻结成快照 */
+  worldId?: string | null
+  /** 这一集要教的寓意（家长在世界详情页挑的那条） */
+  moral?: string | null
 }
 
 // 从 cookie 解析当前用户 + 其 credits / allowance 状态
@@ -130,6 +135,8 @@ export async function POST(req: NextRequest) {
         }
       }
       try {
+        // 世界档案以服务端读取为准，不信任客户端传来的快照
+        const world = body.worldId ? await getWorld(body.worldId) : null
         seriesId = await createSeries({
           userId: user.id,
           title: body.title,
@@ -142,9 +149,13 @@ export async function POST(req: NextRequest) {
           theme: body.theme,
           ageGroup: body.ageGroup,
           level: body.level ?? null,
+          worldId: world?.id ?? null,
+          worldSnapshot: world ? toWorldSnapshot(world) : null,
         })
         await sql`
-          UPDATE stories SET series_id = ${seriesId}, episode_number = 1 WHERE id = ${storyId}
+          UPDATE stories
+          SET series_id = ${seriesId}, episode_number = 1, moral = ${body.moral ?? null}
+          WHERE id = ${storyId}
         `
       } catch (err) {
         // 连续剧建不起来不该挡住这本书的保存，降级为「不可续集」

@@ -48,6 +48,16 @@ export default async function WorldDetailPage({ params }: PageProps) {
         </div>
         <h1 className="mt-4 text-3xl sm:text-4xl font-bold tracking-tight text-[#2D2D2D]">{world.name}</h1>
         <p className="mt-2 text-xs text-[#C7C7CC] break-all">{world.id}</p>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Link href={`/worlds/${world.id}/start`} className="apple-button text-sm px-6 py-3 text-center">
+            Start an episode in this world →
+          </Link>
+          <p className="text-xs text-[#8E8E93] leading-relaxed">
+            You pick the lesson for this episode. Your child is the hero — the reading level is matched
+            automatically.
+          </p>
+        </div>
       </section>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 space-y-8">

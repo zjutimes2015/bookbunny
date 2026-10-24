@@ -1,21 +1,6 @@
 import { neon } from '@neondatabase/serverless'
 import type { CharacterCard, StyleLexicon } from '@/lib/types/book'
-
-/**
- * 世界快照：生成一集时把当时的世界档案冻结进这一集。
- * 世界改版或下架都不会影响已经生成的集。
- */
-export interface WorldSnapshot {
-  id: string
-  name: string
-  ageRange: string
-  theme: string
-  scene: string
-  artStyle: string
-  characters: { name: string; role: string; personality: string; catchphrase: string }[]
-  moralPool: string[]
-  forbiddenZones: string[]
-}
+import type { WorldSnapshot } from '@/lib/worlds'
 
 /** 家庭连续剧：主角档案私有，世界只留快照 */
 export interface SeriesRecord {
@@ -136,6 +121,8 @@ export interface RemixSource {
   ageGroup: string
   level: string | null
   content: string[]
+  /** 本集要教的寓意（第 1 集由家长选，之后逐集轮换） */
+  moral: string | null
   series: SeriesRecord | null
   /** 该 series 已有多少集（无 series 时为 1） */
   latestEpisode: number
@@ -151,6 +138,7 @@ interface BookStoryRow {
   age_group: string | null
   level: string | null
   content: string[] | null
+  moral: string | null
   series_id: string | null
 }
 
@@ -159,7 +147,7 @@ export async function loadRemixSource(bookId: string): Promise<RemixSource | nul
   const rows = (await sql()`
     SELECT b.id AS book_id, b.user_id AS book_user_id, b.aspect,
            s.id AS story_id, s.title AS story_title, s.theme AS story_theme,
-           s.age_group, s.level, s.content, s.series_id
+           s.age_group, s.level, s.content, s.moral, s.series_id
     FROM books b
     LEFT JOIN stories s ON s.id = b.story_id
     WHERE b.id = ${bookId}
@@ -190,6 +178,7 @@ export async function loadRemixSource(bookId: string): Promise<RemixSource | nul
     ageGroup: row.age_group ?? '',
     level: row.level,
     content: row.content ?? [],
+    moral: row.moral,
     series,
     latestEpisode,
   }

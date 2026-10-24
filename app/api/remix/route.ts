@@ -5,7 +5,7 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { requireHuman, attachPassCookie, humanCheckFailedResponse } from '@/lib/turnstile'
 import { consumeBookAllocation } from '@/lib/allocation'
 import { loadRemixSource, insertEpisode } from '@/lib/series'
-import { buildSequelBrief, endingLine, isRemixKind, pickMoral } from '@/lib/remix'
+import { buildSequelBrief, endingLine, isRemixKind, nextMoral } from '@/lib/remix'
 import { outlineToPages } from '@/lib/types/book'
 
 /**
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     const series = source.series
     const world = series.worldSnapshot
     const episodeNumber = source.latestEpisode + 1
-    const moral = pickMoral(world?.moralPool, episodeNumber) ?? source.storyTheme
+    const moral = nextMoral(world?.moralPool, source.moral, episodeNumber) ?? source.storyTheme
     const sequelBrief = buildSequelBrief({
       kind,
       episodeNumber,

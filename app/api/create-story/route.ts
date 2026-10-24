@@ -14,7 +14,7 @@ function maxPagesFor(tier: string | undefined, isPaid: boolean): number {
 
 export async function POST(req: NextRequest) {
   try {
-    const { theme, ageGroup, characterName, pages, level, styleLexicon, styleCard, characterCards, language, turnstileToken } = await req.json()
+    const { theme, ageGroup, characterName, pages, level, styleLexicon, styleCard, characterCards, language, worldBrief, turnstileToken } = await req.json()
 
     if (!theme || !ageGroup || !characterName) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       styleLexicon, // 可选：风格层（固定风格词库）
       styleCard, // 可选：风格设定卡
       characterCards, // 可选：角色设定卡（一致性）
+      worldBrief, // 可选：官方世界简报（舞台/配角/画风/禁区/本集寓意）
       language, // 可选：内容语言（缺省英语）
     })
 

@@ -45,6 +45,23 @@ export function pickMoral(pool: string[] | null | undefined, episodeNumber: numb
   return pool[index]
 }
 
+/**
+ * 下一集的寓意：优先顺着上一集在池子里的位置往后走。
+ * 这样第 1 集由家长挑的寓意会被尊重，第 2 集从他挑的那条往后轮，而不是从池子第一条重来。
+ */
+export function nextMoral(
+  pool: string[] | null | undefined,
+  previousMoral: string | null | undefined,
+  episodeNumber: number,
+): string | null {
+  if (!pool || pool.length === 0) return null
+  if (previousMoral) {
+    const index = pool.indexOf(previousMoral)
+    if (index >= 0) return pool[(index + 1) % pool.length]
+  }
+  return pickMoral(pool, episodeNumber)
+}
+
 /** 每种改写对剧情的硬性要求 */
 const KIND_DIRECTIVE: Record<RemixKind, string> = {
   ending:
@@ -125,4 +142,47 @@ export function endingLine(pages: string[] | null | undefined): string | null {
   if (!pages || pages.length === 0) return null
   const last = pages[pages.length - 1]
   return last?.trim() || null
+}
+
+export interface WorldBriefInput {
+  worldName: string
+  worldScene: string
+  artStyle: string
+  ageRange: string
+  cast: SequelCastMember[]
+  moral?: string | null
+  forbidden?: string[]
+}
+
+/**
+ * 第 1 集的世界简报：官方世界 = 舞台，孩子 = 主角。
+ * 家长挑的是这一集要教的寓意，不是「买一套设定」。
+ */
+export function buildWorldBrief(input: WorldBriefInput): string {
+  const lines: string[] = [
+    `STAGE BRIEF — this episode takes place inside the official world "${input.worldName}".`,
+    `- Setting (keep every page inside it): ${input.worldScene}`,
+    `- Art direction (must hold on every page): ${input.artStyle}`,
+    `- Target age: ${input.ageRange}.`,
+  ]
+
+  if (input.cast.length) {
+    const cast = input.cast
+      .map((c) => `${c.name} (${c.role}${c.catchphrase ? `, says “${c.catchphrase}”` : ''})`)
+      .join('; ')
+    lines.push(`- Official cast (keep their roles, personalities and catchphrases): ${cast}`)
+  }
+
+  lines.push(
+    `- The child protagonist is the hero of this episode; the official cast supports them and never replaces them.`,
+  )
+  lines.push(`- This episode's moral: ${input.moral || 'a gentle, age-appropriate lesson'}`)
+  lines.push('- Write every name, place and line of dialogue in English, transliterating original names naturally.')
+  lines.push('- No villain, no peril, no frightening imagery; exactly one plot point per page.')
+
+  if (input.forbidden?.length) {
+    lines.push(`- Forbidden in this world: ${input.forbidden.join(' ')}`)
+  }
+
+  return lines.join('\n')
 }
