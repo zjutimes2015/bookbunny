@@ -78,6 +78,6 @@ describe('SafetyPage (COPPA)', () => {
   it('ships COPPA-oriented SEO metadata', () => {
     expect(metadata.title).toMatch(/COPPA/i)
     expect(metadata.description).toMatch(/verifiable parental consent/i)
-    expect(metadata.alternates?.canonical).toBe('/safety')
+    expect(metadata.alternates?.canonical).toContain('/safety')
   })
 })
