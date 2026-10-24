@@ -5,7 +5,7 @@ async function getAnalyticsData() {
   try {
     const sql = neon(process.env.NEON_DATABASE_URL!)
 
-    const [dailyBooks, dailyUsers, statusCounts] = await Promise.all([
+    const [dailyBooks, dailyUsers, statusCounts, revenueTrend] = await Promise.all([
       sql`
         SELECT DATE(created_at) as day, COUNT(*) as count
         FROM books GROUP BY day ORDER BY day DESC LIMIT 14
@@ -18,22 +18,32 @@ async function getAnalyticsData() {
         SELECT status, COUNT(*) as count
         FROM books GROUP BY status
       `,
+      sql`
+        SELECT DATE(created_at) as day, COALESCE(SUM(amount), 0) as amt
+        FROM payments WHERE status = 'completed'
+          AND created_at >= CURRENT_DATE - INTERVAL '14 days'
+        GROUP BY day ORDER BY day
+      `,
     ])
 
     return {
       dailyBooks: (dailyBooks as { day: string; count: number }[]).reverse(),
       dailyUsers: (dailyUsers as { day: string; count: number }[]).reverse(),
-      statusCounts: statusCounts as { status: string; count: number }[],
+      statusCounts: (statusCounts as { status: string; count: number }[]),
+      revenueTrend: (revenueTrend as { day: string; amt: number }[]).map(r => ({
+        day: r.day,
+        amount: Number(r.amt) / 100,
+      })),
     }
   } catch {
-    return { dailyBooks: [], dailyUsers: [], statusCounts: [] }
+    return { dailyBooks: [], dailyUsers: [], statusCounts: [], revenueTrend: [] }
   }
 }
 
 export default async function AdminAnalytics() {
   const data = await getAnalyticsData()
 
-  const hasData = data.dailyBooks.length > 0 || data.dailyUsers.length > 0
+  const hasData = data.dailyBooks.length > 0 || data.dailyUsers.length > 0 || data.revenueTrend.length > 0
 
   return (
     <div>
