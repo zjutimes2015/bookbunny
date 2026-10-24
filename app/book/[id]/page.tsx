@@ -7,8 +7,10 @@ import BunnyMascot from '@/components/BunnyMascot'
 import ReadAloudPlayer from '@/components/ReadAloudPlayer'
 import ReadAlongPlayer from '@/components/ReadAlongPlayer'
 import TurnstileWidget from '@/components/TurnstileWidget'
+import BookInsightsPanel from '@/components/BookInsights'
 import { pagesToOutline, type PageOutline } from '@/lib/types/book'
 import { REMIX_KINDS, type RemixKind } from '@/lib/remix'
+import { sendReadingEvents } from '@/lib/reading-events-client'
 import { useAuth } from '@/lib/auth-context'
 
 interface QuizQuestion {
@@ -34,6 +36,8 @@ interface BookDetail {
   canContinue?: boolean
   episodeNumber?: number
   protagonistName?: string | null
+  /** 只有本书所属家庭能看学情与续集 */
+  isOwner?: boolean
 }
 
 interface ProJob {
@@ -82,6 +86,13 @@ export default function BookDetailPage() {
   const [remixStep, setRemixStep] = useState<'idle' | 'writing' | 'illustrating'>('idle')
   const [remixError, setRemixError] = useState<string | null>(null)
 
+  // 阅读数据回流：同一事件的去重标记，避免重复计数
+  const openedRef = useRef(false)
+  const completedRef = useRef(false)
+  const quizSentRef = useRef(false)
+  const lastPageSentRef = useRef<number | null>(null)
+  const playCountRef = useRef(0)
+
   // Pro 动画状态
   const [proJobId, setProJobId] = useState<string | null>(null)
   const [proJob, setProJob] = useState<ProJob | null>(null)
@@ -98,6 +109,11 @@ export default function BookDetailPage() {
         setBook(data)
         // 检查是否已有 Pro 任务
         if (data.proJobId) setProJobId(data.proJobId)
+        // 打开这一集（只记一次；非本人不记）
+        if (data.isOwner && !openedRef.current) {
+          openedRef.current = true
+          sendReadingEvents(bookId, [{ type: 'book_open' }])
+        }
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))
@@ -293,6 +309,49 @@ export default function BookDetailPage() {
   const nextEpisode = (book.episodeNumber ?? 1) + 1
   const chosenRemix = REMIX_KINDS.find((k) => k.id === remixKind) ?? null
 
+  /** 翻页 / 读完：只在本人阅读时回流 */
+  const handleActivePageChange = (index: number | null) => {
+    setActivePage(index)
+    if (!book?.isOwner || index === null) return
+
+    const pageNumber = index + 1
+    if (lastPageSentRef.current !== pageNumber) {
+      lastPageSentRef.current = pageNumber
+      sendReadingEvents(book.id, [{ type: 'page_view', page: pageNumber }])
+    }
+
+    if (index === outline.length - 1 && !completedRef.current) {
+      completedRef.current = true
+      sendReadingEvents(book.id, [{ type: 'book_complete', page: pageNumber }])
+    }
+  }
+
+  /** 从 idle 再播一次 = 重播 */
+  const handlePlay = () => {
+    if (!book?.isOwner) return
+    playCountRef.current += 1
+    if (playCountRef.current > 1) {
+      sendReadingEvents(book.id, [{ type: 'replay' }])
+    }
+  }
+
+  /** 提交 quiz：记录正确率；首次提交也视为读完 */
+  const handleCheckAnswers = () => {
+    if (!book?.quiz) return
+    setSubmitted(true)
+    if (!book.isOwner || quizSentRef.current) return
+
+    quizSentRef.current = true
+    const total = book.quiz.questions.length
+    sendReadingEvents(book.id, [
+      { type: 'quiz_submit', value: total > 0 ? score / total : 0, count: total },
+    ])
+    if (!completedRef.current) {
+      completedRef.current = true
+      sendReadingEvents(book.id, [{ type: 'book_complete' }])
+    }
+  }
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 md:py-12">
       {/* Header */}
@@ -443,12 +502,16 @@ export default function BookDetailPage() {
         <ReadAlongPlayer
           pages={outline.map(p => p.pageText)}
           activePageIndex={activePage}
-          onActivePageChange={setActivePage}
+          onActivePageChange={handleActivePageChange}
+          onReadAlongScore={(accuracy) => {
+            if (book.isOwner) sendReadingEvents(book.id, [{ type: 'readalong', value: accuracy }])
+          }}
         />
       ) : (
         <ReadAloudPlayer
           pages={outline.map(p => p.pageText)}
-          onActivePageChange={setActivePage}
+          onActivePageChange={handleActivePageChange}
+          onPlay={handlePlay}
         />
       )}
 
@@ -550,13 +613,16 @@ export default function BookDetailPage() {
             <button
               className="apple-button text-sm px-5 py-2.5 disabled:opacity-50"
               disabled={Object.keys(answers).length < book.quiz.questions.length}
-              onClick={() => setSubmitted(true)}
+              onClick={handleCheckAnswers}
             >
               {submitted ? '✓ Checked' : 'Check Answers'}
             </button>
           </div>
         </div>
       )}
+
+      {/* 单集学情：只给本家庭看 */}
+      {book.isOwner && <BookInsightsPanel bookId={book.id} />}
 
       {/* 续集：同一主角 + 同一世界。只在本书所属家庭里出现 */}
       {book.canContinue && (

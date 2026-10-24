@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { GENERAL_FORBIDDEN_ZONES } from '@/data/worlds'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 import { getWorld } from '@/lib/worlds'
+import { getWorldInsights } from '@/lib/analytics'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +29,17 @@ export default async function WorldDetailPage({ params }: PageProps) {
   const { id } = await params
   const world = await getWorld(id)
   if (!world) notFound()
+
+  const insights = await getWorldInsights(world.id)
+  const pct = (v: number | null) => (v === null ? '—' : `${Math.round(v * 100)}%`)
+  const stats = [
+    { label: 'Families', value: String(insights.families) },
+    { label: 'Episodes read', value: String(insights.episodes) },
+    { label: 'Finished', value: pct(insights.completionRate) },
+    { label: 'Replays / episode', value: insights.replaysPerEpisode === null ? '—' : insights.replaysPerEpisode.toFixed(1) },
+    { label: 'Quiz accuracy', value: pct(insights.quizAccuracy) },
+    { label: 'Read-aloud', value: pct(insights.readAlongAccuracy) },
+  ]
 
   return (
     <div className="min-h-screen">
@@ -155,6 +167,38 @@ export default async function WorldDetailPage({ params }: PageProps) {
               </li>
             ))}
           </ol>
+        </section>
+
+        {/* 世界级聚合：只有数字，没有任何家庭的阅读细节 */}
+        <section className="apple-card p-6 sm:p-8">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-xl font-bold text-[#2D2D2D]">How this world is doing</h2>
+            <span className="rounded-full bg-[#F2F2F7] px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-[#8E8E93]">
+              Aggregated · no family data
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-[#8E8E93] leading-relaxed">
+            Numbers across every family reading this world. No single child&apos;s reading is visible here.
+          </p>
+
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {stats.map((s) => (
+              <div key={s.label} className="rounded-xl bg-[#FAFAFB] px-4 py-3">
+                <p className="text-[11px] uppercase tracking-wide text-[#8E8E93]">{s.label}</p>
+                <p className="mt-1 text-lg font-bold text-[#2D2D2D]">{s.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-4 text-sm text-[#2D2D2D]">
+            <span className="font-semibold">Most-picked lesson: </span>
+            {insights.topMoral || 'not enough readings yet'}
+          </p>
+          {insights.episodes === 0 && (
+            <p className="mt-1 text-xs text-[#8E8E93]">
+              No episodes read in this world yet — these numbers start filling up after the first family reads one.
+            </p>
+          )}
         </section>
       </div>
     </div>

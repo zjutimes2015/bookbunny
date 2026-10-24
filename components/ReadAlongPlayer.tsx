@@ -12,6 +12,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { PageOutline } from '@/lib/types/book'
+import { readAlongAccuracy } from '@/lib/readalong'
 
 interface WordTimestamp {
   word: string
@@ -34,6 +35,31 @@ interface ReadAlongPlayerProps {
   onActivePageChange?: (index: number | null) => void
   language?: string
   rate?: number
+  /** 跟读练习的准确率（0–1）；只在家长确认后、本机识别时回调 */
+  onReadAlongScore?: (accuracy: number) => void
+}
+
+/** 浏览器语音识别的最小接口（Chrome/Edge 的 webkitSpeechRecognition） */
+interface SpeechRecognitionLike {
+  lang: string
+  continuous: boolean
+  interimResults: boolean
+  start: () => void
+  stop: () => void
+  onresult: ((event: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null
+  onerror: (() => void) | null
+  onend: (() => void) | null
+}
+
+type SpeechRecognitionCtor = new () => SpeechRecognitionLike
+
+function getSpeechRecognition(): SpeechRecognitionCtor | null {
+  if (typeof window === 'undefined') return null
+  const w = window as unknown as {
+    SpeechRecognition?: SpeechRecognitionCtor
+    webkitSpeechRecognition?: SpeechRecognitionCtor
+  }
+  return w.SpeechRecognition || w.webkitSpeechRecognition || null
 }
 
 type Status = 'idle' | 'playing' | 'paused'
@@ -101,14 +127,83 @@ export default function ReadAlongPlayer({
   onActivePageChange,
   language = 'en-US',
   rate = 0.85,
+  onReadAlongScore,
 }: ReadAlongPlayerProps) {
   const [status, setStatus] = useState<Status>('idle')
   const [highlightedWord, setHighlightedWord] = useState<number | null>(null)
   const [currentTime, setCurrentTime] = useState(0)
 
+  // 跟读练习（麦克风）：默认关闭，家长确认后才启用
+  const [micSupported, setMicSupported] = useState(false)
+  const [practiceConsent, setPracticeConsent] = useState(false)
+  const [listening, setListening] = useState(false)
+  const [practiceScore, setPracticeScore] = useState<number | null>(null)
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
+  const heardRef = useRef('')
+
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const animFrameRef = useRef<number>(0)
   const playingRef = useRef(false)
+
+  useEffect(() => {
+    setMicSupported(getSpeechRecognition() !== null)
+  }, [])
+
+  // 换页就清空上一页的口语记录，避免把两页拼在一起算分
+  useEffect(() => {
+    recognitionRef.current?.stop()
+    heardRef.current = ''
+    setPracticeScore(null)
+  }, [activePageIndex])
+
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop()
+      recognitionRef.current = null
+    }
+  }, [])
+
+  const finishPractice = (targetText: string) => {
+    const accuracy = readAlongAccuracy(targetText, heardRef.current)
+    setPracticeScore(accuracy)
+    onReadAlongScore?.(accuracy)
+  }
+
+  const startPractice = () => {
+    const Ctor = getSpeechRecognition()
+    if (!Ctor || activePageIndex === null || !currentPageText) return
+
+    const recognition = new Ctor()
+    recognition.lang = language
+    recognition.continuous = true
+    recognition.interimResults = false
+    heardRef.current = ''
+    setPracticeScore(null)
+
+    recognition.onresult = (event) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const alt = event.results[i][0]
+        if (alt?.transcript) heardRef.current += ` ${alt.transcript}`
+      }
+    }
+    recognition.onerror = () => setListening(false)
+    recognition.onend = () => {
+      setListening(false)
+      finishPractice(currentPageText)
+    }
+
+    recognitionRef.current = recognition
+    setListening(true)
+    try {
+      recognition.start()
+    } catch {
+      setListening(false)
+    }
+  }
+
+  const stopPractice = () => {
+    recognitionRef.current?.stop()
+  }
 
   // 当前页的文字
   const currentPageText = activePageIndex !== null && activePageIndex !== undefined ? pages[activePageIndex] : ''
@@ -259,6 +354,45 @@ export default function ReadAlongPlayer({
           ? `${currentCaptions.words.length} words tracked · click Play to start`
           : 'No caption data available · falling back to plain text view'}
       </p>
+
+      {/* 跟读练习：默认关闭，家长确认后才开麦 */}
+      {micSupported && activePageIndex !== null && (
+        <div className="mt-5 border-t border-[#F2F2F7] pt-4">
+          <p className="text-sm font-semibold text-[#2D2D2D]">Read it out loud</p>
+          <p className="mt-1 text-xs text-[#8E8E93] leading-relaxed">
+            Your browser turns speech into words and we compare them with this page. We only save the score —
+            never the audio or the words.
+          </p>
+
+          {!practiceConsent ? (
+            <label className="mt-3 flex items-start gap-2 text-xs text-[#8E8E93] leading-relaxed">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                onChange={(e) => setPracticeConsent(e.target.checked)}
+              />
+              <span>
+                I&apos;m the parent or guardian and I allow speech practice for this page.
+              </span>
+            </label>
+          ) : (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={listening ? stopPractice : startPractice}
+                className={listening ? 'apple-button-secondary text-sm px-4 py-2' : 'apple-button text-sm px-4 py-2'}
+              >
+                {listening ? 'Stop and score' : 'Start reading'}
+              </button>
+              {practiceScore !== null && (
+                <span className="text-sm font-semibold text-[#4A9E8E]">
+                  {Math.round(practiceScore * 100)}% words matched
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

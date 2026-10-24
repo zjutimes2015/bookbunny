@@ -15,6 +15,8 @@ import {
 interface ReadAloudPlayerProps {
   pages: string[]
   onActivePageChange?: (index: number | null) => void
+  /** 每次从 idle 开始播放（含重播）时触发，用于统计重播次数 */
+  onPlay?: () => void
 }
 
 type Status = 'idle' | 'playing' | 'paused'
@@ -47,7 +49,7 @@ const SPEED_OPTIONS = [0.7, 0.85, 1, 1.25]
  * 配音走浏览器内置 Web Speech API（见 lib/audio/narration.ts）；
  * 配乐走运行时 Web Audio 合成（见 lib/audio/music.ts）。
  */
-export default function ReadAloudPlayer({ pages, onActivePageChange }: ReadAloudPlayerProps) {
+export default function ReadAloudPlayer({ pages, onActivePageChange, onPlay }: ReadAloudPlayerProps) {
   const [supported, setSupported] = useState(false)
   const [voices, setVoices] = useState<NarrationVoice[]>([])
   const [status, setStatus] = useState<Status>('idle')
@@ -67,11 +69,16 @@ export default function ReadAloudPlayer({ pages, onActivePageChange }: ReadAloud
   const langRef = useRef(lang)
   const voiceRef = useRef(voiceName)
   const onActiveRef = useRef(onActivePageChange)
+  const onPlayRef = useRef(onPlay)
 
   // 能力探测与语音订阅（仅客户端执行）
   useEffect(() => {
     setSupported(speechSupported())
   }, [])
+
+  useEffect(() => {
+    onPlayRef.current = onPlay
+  }, [onPlay])
 
   useEffect(() => subscribeVoices(setVoices), [])
 
@@ -151,6 +158,7 @@ export default function ReadAloudPlayer({ pages, onActivePageChange }: ReadAloud
     if (pages.length === 0) return
     playingRef.current = true
     setStatus('playing')
+    onPlayRef.current?.()
     speakPage(0)
   }
 
