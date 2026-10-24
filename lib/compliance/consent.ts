@@ -7,8 +7,8 @@
  *
  * A consent record is only ever written by a server-side route, never by the browser.
  */
-import { neon } from '@neondatabase/serverless'
 import { randomUUID } from 'node:crypto'
+import { sql } from '@/lib/neon'
 import { POLICY_VERSION } from '@/lib/site'
 
 /** Purposes for which a child's personal information may be processed. */
@@ -96,8 +96,6 @@ export interface ConsentRecord {
   grantedAt: string
   revokedAt: string | null
 }
-
-const sql = neon(process.env.NEON_DATABASE_URL!)
 
 function mapRow(row: Record<string, unknown>): ConsentRecord {
   return {
