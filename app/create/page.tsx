@@ -1,3 +1,5 @@
+'use client'
+
 import type { Metadata } from 'next'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
@@ -44,8 +46,6 @@ export const metadata: Metadata = {
     follow: false,
   },
 }
-
-'use client'
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'

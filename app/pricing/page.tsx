@@ -1,3 +1,5 @@
+'use client'
+
 import type { Metadata } from 'next'
 import { Fragment, useState } from 'react'
 import Link from 'next/link'
