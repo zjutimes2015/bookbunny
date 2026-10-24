@@ -8,6 +8,7 @@ interface User {
   email: string
   image?: string
   isPaid: boolean
+  isAdmin: boolean
   subscriptionTier: 'free' | 'starter' | 'creator' | 'studio' | 'pro' | 'commercial'
   createdAt: string
 }

@@ -134,15 +134,28 @@ export function UserAvatar() {
           <div className="p-3 border-b border-[#E5E5EA]">
             <p className="text-sm font-medium text-[#2D2D2D]">{user.name}</p>
             <p className="text-xs text-[#8E8E93]">{user.email}</p>
-            <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium ${
-              user.isPaid ? 'bg-[#FFD700]/20 text-[#B8960F]' : 'bg-[#98D8C8]/20 text-[#4A9E8E]'
-            }`}>
-              {user.isPaid ? 'Premium' : 'Free'}
-            </span>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${
+                user.isPaid ? 'bg-[#FFD700]/20 text-[#B8960F]' : 'bg-[#98D8C8]/20 text-[#4A9E8E]'
+              }`}>
+                {user.isPaid ? user.subscriptionTier : 'Free'}
+              </span>
+              {user.isAdmin && (
+                <span className="inline-block text-xs px-2 py-0.5 rounded-full font-medium bg-[#FF6B8A]/20 text-[#FF6B8A]">
+                  Admin
+                </span>
+              )}
+            </div>
           </div>
-          <Link href={user.isPaid ? '/admin' : '/pricing'} className="block px-3 py-2 text-sm text-[#2D2D2D] hover:bg-[#F2F2F7]">
-            {user.isPaid ? 'Dashboard' : 'Upgrade Plan'}
-          </Link>
+          {user.isAdmin ? (
+            <Link href="/admin" className="block px-3 py-2 text-sm text-[#2D2D2D] hover:bg-[#F2F2F7]">
+              🛡️ Admin Dashboard
+            </Link>
+          ) : (
+            <Link href={user.isPaid ? '/progress' : '/pricing'} className="block px-3 py-2 text-sm text-[#2D2D2D] hover:bg-[#F2F2F7]">
+              {user.isPaid ? 'My Progress' : 'Upgrade Plan'}
+            </Link>
+          )}
           <button onClick={logout} className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-[#F2F2F7]">
             Sign Out
           </button>

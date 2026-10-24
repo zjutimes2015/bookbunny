@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
+import { isAdminEmail } from '@/lib/admin'
 
 export async function GET(req: NextRequest) {
   const token = req.cookies.get('auth_token')?.value
@@ -28,6 +29,7 @@ export async function GET(req: NextRequest) {
         image: u.image,
         isPaid: u.is_paid,
         subscriptionTier: u.subscription_tier,
+        isAdmin: isAdminEmail(u.email),
         credits: u.credits ?? 0,
         allowanceRemaining: u.monthly_allowance_remaining ?? null,
         allowanceResetAt: u.allowance_reset_at ?? null,
