@@ -2,13 +2,16 @@ import { NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 import { sendEmail } from '@/lib/email/send'
 
-// ⚠️ Protected: should only be called by cron-job.org
+// ⚠️ Protected: called by Vercel Cron (Authorization: Bearer $CRON_SECRET)
 // Add CRON_SECRET to .env.local for security
 export async function GET(req: Request) {
   try {
     // Verify cron secret
     const url = new URL(req.url)
-    const token = url.searchParams.get('token')
+    const token =
+      url.searchParams.get('token') ||
+      req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
+      ''
     const expectedToken = process.env.CRON_SECRET
 
     if (expectedToken && token !== expectedToken) {

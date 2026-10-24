@@ -25,6 +25,12 @@ function makeRequest(token?: string) {
   return new Request(url)
 }
 
+function makeBearerRequest(token: string) {
+  return new Request('http://localhost/api/cron/pro-grants', {
+    headers: { authorization: `Bearer ${token}` },
+  })
+}
+
 describe('GET /api/cron/pro-grants', () => {
   beforeEach(() => {
     responseQueue.length = 0
@@ -52,6 +58,17 @@ describe('GET /api/cron/pro-grants', () => {
       const res = await GET(makeRequest())
       expect(res.status).toBe(500)
       expect(callLog).toHaveLength(0)
+    })
+
+    it('accepts Authorization: Bearer <CRON_SECRET> from Vercel Cron', async () => {
+      responseQueue.push([])
+      const res = await GET(makeBearerRequest('secret-123'))
+      expect(res.status).toBe(200)
+    })
+
+    it('rejects a wrong bearer token', async () => {
+      const res = await GET(makeBearerRequest('nope'))
+      expect(res.status).toBe(401)
     })
   })
 

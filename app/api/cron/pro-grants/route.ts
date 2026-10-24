@@ -2,12 +2,15 @@ import { NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 import { PRO_CREDITS_PER_BOOK, STUDIO_PRO_BOOKS_PER_PERIOD } from '@/lib/payments/waffo'
 
-// ⚠️ Protected: should only be called by cron-job.org
+// ⚠️ Protected: called by Vercel Cron (Authorization: Bearer $CRON_SECRET)
 // Studio 年付用户按月补发 Pro 动画额度（月付由续费 webhook 直接发放）
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url)
-    const token = url.searchParams.get('token')
+    const token =
+      url.searchParams.get('token') ||
+      req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
+      ''
     const expectedToken = process.env.CRON_SECRET
 
     // 该任务会发放付费权益，未配置密钥时拒绝执行
