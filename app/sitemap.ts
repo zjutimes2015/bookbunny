@@ -52,5 +52,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       ...monthly(),
       priority: 0.5,
     },
+    {
+      url: `${SITE_URL}/refunds`,
+      ...monthly(),
+      priority: 0.5,
+    },
   ]
 }

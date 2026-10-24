@@ -9,6 +9,7 @@ import {
   LEGAL_JURISDICTION,
   POLICY_VERSION,
 } from '@/lib/site'
+import { refundPolicySections } from '@/lib/legal/refund-policy'
 
 const TITLE = 'Terms of Service — SproutTales'
 const DESCRIPTION =
@@ -229,6 +230,16 @@ const SECTIONS: Section[] = [
           <li className={ITEM}>
             <span className={DOT}>•</span>
             <span>
+              <span className={STRONG}>Non-consensual intimate imagery (NCII).</span> Private
+              intimate images of a person without that person&apos;s consent, or synthetic or
+              AI-generated intimate images of a person without that person&apos;s consent. A parent
+              or guardian may not upload, request, or generate intimate images of a child or of
+              anyone else.
+            </span>
+          </li>
+          <li className={ITEM}>
+            <span className={DOT}>•</span>
+            <span>
               <span className={STRONG}>Deepfakes and impersonation.</span> Content that depicts a
               real, identifiable person without their consent, or that is intended to deceive others
               about a person&apos;s identity, statements, or actions.
@@ -367,29 +378,21 @@ const SECTIONS: Section[] = [
     title: 'Payments, subscriptions, cancellation and refunds',
     body: (
       <>
-        <ul className={LIST}>
-          <li className={ITEM}>
-            <span className={DOT}>•</span>
-            <span>
-              Payments are processed by our payment processor. You agree to its terms when you make a
-              purchase.
-            </span>
-          </li>
-          <li className={ITEM}>
-            <span className={DOT}>•</span>
-            <span>
-              Paid plans are subscriptions that renew automatically until you cancel. You may cancel
-              at any time, and access continues until the end of the period you have paid for.
-            </span>
-          </li>
-          <li className={ITEM}>
-            <span className={DOT}>•</span>
-            <span>
-              Refunds are provided as required by applicable law and as described at the point of
-              purchase.
-            </span>
-          </li>
-        </ul>
+        <p>
+          Paid plans and credit packs are purchased by the parent or guardian who holds the{' '}
+          {SITE_NAME} account. The refund rules below are part of these Terms. The same rules are
+          published as our{' '}
+          <Link href="/refunds" className={STRONG}>
+            Refund Policy
+          </Link>
+          .
+        </p>
+        {refundPolicySections({ includeTermsLink: false }).map((section) => (
+          <div key={section.id} id={section.id}>
+            <h3 className={SUBHEAD}>{section.title}</h3>
+            {section.body}
+          </div>
+        ))}
       </>
     ),
   },
@@ -482,7 +485,7 @@ export default function TermsPage() {
         </h1>
         <p className="mt-5 text-lg text-[#8E8E93] max-w-2xl mx-auto leading-relaxed">
           The rules for using SproutTales — eligibility, content rules, AI-output disclaimers,
-          ownership, payments, and the limits of our liability.
+          ownership, payments and refunds, and the limits of our liability.
         </p>
         <p className="mt-4 text-sm text-[#8E8E93]">Effective date: {POLICY_VERSION}</p>
       </section>
@@ -516,6 +519,10 @@ export default function TermsPage() {
             See also our{' '}
             <Link href="/privacy" className="text-[#FF6B8A] font-medium">
               Privacy Policy
+            </Link>{' '}
+            and{' '}
+            <Link href="/refunds" className="text-[#FF6B8A] font-medium">
+              Refund Policy
             </Link>
             , or return to the{' '}
             <Link href="/" className="text-[#FF6B8A] font-medium">

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { neon } from '@neondatabase/serverless'
-
-const sql = neon(process.env.NEON_DATABASE_URL!)
+import { sql } from '@/lib/neon'
 
 // 与 /api/auth/me 同一套 cookie 认证
 async function getUserId(req: NextRequest): Promise<string | null> {

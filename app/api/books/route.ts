@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { neon } from '@neondatabase/serverless'
+import { sql } from '@/lib/neon'
 import { outlineToPages, type PageOutline } from '@/lib/types/book'
-
-const sql = neon(process.env.NEON_DATABASE_URL!)
 
 interface SaveBookBody {
   title: string

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from 'next/server'
-import { neon } from '@neondatabase/serverless'
+import { sql } from '@/lib/neon'
 import {
   pagesToOutline,
   ASPECT_SIZE,
@@ -15,8 +15,6 @@ import { requireHuman, attachPassCookie, humanCheckFailedResponse } from '@/lib/
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
-
-const sql = neon(process.env.NEON_DATABASE_URL!)
 
 interface JobPage {
   index: number
