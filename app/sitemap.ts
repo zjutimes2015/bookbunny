@@ -7,38 +7,45 @@ import { SITE_URL } from '@/lib/site'
  * routes are listed — private surfaces such as /api, /admin and /progress stay uncrawled.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date()
+  const now = new Date()
+  const monthly = () => ({ lastModified: now, changeFrequency: 'monthly' as const })
+  const weekly = () => ({ lastModified: now, changeFrequency: 'weekly' as const })
 
   return [
     {
       url: `${SITE_URL}/`,
-      lastModified,
-      changeFrequency: 'weekly',
+      ...weekly(),
       priority: 1,
     },
     {
       url: `${SITE_URL}/ai-picture-book-generator`,
-      lastModified,
-      changeFrequency: 'monthly',
+      ...monthly(),
       priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/vs/readkidz`,
-      lastModified,
-      changeFrequency: 'monthly',
-      priority: 0.8,
     },
     {
       url: `${SITE_URL}/pricing`,
-      lastModified,
-      changeFrequency: 'monthly',
+      ...monthly(),
       priority: 0.8,
     },
     {
-      url: `${SITE_URL}/create`,
-      lastModified,
-      changeFrequency: 'weekly',
-      priority: 0.9,
+      url: `${SITE_URL}/vs/readkidz`,
+      ...monthly(),
+      priority: 0.7,
+    },
+    {
+      url: `${SITE_URL}/safety`,
+      ...monthly(),
+      priority: 0.6,
+    },
+    {
+      url: `${SITE_URL}/privacy`,
+      ...monthly(),
+      priority: 0.5,
+    },
+    {
+      url: `${SITE_URL}/terms`,
+      ...monthly(),
+      priority: 0.5,
     },
   ]
 }

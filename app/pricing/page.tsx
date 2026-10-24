@@ -1,7 +1,46 @@
-'use client'
-
+import type { Metadata } from 'next'
 import { Fragment, useState } from 'react'
+import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
+import { SITE_URL, SITE_NAME } from '@/lib/site'
+
+const TITLE = 'Pricing — Free & Paid Plans for AI Children\'s Books | SproutTales'
+const DESCRIPTION =
+  'SproutTales pricing: Free plan (1 book), Starter $12/mo, Creator $29/mo with KDP export and commercial license, Studio $59/mo. Optional credit packs never expire. Annual billing saves up to 25%.'
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: `${SITE_URL}/pricing` },
+  openGraph: {
+    type: 'website',
+    url: `${SITE_URL}/pricing`,
+    siteName: SITE_NAME,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'SproutTales pricing plans',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ['/twitter-image.png'],
+  },
+  keywords: [
+    'AI children book pricing',
+    'picture book generator cost',
+    'KDP book creator pricing',
+    'children story app price',
+    'SproutTales plans',
+  ],
+}
 
 type MatrixValue = string | boolean
 
@@ -63,7 +102,6 @@ interface PlanCard {
   desc: string
   features: string[]
   cta: string
-  /** false 时按钮直接进入创作页（免费档） */
   checkout: boolean
   featured?: boolean
 }
@@ -348,7 +386,7 @@ export default function PricingPage() {
 
       <div className="text-center mt-10">
         <p className="text-xs text-[#8E8E93]">
-          Cancel anytime. Credits never expire and are never resold as “unlimited”.
+          Cancel anytime. Credits never expire and are never resold as "unlimited".
         </p>
       </div>
     </div>

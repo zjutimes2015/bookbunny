@@ -13,14 +13,35 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: '/safety' },
+  alternates: { canonical: `${SITE_URL}/safety` },
   openGraph: {
-    title: TITLE,
-    description: DESCRIPTION,
+    type: 'website',
     url: `${SITE_URL}/safety`,
     siteName: SITE_NAME,
-    type: 'website',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'SproutTales child safety and COPPA compliance',
+      },
+    ],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ['/twitter-image.png'],
+  },
+  keywords: [
+    'children book safety',
+    'COPPA compliance',
+    'parental consent AI',
+    'child data protection',
+    'biometric data children',
+  ],
 }
 
 const STRONG = 'text-[#2D2D2D] font-semibold'

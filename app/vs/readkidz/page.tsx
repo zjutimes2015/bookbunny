@@ -3,21 +3,42 @@ import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
-const TITLE = 'SproutTales vs ReadKidz — AI Children’s Picture Book Generator Comparison'
+const TITLE = 'SproutTales vs ReadKidz — AI Children\'s Picture Book Comparison (2026)'
 const DESCRIPTION =
-  'An honest comparison of SproutTales and ReadKidz: pricing model, credits, free-plan exports, pages per book, character consistency, photo privacy, and print-ready PDF export.'
+  'An honest comparison of SproutTales and ReadKidz: pricing model, credits, free-plan exports, pages per book, character consistency, photo privacy, GRL reading levels, and print-ready PDF export for Amazon KDP.'
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: `${SITE_URL}/vs/readkidz` },
   openGraph: {
-    title: TITLE,
-    description: DESCRIPTION,
+    type: 'website',
     url: `${SITE_URL}/vs/readkidz`,
     siteName: SITE_NAME,
-    type: 'website',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'SproutTales vs ReadKidz comparison',
+      },
+    ],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ['/twitter-image.png'],
+  },
+  keywords: [
+    'SproutTales vs ReadKidz',
+    'AI children book generator comparison',
+    'best AI picture book maker',
+    'ReadKidz alternative',
+    'AI storybook comparison 2026',
+  ],
 }
 
 interface CompareRow {
@@ -100,7 +121,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'Does SproutTales watermark free exports?',
-    a: 'The Free plan is preview-only with a watermark — one 8-page book, three art styles, and no PDF export. Watermark-free PDF export starts on Starter at $12/month. ReadKidz’s free-plan exports carry a watermark.',
+    a: 'The Free plan is preview-only with a watermark — one 8-page book, three art styles, and no PDF export. Watermark-free PDF export starts on Starter at $12/month. ReadKidz\'s free-plan exports carry a watermark.',
   },
   {
     q: 'Which is better if I want a printed hardcover book?',
@@ -112,7 +133,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'Can I publish books from either tool on Amazon KDP?',
-    a: 'ReadKidz’s Terms allow commercial use of output, such as publishing to Amazon KDP, and note that AI outputs are non-exclusive. SproutTales exports two print-ready PDFs for KDP — a separate interior and a full cover — with bleed, gutter, spine width, and an even page count of at least 24; commercial rights are included from the Creator plan at $29/month.',
+    a: 'ReadKidz\'s Terms allow commercial use of output, such as publishing to Amazon KDP, and note that AI outputs are non-exclusive. SproutTales exports two print-ready PDFs for KDP — a separate interior and a full cover — with bleed, gutter, spine width, and an even page count of at least 24; commercial rights are included from the Creator plan at $29/month.',
   },
 ]
 
@@ -143,7 +164,7 @@ export default function VsReadKidzPage() {
           SproutTales <span className="bunny-text-gradient">vs</span> ReadKidz
         </h1>
         <p className="mt-5 text-lg text-[#8E8E93] max-w-2xl mx-auto leading-relaxed">
-          Both tools turn an idea into an illustrated children’s book. Here is an honest,
+          Both tools turn an idea into an illustrated children&apos;s book. Here is an honest,
           side-by-side look at how they differ — including where ReadKidz is the stronger choice.
         </p>
       </section>
@@ -179,7 +200,7 @@ export default function VsReadKidzPage() {
           </div>
         </div>
         <p className="text-xs text-[#8E8E93] mt-4">
-          “—” means the feature was not part of the details we could verify from the competitor’s
+          "—" means the feature was not part of the details we could verify from the competitor&apos;s
           public pricing page. Always check readkidz.com for their current plans and features.
         </p>
       </section>

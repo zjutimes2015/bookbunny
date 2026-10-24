@@ -17,14 +17,35 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: '/terms' },
+  alternates: { canonical: `${SITE_URL}/terms` },
   openGraph: {
-    title: TITLE,
-    description: DESCRIPTION,
+    type: 'website',
     url: `${SITE_URL}/terms`,
     siteName: SITE_NAME,
-    type: 'website',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'SproutTales terms of service',
+      },
+    ],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ['/twitter-image.png'],
+  },
+  keywords: [
+    'terms of service children books',
+    'AI picture book terms',
+    'children content policy',
+    'commercial license terms',
+    'SproutTales terms',
+  ],
 }
 
 const SUBHEAD = 'text-sm font-semibold text-[#2D2D2D] mt-5 mb-2'

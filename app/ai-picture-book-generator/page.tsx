@@ -3,21 +3,44 @@ import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
-const TITLE = 'AI Picture Book Generator — Create Illustrated Children’s Books with Consistent Characters'
+const TITLE = 'AI Picture Book Generator — Create Illustrated Children\'s Books with Consistent Characters'
 const DESCRIPTION =
-  'SproutTales is an AI picture book generator that turns an idea into a fully illustrated children’s storybook — consistent characters, leveled text, and a print-ready PDF. Start free, then pick the plan that fits.'
+  'SproutTales is an AI picture book generator that turns an idea into a fully illustrated children\'s storybook — consistent characters, leveled text, and a print-ready PDF. Start free, then pick the plan that fits.'
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: `${SITE_URL}/ai-picture-book-generator` },
   openGraph: {
-    title: TITLE,
-    description: DESCRIPTION,
+    type: 'website',
     url: `${SITE_URL}/ai-picture-book-generator`,
     siteName: SITE_NAME,
-    type: 'website',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'SproutTales — AI picture book generator',
+      },
+    ],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ['/twitter-image.png'],
+  },
+  keywords: [
+    'AI picture book generator',
+    'AI children book creator',
+    'AI storybook maker',
+    'illustrated children book AI',
+    'AI picture book generator free',
+    'KDP picture book AI',
+    'consistent character AI illustration',
+  ],
 }
 
 const STEPS = [
@@ -29,7 +52,7 @@ const STEPS = [
 ]
 
 const WHAT_YOU_GET = [
-  'A complete, illustrated children’s picture book from a single idea.',
+  'A complete, illustrated children\'s picture book from a single idea.',
   'The same recognizable character on every page, enforced by a stored reference card.',
   'Reading-level-matched text (GRL A–E) with vocabulary suited to the level.',
   'Comprehension questions and a reading-progress view for each book.',
@@ -68,7 +91,7 @@ const DIFFERENTIATORS = [
 const FAQS: { q: string; a: string }[] = [
   {
     q: 'What is an AI picture book generator?',
-    a: 'An AI picture book generator turns a written idea into a finished children’s picture book — it writes the story, creates the characters, and illustrates each page. SproutTales then exports the result as a print-ready PDF you can publish or print.',
+    a: 'An AI picture book generator turns a written idea into a finished children\'s picture book — it writes the story, creates the characters, and illustrates each page. SproutTales then exports the result as a print-ready PDF you can publish or print.',
   },
   {
     q: 'How do I create a picture book with SproutTales?',
@@ -119,7 +142,7 @@ export default function AiPictureBookGeneratorPage() {
           AI <span className="bunny-text-gradient">Picture Book</span> Generator
         </h1>
         <p className="mt-5 text-lg text-[#8E8E93] max-w-2xl mx-auto leading-relaxed">
-          Turn an idea into a fully illustrated children’s storybook. SproutTales writes the story,
+          Turn an idea into a fully illustrated children&apos;s storybook. SproutTales writes the story,
           keeps the characters consistent on every page, and exports a print-ready PDF — with no
           credits and no expiry.
         </p>

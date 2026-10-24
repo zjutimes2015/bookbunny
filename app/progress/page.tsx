@@ -1,9 +1,33 @@
 'use client'
 
+import type { Metadata } from 'next'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 import { useAuth } from '@/lib/auth-context'
+import { SITE_URL, SITE_NAME } from '@/lib/site'
+
+const TITLE = 'Reading Progress — Track Your Child\'s Leveled Book Journey | SproutTales'
+const DESCRIPTION = 'Track your child\'s reading journey with SproutTales: view books read by level (GRL A–E), see comprehension progress, and explore their growing library.'
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: `${SITE_URL}/progress` },
+  robots: 'noindex, follow',
+  openGraph: {
+    type: 'website',
+    url: `${SITE_URL}/progress`,
+    siteName: SITE_NAME,
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+}
 
 interface BookItem {
   id: string

@@ -1,5 +1,55 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import type { ReactNode } from 'react'
+import { SITE_URL, SITE_NAME } from '@/lib/site'
+
+export const metadata: Metadata = {
+  title: 'Home — AI Children\'s Picture Book Generator | SproutTales',
+  description:
+    'Turn an idea into a real picture book with consistent characters and up to 24 illustrated pages. GRL A–E leveled readers, print-ready PDFs for Amazon KDP, and 10 languages. Start free — no credit card required.',
+  alternates: {
+    canonical: SITE_URL,
+  },
+  openGraph: {
+    type: 'website',
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: 'AI Children\'s Picture Book Generator — SproutTales',
+    description:
+      'Turn an idea into a real picture book with consistent characters and up to 24 illustrated pages. GRL A–E leveled readers, print-ready PDFs for Amazon KDP.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'SproutTales — AI children\'s picture book generator',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AI Children\'s Picture Book Generator — SproutTales',
+    description:
+      'Turn an idea into a real picture book with consistent characters. GRL A–E, KDP-ready PDFs, 10 languages. Start free.',
+    images: ['/twitter-image.png'],
+  },
+  keywords: [
+    'AI children book generator',
+    'AI picture book maker',
+    'children story book creator',
+    'KDP book generator',
+    'Amazon KDP children book',
+    'leveled reader AI GRL A-E',
+    'character consistent AI illustration',
+    'AI book creator for kids',
+    'photo to character AI',
+    'parental consent children app',
+    'SproutTales',
+  ],
+  robots: {
+    index: true,
+    follow: true,
+  },
+}
 
 type SceneVariant = 'meadow' | 'stream' | 'garden'
 type CoverVariant = 'moon' | 'lila' | 'kai'
@@ -355,13 +405,13 @@ const FAQS = [
   },
 ]
 
-const Chip = ({ children }: { children: ReactNode }) => (
+const Chip = ({ children }: { children: React.ReactNode }) => (
   <span className="rounded-md border border-[#E5E5EA] px-2 py-0.5 text-[10px] font-medium tracking-wide text-[#8E8E93]">
     {children}
   </span>
 )
 
-const SectionLabel = ({ children }: { children: ReactNode }) => (
+const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <p className="mb-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8E8E93]">{children}</p>
 )
 
