@@ -49,6 +49,9 @@ export default function Footer() {
               <Link href="/terms" className="block text-[#8E8E93] hover:text-[#FF6B8A]">
                 Terms of Service
               </Link>
+              <Link href="/refunds" className="block text-[#8E8E93] hover:text-[#FF6B8A]">
+                Refund Policy
+              </Link>
               <Link href="/privacy" className="block text-[#8E8E93] hover:text-[#FF6B8A]">
                 Privacy Policy
               </Link>
