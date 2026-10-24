@@ -114,6 +114,9 @@ export type WaffoPlanKey = keyof typeof WAFFO_PLANS
  */
 export const PRO_CREDITS_PER_BOOK = 3
 
+/** Studio 每期附赠的 Pro 动画本数（订阅权益，非一次性商品） */
+export const STUDIO_PRO_BOOKS_PER_PERIOD = 10
+
 /** 套餐 key 对应的订阅档位；未知 plan（如已下架的历史套餐）返回 null */
 export function planTier(planKey: string): SubscriptionTier | null {
   const plan = WAFFO_PLANS[planKey as WaffoPlanKey]

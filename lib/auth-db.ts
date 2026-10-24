@@ -19,6 +19,7 @@ sql`
     updated_at TIMESTAMP DEFAULT NOW(),
     credits INTEGER DEFAULT 0,
     pro_animation_credits INTEGER DEFAULT 0,
+    pro_grant_next_at TIMESTAMPTZ,
     monthly_allowance_remaining INTEGER,
     allowance_reset_at TIMESTAMPTZ
   )
@@ -26,6 +27,8 @@ sql`
 
 // 存量库补列（Pro 动画面包是独立商品，额度池与普通 credits 分离）
 sql`ALTER TABLE bookbunny_users ADD COLUMN IF NOT EXISTS pro_animation_credits INTEGER DEFAULT 0`.catch(() => {})
+// 下次应发放 Pro 额度的时点（Studio 年付靠它按月补发）
+sql`ALTER TABLE bookbunny_users ADD COLUMN IF NOT EXISTS pro_grant_next_at TIMESTAMPTZ`.catch(() => {})
 
 export const users = pgTable('bookbunny_users', {
   id: text('id').primaryKey(),
@@ -39,6 +42,7 @@ export const users = pgTable('bookbunny_users', {
   updatedAt: timestamp('updated_at').defaultNow(),
   credits: integer('credits').default(0),
   proAnimationCredits: integer('pro_animation_credits').default(0),
+  proGrantNextAt: timestamp('pro_grant_next_at', { withTimezone: true }),
   monthlyAllowanceRemaining: integer('monthly_allowance_remaining'),
   allowanceResetAt: timestamp('allowance_reset_at', { withTimezone: true }),
 })

@@ -6,7 +6,7 @@ import {
   type WebhookEvent,
   type WebhookEventData,
 } from '@waffo/pancake-ts'
-import { planTier, planGrant, PRO_CREDITS_PER_BOOK } from '@/lib/payments/waffo'
+import { planTier, planGrant, PRO_CREDITS_PER_BOOK, STUDIO_PRO_BOOKS_PER_PERIOD } from '@/lib/payments/waffo'
 import { recordCommissionForPayment } from '@/lib/affiliate'
 
 /** 各订阅档位的月度书籍 allowance */
@@ -14,9 +14,6 @@ const TIER_ALLOWANCE: Record<string, number> = {
   creator: 30,
   studio: 100,
 }
-
-/** Studio 每期附赠的 Pro 动画本数 */
-const STUDIO_PRO_BOOKS = 10
 
 /** 下一次 allowance 重置时间（下个月 1 号 00:00 UTC） */
 function nextResetAt() {
@@ -96,9 +93,11 @@ export async function POST(request: Request) {
             WHERE id = ${userId}
           `
         } else {
-          // 订阅档位：重置月度书籍 allowance，Studio 额外附赠 Pro 动画额度
+          // 订阅档位：重置月度书籍 allowance，Studio 额外附赠本期 Pro 动画额度。
+          // pro_grant_next_at 记录下次应发放时点：月付靠续费 webhook 推进，
+          // 年付由 /api/cron/pro-grants 按月补发。
           const allowance = TIER_ALLOWANCE[tier] ?? 0
-          const proCredits = tier === 'studio' ? STUDIO_PRO_BOOKS * PRO_CREDITS_PER_BOOK : 0
+          const proCredits = tier === 'studio' ? STUDIO_PRO_BOOKS_PER_PERIOD * PRO_CREDITS_PER_BOOK : 0
           await sql`
             UPDATE bookbunny_users
             SET is_paid = TRUE,
@@ -106,6 +105,10 @@ export async function POST(request: Request) {
                 monthly_allowance_remaining = ${allowance},
                 allowance_reset_at = ${nextResetAt()},
                 pro_animation_credits = COALESCE(pro_animation_credits, 0) + ${proCredits},
+                pro_grant_next_at = CASE
+                  WHEN ${proCredits} > 0 THEN NOW() + INTERVAL '1 month'
+                  ELSE pro_grant_next_at
+                END,
                 updated_at = NOW()
             WHERE id = ${userId}
           `
@@ -116,6 +119,7 @@ export async function POST(request: Request) {
 
       case WebhookEventType.SubscriptionCanceled:
       case WebhookEventType.SubscriptionPastDue: {
+        // 取消/逾期时停止后续 Pro 额度发放（已发放的余额保留）
         if (userId) {
           await sql`
             UPDATE bookbunny_users
@@ -123,6 +127,7 @@ export async function POST(request: Request) {
                 subscription_tier = 'free',
                 monthly_allowance_remaining = NULL,
                 allowance_reset_at = NULL,
+                pro_grant_next_at = NULL,
                 updated_at = NOW()
             WHERE id = ${userId}
           `
@@ -133,6 +138,7 @@ export async function POST(request: Request) {
                 subscription_tier = 'free',
                 monthly_allowance_remaining = NULL,
                 allowance_reset_at = NULL,
+                pro_grant_next_at = NULL,
                 updated_at = NOW()
             WHERE email = ${d.buyerEmail}
           `
