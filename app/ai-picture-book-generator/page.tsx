@@ -3,9 +3,9 @@ import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
-const TITLE = 'AI Picture Book Generator — Create Illustrated Children\'s Books with Consistent Characters'
+const TITLE = "AI Picture Book Generator for Kids — Create & Print KDP Books (2026)"
 const DESCRIPTION =
-  'SproutTales is an AI picture book generator that turns an idea into a fully illustrated children\'s storybook — consistent characters, leveled text, and a print-ready PDF. Start free, then pick the plan that fits.'
+  'SproutTales is the best AI picture book generator in 2026: turn an idea into a fully illustrated children\'s storybook with consistent characters, GRL A–E leveled text, and print-ready PDFs for Amazon KDP. Start free today.'
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -40,6 +40,9 @@ export const metadata: Metadata = {
     'AI picture book generator free',
     'KDP picture book AI',
     'consistent character AI illustration',
+    'how to make a childrens book with AI',
+    'make a childrens book free',
+    'best AI picture book generator 2026',
   ],
 }
 
@@ -91,11 +94,15 @@ const DIFFERENTIATORS = [
 const FAQS: { q: string; a: string }[] = [
   {
     q: 'What is an AI picture book generator?',
-    a: 'An AI picture book generator turns a written idea into a finished children\'s picture book — it writes the story, creates the characters, and illustrates each page. SproutTales then exports the result as a print-ready PDF you can publish or print.',
+    a: 'An AI picture book generator turns a written idea into a finished children\'s picture book — it writes the story, creates the characters, and illustrates each page. SproutTales then exports the result as a print-ready PDF you can publish or print on Amazon KDP.',
   },
   {
-    q: 'How do I create a picture book with SproutTales?',
-    a: 'Enter an idea, pick a reading level from GRL A to E, build your character, and SproutTales writes and illustrates every page. When the story is finished you download a KDP-ready interior PDF and a full-cover PDF.',
+    q: 'How do I make a children\'s book with AI?',
+    a: 'Enter an idea or theme, pick a reading level from GRL A to E, build your character from a description or photo, and SproutTales writes and illustrates every page in about 10 minutes. You then download two print-ready PDFs — interior and full cover — ready for Amazon KDP.',
+  },
+  {
+    q: 'How do I create a children\'s book for my kid?',
+    a: 'Start with a simple idea — a bedtime story, a holiday adventure, or your child as the hero. SproutTales handles the story writing, consistent character illustrations, and print-ready export. No design skills needed.',
   },
   {
     q: 'Do the characters stay consistent across every page?',
@@ -108,6 +115,10 @@ const FAQS: { q: string; a: string }[] = [
   {
     q: 'Can I publish a SproutTales book on Amazon KDP?',
     a: 'SproutTales exports two print-ready PDFs for Amazon KDP — a separate interior and a full cover (back, spine, and front) — with the correct bleed, gutter, spine width, and an even, padded page count of at least 24.',
+  },
+  {
+    q: 'Is there a free AI picture book generator?',
+    a: 'Yes. SproutTales offers a Free plan that lets you create 1 eight-page book with three art styles. Watermark-free PDF export and KDP-ready files start on the Starter plan at $12/month.',
   },
   {
     q: 'Is there a credit system, and do my books expire?',

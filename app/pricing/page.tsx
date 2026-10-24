@@ -4,9 +4,9 @@ import { Fragment, useState } from 'react'
 import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 
-const TITLE = 'Pricing — Free & Paid Plans for AI Children\'s Books | SproutTales'
+const TITLE = "AI Picture Book Generator — Free Plan + $12/mo Starter | SproutTales Pricing"
 const DESCRIPTION =
-  'SproutTales pricing: Free plan (1 book), Starter $12/mo, Creator $29/mo with KDP export and commercial license, Studio $59/mo. Optional credit packs never expire. Annual billing saves up to 25%.'
+  "Start free with 1 AI children's book. Starter plan is just $12/month with KDP export, commercial license, and 10 books/month. Creator $29, Studio $59. Credit packs never expire."
 
 type MatrixValue = string | boolean
 

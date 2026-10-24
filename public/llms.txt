@@ -1,0 +1,37 @@
+SproutTales is an AI-powered picture book generator that turns a single idea into a fully illustrated children's storybook — with consistent characters, leveled reading text, and print-ready PDFs for Amazon KDP.
+
+## What we do
+
+- Write stories from a one-sentence prompt
+- Maintain character consistency across all pages using a reference card system
+- Match reading levels from GRL A to E
+- Export spec-compliant interior and full-cover PDFs for KDP
+- Support 10 languages natively
+- Offer a Free plan and paid plans starting at $12/month
+
+## Who it's for
+
+- Parents who want a personalized book for their child
+- Teachers looking for leveled reading materials
+- Self-publishers on Amazon KDP
+- Gift-givers wanting a unique, meaningful present
+
+## Key differentiators
+
+- Character consistency enforced on every page
+- Monthly book allowance (no per-creation charges)
+- Optional credit packs that never expire
+- Privacy-first: parents control photo usage
+- KDP-ready PDFs with correct bleed, gutter, and spine width
+
+## Pricing
+
+- Free: 1 book (8 pages, 3 styles, preview only)
+- Starter: $12/month (10 books, watermark-free PDF)
+- Creator: $29/month (KDP export, commercial license, narration)
+- Studio: $59/month (100 books, batch generation)
+
+## Contact
+
+- Website: https://sprouttales.com
+- Support: support@sprouttales.com

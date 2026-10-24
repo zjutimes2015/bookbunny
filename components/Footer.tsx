@@ -28,6 +28,21 @@ export default function Footer() {
               <Link href="/affiliate" className="block text-[#8E8E93] hover:text-[#FF6B8A]">
                 Affiliate program
               </Link>
+              <Link href="/personalized-childrens-books" className="block text-[#8E8E93] hover:text-[#FF6B8A]">
+                Personalized gifts
+              </Link>
+            </div>
+            <div className="space-y-3">
+              <p className="font-semibold text-[#2D2D2D]">Learn</p>
+              <Link href="/blog/how-to-make-a-childrens-book" className="block text-[#8E8E93] hover:text-[#FF6B8A]">
+                How-to guide
+              </Link>
+              <Link href="/vs/readkidz" className="block text-[#8E8E93] hover:text-[#FF6B8A]">
+                SproutTales vs ReadKidz
+              </Link>
+              <Link href="/about" className="block text-[#8E8E93] hover:text-[#FF6B8A]">
+                About
+              </Link>
             </div>
             <div className="space-y-3">
               <p className="font-semibold text-[#2D2D2D]">Legal</p>
@@ -36,6 +51,9 @@ export default function Footer() {
               </Link>
               <Link href="/privacy" className="block text-[#8E8E93] hover:text-[#FF6B8A]">
                 Privacy Policy
+              </Link>
+              <Link href="/safety" className="block text-[#8E8E93] hover:text-[#FF6B8A]">
+                Safety & Privacy
               </Link>
             </div>
             <div className="space-y-3">
