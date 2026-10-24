@@ -30,6 +30,8 @@ interface StoryOptions {
   styleCard?: StyleCard
   /** 角色设定卡（可选）：注入大纲，锁定角色一致性 */
   characterCards?: CharacterCard[]
+  /** 续集简报（可选）：同一主角 + 同一世界的下一集，而不是一本新书 */
+  sequelBrief?: string
   /** 内容语言（可选）：面向读者的文字语言，缺省英语 */
   language?: BookLanguage
 }
@@ -145,7 +147,7 @@ Parameters:
 - Main Character(s): ${options.characterName}
 - Number of pages: ${pageCount} (page 1 is the COVER, the rest are BODY)
 
-${constraintsBlock ? constraintsBlock + '\n' : ''}${languageRule}\n\n${characterBibleBlock ? characterBibleBlock + '\n\n' : ''}${visualDirectionBlock ? visualDirectionBlock + '\n\n' : ''}For EACH page output the following 18 fields (this is a "construction drawing", be concrete, NEVER vague like "warm scene").
+${constraintsBlock ? constraintsBlock + '\n' : ''}${languageRule}\n\n${characterBibleBlock ? characterBibleBlock + '\n\n' : ''}${visualDirectionBlock ? visualDirectionBlock + '\n\n' : ''}${options.sequelBrief ? options.sequelBrief + '\n\n' : ''}For EACH page output the following 18 fields (this is a "construction drawing", be concrete, NEVER vague like "warm scene").
 
 LANGUAGE CONTRACT (strictly enforced, no exceptions):
 - Reader-facing fields (3, 4, 6, 7, 8, 18) and the title MUST be written in ${languageName(lang)}.

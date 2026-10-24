@@ -10,7 +10,7 @@ import {
 } from '@/lib/types/book'
 import { getSessionUser, getClientIp } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { isR2Configured, uploadBase64Image, bookKey } from '@/lib/r2'
+import { isR2Configured, uploadBase64Image, bookKey, keyFromAssetUrl, getObjectFile } from '@/lib/r2'
 import { requireHuman, attachPassCookie, humanCheckFailedResponse } from '@/lib/turnstile'
 
 export const runtime = 'nodejs'
@@ -102,9 +102,21 @@ async function callFlux(prompt: string, size: string, image?: string): Promise<s
   return b64 as string
 }
 
+/**
+ * 续集场景拿不到内存里的 base64，只有 R2 资源地址：
+ * 按地址反推 key 取回字节，让主角参考图跨集复用，长相不漂移。
+ */
+async function referenceBase64FromUrl(url?: string | null): Promise<string | undefined> {
+  const key = keyFromAssetUrl(url)
+  if (!key) return undefined
+  const file = await getObjectFile(key)
+  if (!file) return undefined
+  return Buffer.from(file.body).toString('base64')
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { outline, pages, characterImageB64, style, styleLexicon, consistencyLine, aspect, language, bookId, turnstileToken } =
+    const { outline, pages, characterImageB64, characterImageUrl, style, styleLexicon, consistencyLine, aspect, language, bookId, turnstileToken } =
       await req.json()
     void language
 
@@ -152,12 +164,17 @@ export async function POST(req: NextRequest) {
     `
 
     // 响应返回后继续执行（Vercel 上不会被立即冻结）
+    const referenceB64 =
+      typeof characterImageB64 === 'string' && characterImageB64
+        ? characterImageB64
+        : await referenceBase64FromUrl(characterImageUrl)
+
     after(
       runGeneration({
         genId,
         bookId: typeof bookId === 'string' ? bookId : null,
         outline: pageOutline,
-        characterImageB64,
+        characterImageB64: referenceB64,
         style,
         styleLexicon,
         consistencyLine,

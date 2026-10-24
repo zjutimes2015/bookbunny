@@ -400,6 +400,8 @@ export default function CreatePage() {
   const saveBook = async (): Promise<string | null> => {
     if (!story || savedBookId) return savedBookId
     try {
+      // 主角档案随书落库：只在创建者账户内，用于「再来一集」复用同一个孩子
+      const lead = refChar || characters[0]
       const res = await fetch('/api/books', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -412,6 +414,16 @@ export default function CreatePage() {
           quiz: story.quiz || null,
           aspect,
           language,
+          character: lead?.card
+            ? {
+                name: lead.name,
+                card: lead.card,
+                consistencyLine: lead.consistencyLine,
+                imageB64: lead.imageB64,
+                style: styleCard?.mainStyle || null,
+                styleLexicon,
+              }
+            : null,
         }),
       })
       const data = await res.json()

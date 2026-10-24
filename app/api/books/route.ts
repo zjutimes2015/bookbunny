@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
-import { outlineToPages, type PageOutline } from '@/lib/types/book'
+import { outlineToPages, type CharacterCard, type PageOutline, type StyleLexicon } from '@/lib/types/book'
+import { consumeBookAllocation } from '@/lib/allocation'
+import { createSeries } from '@/lib/series'
+import { isR2Configured, uploadBase64Image, characterKey } from '@/lib/r2'
 
 const sql = neon(process.env.NEON_DATABASE_URL!)
+
+/** 主角档案：只在创建者账户内保存，绝不进入共享池 */
+interface CharacterPayload {
+  name?: string
+  card?: CharacterCard
+  consistencyLine?: string
+  imageB64?: string
+  style?: string
+  styleLexicon?: StyleLexicon
+}
 
 interface SaveBookBody {
   title: string
@@ -13,6 +26,7 @@ interface SaveBookBody {
   level?: string | null
   quiz?: unknown | null
   aspect?: string | null
+  character?: CharacterPayload | null
 }
 
 // 从 cookie 解析当前用户 + 其 credits / allowance 状态
@@ -48,88 +62,6 @@ async function getUserId(req: NextRequest): Promise<{
   } catch {
     return null
   }
-}
-
-/** 各订阅档位的月度书籍 allowance */
-const TIER_ALLOWANCE: Record<string, number> = {
-  free: 3,
-  creator: 30,
-  studio: 100,
-}
-
-/** 根据 tier 计算下一次 allowance 重置时间（下个月同日 00:00 UTC） */
-function nextResetAt(): Date {
-  const d = new Date()
-  d.setUTCMonth(d.getUTCMonth() + 1, 1)
-  d.setUTCHours(0, 0, 0, 0)
-  return d
-}
-
-/**
- * 扣减 credits / 月度 allowance。
- * 顺序：credits 优先（永不过期的一次性额度），然后扣月度 allowance。
- * 如果两者都不够，返回 { ok: false }。
- */
-async function consumeBookAllocation(userId: string): Promise<{ ok: boolean; reason?: string }> {
-  // 先查出最新状态
-  const rows = await sql`
-    SELECT credits, subscription_tier, monthly_allowance_remaining, allowance_reset_at
-    FROM bookbunny_users WHERE id = ${userId}
-  `
-  const row = rows[0]
-  if (!row) return { ok: false, reason: 'user_not_found' }
-
-  const credits = (row.credits as number) ?? 0
-  const tier = (row.subscription_tier as string) || 'free'
-  let allowance = row.monthly_allowance_remaining as number | null
-  let resetAt = row.allowance_reset_at as Date | null
-
-  // 检查 allowance 是否到期需要重置
-  if (allowance !== null && resetAt && new Date() >= resetAt) {
-    allowance = TIER_ALLOWANCE[tier] ?? 0
-    resetAt = nextResetAt()
-    await sql`
-      UPDATE bookbunny_users
-      SET monthly_allowance_remaining = ${allowance},
-          allowance_reset_at = ${resetAt},
-          updated_at = NOW()
-      WHERE id = ${userId}
-    `
-  }
-
-  // 1. 优先扣 credits（一次性、永不过期）
-  if (credits > 0) {
-    await sql`
-      UPDATE bookbunny_users SET credits = credits - 1, updated_at = NOW() WHERE id = ${userId}
-    `
-    return { ok: true }
-  }
-
-  // 2. 再扣月度 allowance
-  if (allowance !== null && allowance > 0) {
-    await sql`
-      UPDATE bookbunny_users
-      SET monthly_allowance_remaining = monthly_allowance_remaining - 1,
-          updated_at = NOW()
-      WHERE id = ${userId}
-    `
-    return { ok: true }
-  }
-
-  // Free tier 用户首次创作前 allowance 可能是 null —— 给它初始化一次
-  if (allowance === null) {
-    const initial = TIER_ALLOWANCE[tier] ?? 1
-    await sql`
-      UPDATE bookbunny_users
-      SET monthly_allowance_remaining = ${initial},
-          allowance_reset_at = ${nextResetAt()},
-          updated_at = NOW()
-      WHERE id = ${userId}
-    `
-    return consumeBookAllocation(userId) // 重试扣减
-  }
-
-  return { ok: false, reason: 'no_credits_or_allowance' }
 }
 
 export async function POST(req: NextRequest) {
@@ -181,7 +113,47 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ bookId, storyId })
+    // 4. 家庭连续剧：有主角档案时建 series，供「再来一集」复用同一个孩子。
+    //    series.user_id 是隔离边界：世界作者与其它家庭永远读不到这张主角卡。
+    let seriesId: string | null = null
+    const character = body.character
+    if (user?.id && character?.name) {
+      let protagonistImageUrl: string | null = null
+      if (character.imageB64 && isR2Configured()) {
+        try {
+          protagonistImageUrl = await uploadBase64Image(
+            characterKey(globalThis.crypto.randomUUID()),
+            `data:image/png;base64,${character.imageB64}`,
+          )
+        } catch (err) {
+          console.error('Protagonist upload to R2 failed:', err)
+        }
+      }
+      try {
+        seriesId = await createSeries({
+          userId: user.id,
+          title: body.title,
+          protagonistName: character.name,
+          protagonistCard: character.card ?? null,
+          consistencyLine: character.consistencyLine ?? null,
+          protagonistImageUrl,
+          style: character.style ?? null,
+          styleLexicon: character.styleLexicon ?? null,
+          theme: body.theme,
+          ageGroup: body.ageGroup,
+          level: body.level ?? null,
+        })
+        await sql`
+          UPDATE stories SET series_id = ${seriesId}, episode_number = 1 WHERE id = ${storyId}
+        `
+      } catch (err) {
+        // 连续剧建不起来不该挡住这本书的保存，降级为「不可续集」
+        console.error('Series creation failed:', err)
+        seriesId = null
+      }
+    }
+
+    return NextResponse.json({ bookId, storyId, seriesId })
   } catch (err) {
     console.error('Save book error:', err)
     return NextResponse.json(

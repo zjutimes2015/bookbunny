@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import BunnyMascot from '@/components/BunnyMascot'
 import ReadAloudPlayer from '@/components/ReadAloudPlayer'
 import ReadAlongPlayer from '@/components/ReadAlongPlayer'
+import TurnstileWidget from '@/components/TurnstileWidget'
 import { pagesToOutline, type PageOutline } from '@/lib/types/book'
+import { REMIX_KINDS, type RemixKind } from '@/lib/remix'
 import { useAuth } from '@/lib/auth-context'
 
 interface QuizQuestion {
@@ -24,9 +26,14 @@ interface BookDetail {
   ageGroup: string
   theme: string
   level: string | null
+  aspect?: string | null
   quiz: { questions: QuizQuestion[] } | null
   pageImageUrls?: string[] | null
   createdAt: string
+  /** 只有本书所属家庭、且已保存主角档案时才为 true */
+  canContinue?: boolean
+  episodeNumber?: number
+  protagonistName?: string | null
 }
 
 interface ProJob {
@@ -59,6 +66,7 @@ const PRO_COST = 3 // 每本 Pro 动画扣 3 credits
 
 export default function BookDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const bookId = typeof params.id === 'string' ? params.id : ''
   const { user } = useAuth()
   const [book, setBook] = useState<BookDetail | null>(null)
@@ -67,6 +75,12 @@ export default function BookDetailPage() {
   const [answers, setAnswers] = useState<Record<number, number>>({})
   const [submitted, setSubmitted] = useState(false)
   const [activePage, setActivePage] = useState<number | null>(null)
+
+  // 续集（remix）：同一主角、同一世界，再演一集
+  const [remixKind, setRemixKind] = useState<RemixKind | null>(null)
+  const [remixToken, setRemixToken] = useState<string | null>(null)
+  const [remixStep, setRemixStep] = useState<'idle' | 'writing' | 'illustrating'>('idle')
+  const [remixError, setRemixError] = useState<string | null>(null)
 
   // Pro 动画状态
   const [proJobId, setProJobId] = useState<string | null>(null)
@@ -179,6 +193,74 @@ export default function BookDetailPage() {
     a.click()
   }
 
+  /**
+   * 家庭内改写：同一主角 + 同一世界，生成下一集。
+   * 主角档案只在服务端按账户取用；前端只拿到「这一集」的文字与配图任务。
+   */
+  const handleRemix = async () => {
+    if (!book || !remixKind) return
+    setRemixError(null)
+    setRemixStep('writing')
+    try {
+      const res = await fetch('/api/remix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookId: book.id, kind: remixKind, turnstileToken: remixToken || '' }),
+      })
+      const data = await res.json()
+
+      if (res.status === 401) {
+        window.location.href = `/api/auth/google?next=/book/${book.id}`
+        return
+      }
+      if (res.status === 402) {
+        window.location.href = '/pricing'
+        return
+      }
+      if (!res.ok || data.error) {
+        throw new Error(
+          data.code === 'bot_check_required'
+            ? 'Verification expired. Please complete the check and try again.'
+            : data.error || 'Failed to write the next episode',
+        )
+      }
+
+      setRemixStep('illustrating')
+
+      // 这一集立刻配图：复用同一个主角参考图与同一画风
+      try {
+        const genRes = await fetch('/api/generate-pages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            outline: data.outline,
+            bookId: data.bookId,
+            characterImageUrl: data.protagonistImageUrl || null,
+            consistencyLine: data.consistencyLine || null,
+            style: data.style || null,
+            aspect: data.aspect || book.aspect || '1:1',
+          }),
+        })
+        const gen = await genRes.json()
+        if (genRes.ok && gen.genId) {
+          // 最多等约 3 分钟；即使没画完也先进入新书页（文字已经存好）
+          for (let i = 0; i < 60; i++) {
+            await new Promise((r) => setTimeout(r, 3000))
+            const status = await fetch(`/api/generate-pages?genId=${gen.genId}`).then((r) => r.json())
+            if (status.status === 'done' || status.status === 'error') break
+          }
+        }
+      } catch {
+        // 配图失败不影响这一集：文字版已经落库
+      }
+
+      router.push(`/book/${data.bookId}`)
+    } catch (err) {
+      setRemixError(err instanceof Error ? err.message : 'Failed to write the next episode')
+      setRemixStep('idle')
+    }
+  }
+
   if (loading) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
@@ -207,6 +289,9 @@ export default function BookDetailPage() {
   const proProgress = proJob
     ? Math.round((totalDone / Math.max(proJob.total, 1)) * 100)
     : 0
+
+  const nextEpisode = (book.episodeNumber ?? 1) + 1
+  const chosenRemix = REMIX_KINDS.find((k) => k.id === remixKind) ?? null
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 md:py-12">
@@ -470,6 +555,98 @@ export default function BookDetailPage() {
               {submitted ? '✓ Checked' : 'Check Answers'}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* 续集：同一主角 + 同一世界。只在本书所属家庭里出现 */}
+      {book.canContinue && (
+        <div className="apple-card p-6 md:p-8">
+          <div className="flex items-start justify-between gap-4 mb-5">
+            <div>
+              <h2 className="text-lg font-bold text-[#2D2D2D]">
+                Episode {nextEpisode}?
+              </h2>
+              <p className="text-xs text-[#8E8E93] mt-0.5">
+                Same hero, same world — pick how this one goes.
+              </p>
+            </div>
+            <BunnyMascot size={40} />
+          </div>
+
+          {remixStep === 'idle' && !remixKind && (
+            <div className="grid sm:grid-cols-3 gap-3">
+              {REMIX_KINDS.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => setRemixKind(option.id)}
+                  className="text-left rounded-xl border border-[#E5E5EA] bg-white p-4 hover:border-[#FF6B8A] hover:bg-[#FFF5EE] transition-all"
+                >
+                  <span className="block text-sm font-semibold text-[#2D2D2D]">{option.label}</span>
+                  <span className="mt-1 block text-xs text-[#8E8E93] leading-relaxed">{option.hint}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {remixStep === 'idle' && chosenRemix && (
+            <div className="space-y-4">
+              <p className="text-sm text-[#2D2D2D]">
+                <span className="font-semibold">{chosenRemix.label}</span>
+                {book.protagonistName ? ` — ${book.protagonistName} stays the hero.` : ''}
+              </p>
+              <div className="rounded-xl bg-[#FFF5EE] p-4 text-xs text-[#8E8E93] leading-relaxed">
+                This episode is AI-generated. {book.protagonistName || 'Your child'}&apos;s look stays inside
+                your account — it is never shared with world authors or other families.
+              </div>
+              <TurnstileWidget
+                onVerify={(token) => setRemixToken(token)}
+                onExpire={() => setRemixToken(null)}
+                onError={() => setRemixToken(null)}
+              />
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className="apple-button text-sm px-5 py-2.5 disabled:opacity-50"
+                  disabled={!remixToken}
+                  onClick={handleRemix}
+                >
+                  Generate Episode {nextEpisode}
+                </button>
+                <button
+                  className="apple-button-secondary text-sm px-4 py-2.5"
+                  onClick={() => { setRemixKind(null); setRemixToken(null) }}
+                >
+                  Pick another
+                </button>
+              </div>
+              <p className="text-[11px] text-[#8E8E93]">
+                Uses one book from your plan. Cancelling never charges you.
+              </p>
+            </div>
+          )}
+
+          {remixStep !== 'idle' && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="bunny-bounce"><BunnyMascot size={32} /></div>
+                <span className="text-sm text-[#2D2D2D]">
+                  {remixStep === 'writing'
+                    ? 'Writing Episode ' + nextEpisode + '…'
+                    : 'Illustrating Episode ' + nextEpisode + '…'}
+                </span>
+              </div>
+              <div className="w-full bg-[#F2F2F7] rounded-full h-2.5">
+                <div
+                  className="bunny-gradient h-2.5 rounded-full transition-all duration-700"
+                  style={{ width: remixStep === 'writing' ? '25%' : '65%' }}
+                />
+              </div>
+              <p className="text-xs text-[#8E8E93]">
+                Same hero, same world. This usually takes 1–3 minutes.
+              </p>
+            </div>
+          )}
+
+          {remixError && <p className="text-xs text-red-400 mt-3">{remixError}</p>}
         </div>
       )}
     </div>
