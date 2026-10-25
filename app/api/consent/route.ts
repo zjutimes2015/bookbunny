@@ -7,6 +7,7 @@ import {
   revokeConsent,
 } from '@/lib/compliance/consent'
 import { deleteFiles, keyFromAssetUrl } from '@/lib/r2'
+import { isCreemConfigured } from '@/lib/payments/creem'
 import { POLICY_VERSION } from '@/lib/site'
 
 const sql = neon(process.env.NEON_DATABASE_URL!)
@@ -44,6 +45,8 @@ export async function GET(req: NextRequest) {
     /** True when this parent may upload a child's photograph right now. */
     photoAllowed:
       current && !!consent?.purposes.includes('photo-processing'),
+    /** True when a new verification can actually be started in this environment. */
+    vpcAvailable: isCreemConfigured() || process.env.NODE_ENV !== 'production',
   })
 }
 

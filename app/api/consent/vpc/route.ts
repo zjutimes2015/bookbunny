@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
   const siteUrl = process.env.SITE_URL || 'http://localhost:3000'
 
-  // Production path: a real, refundable charge on the parent's own card.
+  // Production path: a real charge on the parent's own card.
   // The consent row is written by the Creem webhook once the charge settles.
   if (isCreemConfigured()) {
     const creem = getCreem()
@@ -56,6 +56,20 @@ export async function POST(req: NextRequest) {
       metadata: { purpose: 'vpc', userId, method: method.id },
     })
     return NextResponse.json({ url: checkout.checkoutUrl })
+  }
+
+  // No payment provider configured. In production this must fail closed: a consent
+  // record is a legal authorisation to process a child's photograph, so it can only
+  // be written after the parent actually cleared a verification step.
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      {
+        error:
+          'Photo verification is unavailable right now. You can still create a book without a photograph.',
+        code: 'vpc_unavailable',
+      },
+      { status: 503 },
+    )
   }
 
   // Development path: no payment provider configured, so record the consent straight

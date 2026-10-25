@@ -149,8 +149,9 @@ const SECTIONS: Section[] = [
           <li className={ITEM}>
             <span className={DOT}>•</span>
             <span>
-              Optionally, a recording of the parent&apos;s or the child&apos;s voice, when the
-              read-aloud feature is used.
+              A read-along score, when a parent turns on the read-along practice feature. Speech is
+              recognised by the browser&apos;s built-in speech service; we store only the resulting
+              accuracy score, never the audio and never a transcript.
             </span>
           </li>
         </ul>
@@ -196,7 +197,8 @@ const SECTIONS: Section[] = [
           <li className={ITEM}>
             <span className={DOT}>•</span>
             <span>
-              <span className={STRONG}>Generating the read-aloud audio</span> for a book.
+              <span className={STRONG}>Scoring read-along practice</span>, so a parent can see how
+              clearly the book was read out loud.
             </span>
           </li>
           <li className={ITEM}>
@@ -337,7 +339,21 @@ const SECTIONS: Section[] = [
           <li className={ITEM}>
             <span className={DOT}>•</span>
             <span>
-              <span className={STRONG}>Creem</span> — payment processing.
+              <span className={STRONG}>Waffo</span> — subscription and credit-pack billing.
+            </span>
+          </li>
+          <li className={ITEM}>
+            <span className={DOT}>•</span>
+            <span>
+              <span className={STRONG}>Creem</span> — the one-time charge that verifies a
+              parent&apos;s identity before a photograph is accepted.
+            </span>
+          </li>
+          <li className={ITEM}>
+            <span className={DOT}>•</span>
+            <span>
+              <span className={STRONG}>Google</span> — speech recognition for read-along practice,
+              performed by the browser, and aggregate traffic measurement.
             </span>
           </li>
           <li className={ITEM}>
@@ -378,8 +394,8 @@ const SECTIONS: Section[] = [
           <li className={ITEM}>
             <span className={DOT}>•</span>
             <span>
-              <span className={STRONG}>Voice recordings:</span> retained only while needed to produce
-              the read-aloud audio for the associated book.
+              <span className={STRONG}>Read-along audio:</span> never uploaded and never stored. Only
+              the accuracy score is kept, alongside the book it belongs to.
             </span>
           </li>
           <li className={ITEM}>

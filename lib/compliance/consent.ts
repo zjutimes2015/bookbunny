@@ -50,7 +50,7 @@ export const VPC_METHODS: VpcMethod[] = [
     id: 'card-charge',
     label: 'Payment-card verification',
     description:
-      'We place a small charge on your payment card through our payment provider, then refund it. A card held in your own name is one of the verification methods recognised for obtaining verifiable parental consent.',
+      'We place a one-time $0.50 charge on your payment card through our payment provider. A card held in your own name is one of the verification methods recognised for obtaining verifiable parental consent.',
     requires: 'A credit or debit card in your name',
     automated: true,
     available: true,

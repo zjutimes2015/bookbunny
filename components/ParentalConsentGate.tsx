@@ -17,6 +17,8 @@ interface ConsentSnapshot {
   consent: { vpcMethod: string; grantedAt: string; policyVersion: string } | null
   photoAllowed: boolean
   purposes: PurposeInfo[]
+  /** False when this environment cannot start a new verification step. */
+  vpcAvailable?: boolean
 }
 
 interface ParentalConsentGateProps {
@@ -158,44 +160,53 @@ export default function ParentalConsentGate({ onConsentChange }: ParentalConsent
           ))}
         </ul>
 
-        <div className="mt-5 rounded-2xl bg-[#F2F2F7] p-4">
-          <p className="text-xs font-semibold text-[#2D2D2D]">Payment-card verification</p>
-          <p className="text-xs text-[#8E8E93] mt-1">
-            We place a small charge on your own card through our payment provider, then refund it. A
-            card held in your name is one of the recognised ways to verify that you are the parent.
+        {snapshot.vpcAvailable === false ? (
+          <p className="mt-5 rounded-2xl bg-[#F2F2F7] p-4 text-xs text-[#8E8E93]">
+            Photo-based characters are paused right now. You can still create a book by describing
+            your child&apos;s appearance instead — no photograph needed.
           </p>
-        </div>
+        ) : (
+          <>
+            <div className="mt-5 rounded-2xl bg-[#F2F2F7] p-4">
+              <p className="text-xs font-semibold text-[#2D2D2D]">Payment-card verification</p>
+              <p className="text-xs text-[#8E8E93] mt-1">
+                We place a one-time $0.50 charge on your own card through our payment provider. A card
+                held in your name is one of the recognised ways to verify that you are the parent.
+              </p>
+            </div>
 
-        <label className="flex items-start gap-3 mt-5 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={agreed}
-            onChange={(e) => setAgreed(e.target.checked)}
-            className="mt-0.5 accent-[#FF6B8A]"
-          />
-          <span className="text-xs text-[#2D2D2D]">
-            I am the parent or legal guardian of the child shown in the photograph, I have read the{' '}
-            <Link href="/privacy" className="text-[#FF6B8A] underline">
-              Privacy Policy
-            </Link>{' '}
-            and{' '}
-            <Link href="/terms" className="text-[#FF6B8A] underline">
-              Terms of Service
-            </Link>
-            , and I consent to the use of my child&apos;s photograph as described above.
-          </span>
-        </label>
+            <label className="flex items-start gap-3 mt-5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-0.5 accent-[#FF6B8A]"
+              />
+              <span className="text-xs text-[#2D2D2D]">
+                I am the parent or legal guardian of the child shown in the photograph, I have read the{' '}
+                <Link href="/privacy" className="text-[#FF6B8A] underline">
+                  Privacy Policy
+                </Link>{' '}
+                and{' '}
+                <Link href="/terms" className="text-[#FF6B8A] underline">
+                  Terms of Service
+                </Link>
+                , and I consent to the use of my child&apos;s photograph as described above.
+              </span>
+            </label>
 
-        {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+            {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
 
-        <button
-          type="button"
-          onClick={startVerification}
-          disabled={!agreed || working}
-          className="apple-button text-sm px-5 py-2.5 mt-4 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {working ? 'Starting verification…' : 'Verify and continue'}
-        </button>
+            <button
+              type="button"
+              onClick={startVerification}
+              disabled={!agreed || working}
+              className="apple-button text-sm px-5 py-2.5 mt-4 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {working ? 'Starting verification…' : 'Verify and continue'}
+            </button>
+          </>
+        )}
 
         <p className="text-[11px] text-[#8E8E93] mt-3">
           You can withdraw consent at any time, and you can ask us to delete your child&apos;s data by

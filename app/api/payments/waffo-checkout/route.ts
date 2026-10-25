@@ -20,8 +20,16 @@ export async function POST(req: NextRequest) {
     const siteUrl = process.env.SITE_URL || 'http://localhost:3000'
     const tier = selected.tier
 
-    // 未配置密钥时：开发态模拟成功支付
+    // 未配置密钥时：仅限本地开发模拟；生产环境必须失败关闭，
+    // 否则任何登录用户点一下"升级"就能白拿付费权益。
     if (!isWaffoConfigured()) {
+      if (process.env.NODE_ENV === 'production') {
+        console.error('Waffo checkout requested but WAFFO_MERCHANT_ID/WAFFO_PRIVATE_KEY are missing')
+        return NextResponse.json(
+          { error: 'Payments are temporarily unavailable. Please try again later.', code: 'payments_unavailable' },
+          { status: 503 },
+        )
+      }
       const fakeId = `waffo_sim_${Date.now()}`
       const sql = neon(process.env.NEON_DATABASE_URL!)
       await sql`
