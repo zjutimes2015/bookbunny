@@ -123,8 +123,8 @@ interface PackCard {
 }
 
 const PRO_PACKS: PackCard[] = [
-  { key: 'pro_anim_5', name: 'Pro Animation Pack', price: 12, books: 5, available: false },
-  { key: 'pro_anim_10', name: 'Pro Animation Pack ×2', price: 20, books: 10, badge: 'Best value', available: false },
+  { key: 'pro_anim_5', name: 'Pro Animation Pack', price: 12, books: 5, available: true },
+  { key: 'pro_anim_10', name: 'Pro Animation Pack ×2', price: 20, books: 10, badge: 'Best value', available: true },
 ]
 
 function priceLabel(plan: PlanCard, annual: boolean) {
@@ -258,14 +258,11 @@ export default function PricingPage() {
           <span className="text-[10px] font-semibold text-white bg-[#7B3FBF] px-2 py-0.5 rounded-full">Add-on</span>
         </div>
         <p className="text-sm text-[#8E8E93] mt-1">
-          Turn any finished book into an animated video with AI voiceover, original music and word highlighting.
+          Turn any finished book into an animated video with AI voiceover and original music.
           One-time purchase, never expires. Works with every plan.
         </p>
-        <p className="text-xs text-[#7B3FBF] mt-2 font-medium">
-          Video export is still being finished, so packs are not on sale yet.
-        </p>
         <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1">
-          {['Wan 3 video clips per page', 'Inworld TTS 2 voiceover', 'MiniMax original music', 'Whisper word-level captions'].map((f) => (
+          {['Wan 3 video clips per page', 'Inworld TTS 2 voiceover', 'MiniMax original music'].map((f) => (
             <li key={f} className="text-xs text-[#2D2D2D] flex items-center gap-1.5">
               <span className="text-[#C8A2E8]">✓</span> {f}
             </li>
