@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse, after } from 'next/server'
-import { neon } from '@neondatabase/serverless'
+import { sql } from '@/lib/neon'
 import { getSessionUser } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { isR2Configured, assetUrl } from '@/lib/r2'
@@ -24,8 +24,6 @@ import type { PageOutline } from '@/lib/types/book'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300 // Vercel Hobby 上限
-
-const sql = neon(process.env.NEON_DATABASE_URL!)
 
 /** 每本 Pro 动画消耗的 Pro 动画额度（与 Waffo 商品发放口径一致） */
 const PRO_COST = PRO_CREDITS_PER_BOOK
