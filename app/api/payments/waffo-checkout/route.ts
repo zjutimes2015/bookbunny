@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getWaffo, getPlan, isWaffoConfigured, planGrant, PRO_CREDITS_PER_BOOK } from '@/lib/payments/waffo'
+import { getWaffo, getPlan, isWaffoConfigured, planGrant, PRO_CREDITS_PER_BOOK, PRO_DELIVERY_READY } from '@/lib/payments/waffo'
 import { getSessionUser } from '@/lib/auth'
 import { neon } from '@neondatabase/serverless'
 
@@ -19,6 +19,14 @@ export async function POST(req: NextRequest) {
 
     const siteUrl = process.env.SITE_URL || 'http://localhost:3000'
     const tier = selected.tier
+
+    // 交付未上线的一次性商品不允许下单：避免收了钱却没有成品
+    if (tier === 'pro-anim' && !PRO_DELIVERY_READY) {
+      return NextResponse.json(
+        { error: 'Pro animated books are not on sale yet.', code: 'coming_soon' },
+        { status: 503 },
+      )
+    }
 
     // 未配置密钥时：仅限本地开发模拟；生产环境必须失败关闭，
     // 否则任何登录用户点一下"升级"就能白拿付费权益。

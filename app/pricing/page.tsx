@@ -23,7 +23,6 @@ const MATRIX: { title: string; rows: MatrixRow[] }[] = [
       { label: 'Characters per book', free: '1', creator: '5', studio: '5' },
       { label: 'Book languages', free: '1', creator: 'All 10', studio: 'All 10' },
       { label: 'Photo-to-character', free: false, creator: true, studio: true },
-      { label: 'Watermark-free pages', free: false, creator: true, studio: true },
     ],
   },
   {
@@ -32,17 +31,9 @@ const MATRIX: { title: string; rows: MatrixRow[] }[] = [
       { label: 'PDF export', free: 'Preview only', creator: true, studio: true },
       { label: 'KDP interior + cover PDFs', free: false, creator: true, studio: true },
       { label: 'Commercial license', free: false, creator: true, studio: true },
-      { label: 'Narration & background music', free: false, creator: true, studio: true },
+      { label: 'Narration & background music', free: true, creator: true, studio: true },
       { label: 'Animated video (Wan 3 + voice + music)', free: false, creator: 'Add-on packs', studio: '10 included' },
-      { label: 'Batch generation', free: false, creator: false, studio: true },
-    ],
-  },
-  {
-    title: 'Service',
-    rows: [
-      { label: 'Concurrent jobs', free: '1', creator: '2', studio: '3' },
-      { label: 'Generation queue', free: 'Standard', creator: 'Priority', studio: 'Priority' },
-      { label: 'Support', free: 'Community', creator: 'Priority email', studio: 'Priority email' },
+      { label: 'Batched generation (5 pages at a time)', free: true, creator: true, studio: true },
     ],
   },
 ]
@@ -78,7 +69,7 @@ const PLANS: PlanCard[] = [
     features: [
       '3 books per month',
       '8-page book, 3 art styles',
-      'Watermarked preview',
+      'Read books in the app',
       '1 character, 1 language',
     ],
     cta: 'Start free',
@@ -97,7 +88,6 @@ const PLANS: PlanCard[] = [
       'Commercial license included',
       '5 characters · all 10 languages',
       'Narration & background music',
-      'Priority queue',
     ],
     cta: 'Choose Creator',
     checkout: true,
@@ -113,8 +103,6 @@ const PLANS: PlanCard[] = [
       '100 books per month',
       '10 Pro animated books included',
       'Up to 24 pages per book',
-      '3 concurrent generation jobs',
-      'Batch generation',
       'Everything in Creator',
       'Priority support',
     ],
@@ -130,11 +118,13 @@ interface PackCard {
   price: number
   books: number
   badge?: string
+  /** 交付是否已上线；未上线时不允许购买，避免收了钱却没有成品 */
+  available: boolean
 }
 
 const PRO_PACKS: PackCard[] = [
-  { key: 'pro_anim_5', name: 'Pro Animation Pack', price: 12, books: 5 },
-  { key: 'pro_anim_10', name: 'Pro Animation Pack ×2', price: 20, books: 10, badge: 'Best value' },
+  { key: 'pro_anim_5', name: 'Pro Animation Pack', price: 12, books: 5, available: false },
+  { key: 'pro_anim_10', name: 'Pro Animation Pack ×2', price: 20, books: 10, badge: 'Best value', available: false },
 ]
 
 function priceLabel(plan: PlanCard, annual: boolean) {
@@ -271,6 +261,9 @@ export default function PricingPage() {
           Turn any finished book into an animated video with AI voiceover, original music and word highlighting.
           One-time purchase, never expires. Works with every plan.
         </p>
+        <p className="text-xs text-[#7B3FBF] mt-2 font-medium">
+          Video export is still being finished, so packs are not on sale yet.
+        </p>
         <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1">
           {['Wan 3 video clips per page', 'Inworld TTS 2 voiceover', 'MiniMax original music', 'Whisper word-level captions'].map((f) => (
             <li key={f} className="text-xs text-[#2D2D2D] flex items-center gap-1.5">
@@ -303,10 +296,14 @@ export default function PricingPage() {
               <button
                 type="button"
                 onClick={() => handleSelect(pack.key, pack.key)}
-                disabled={checkingOut !== null}
+                disabled={checkingOut !== null || !pack.available}
                 className="text-sm font-medium px-4 py-2.5 rounded-xl shrink-0 text-white bg-[#7B3FBF] hover:bg-[#6A2FB0] transition-all disabled:opacity-50"
               >
-                {checkingOut === pack.key ? 'Opening…' : `Buy · $${pack.price}`}
+                {!pack.available
+                  ? 'Coming soon'
+                  : checkingOut === pack.key
+                    ? 'Opening…'
+                    : `Buy · $${pack.price}`}
               </button>
             </div>
           ))}

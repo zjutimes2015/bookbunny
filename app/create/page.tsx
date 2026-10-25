@@ -99,6 +99,11 @@ export default function CreatePage() {
   const tier = user?.subscriptionTier
   const maxPages =
     tier === 'studio' || tier === 'commercial' ? 24 : tier === 'creator' ? 20 : 8
+  // 免费档边界，与定价页保持一致：3 种画风 · 1 种语言 · 1 个角色
+  const isFreeTier = !tier || tier === 'free'
+  const styleOptions = isFreeTier ? STYLE_LIBRARY.slice(0, 3) : STYLE_LIBRARY
+  const languageOptions = isFreeTier ? BOOK_LANGUAGES.slice(0, 1) : BOOK_LANGUAGES
+  const maxCharacters = isFreeTier ? 1 : 5
   const [step, setStep] = useState<Step>('setup')
   const [characters, setCharacters] = useState<CharData[]>([])
   const [story, setStory] = useState<{
@@ -679,7 +684,9 @@ export default function CreatePage() {
           <div className="text-center mb-6">
             <BunnyMascot size={60} />
             <h2 className="text-xl font-bold text-[#2D2D2D] mt-3">Create Your Characters</h2>
-            <p className="text-sm text-[#8E8E93] mt-1">Add up to 5 characters</p>
+            <p className="text-sm text-[#8E8E93] mt-1">
+              Add up to {maxCharacters} {maxCharacters === 1 ? 'character' : 'characters'}
+            </p>
           </div>
           <ParentalConsentGate onConsentChange={setPhotoConsent} />
           {consentBlocked && (
@@ -710,7 +717,7 @@ export default function CreatePage() {
               onAdd={handleAddCharacter}
               onRemove={handleRemoveCharacter}
               onUpdate={handleUpdateCharacter}
-              maxCharacters={5}
+              maxCharacters={maxCharacters}
             />
             {characters.length > 0 && (
               <>
@@ -736,7 +743,7 @@ export default function CreatePage() {
                   <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Book Language</label>
                   <select className="apple-input" value={language}
                           onChange={(e) => setLanguage(e.target.value as BookLanguage)}>
-                    {BOOK_LANGUAGES.map(l => (
+                    {languageOptions.map(l => (
                       <option key={l.id} value={l.id}>
                         {l.nativeLabel && l.nativeLabel !== l.label ? `${l.label} · ${l.nativeLabel}` : l.label}
                       </option>
@@ -773,7 +780,7 @@ export default function CreatePage() {
                 <div>
                   <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Picture-Book Style</label>
                   <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                    {STYLE_LIBRARY.map(s => (
+                    {styleOptions.map(s => (
                       <button
                         key={s.id}
                         type="button"

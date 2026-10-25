@@ -122,17 +122,30 @@ function buildCharacterBibleBlock(cards?: CharacterCard[]): string {
   return lines.join('\n')
 }
 
+/**
+ * 决定这本书的页数。
+ *
+ * 套餐上限（调用方传入的 requested）优先；GRL 分级只描述语言难度，
+ * 不能反过来覆盖套餐允许的页数——否则免费档会被悄悄生成 14 页。
+ */
+export function resolvePageCount(
+  requested: number | undefined,
+  level: ReadingLevel | null,
+): number {
+  return requested ?? level?.pageCount ?? 20
+}
+
 export async function generateStory(options: StoryOptions): Promise<StoryResult> {
   // 1. 解析分级：优先用 level 参数，否则从 ageGroup 映射（向后兼容）
   const grl = (options.level || grlFromAgeGroup(options.ageGroup)).toUpperCase()
   const level: ReadingLevel | null = pickLevel(grl)
 
   // 2. 构建 prompt：有分级则注入约束，无分级走旧逻辑
-  let pageCount = options.pages || 20
+  // 页数由调用方（套餐上限）决定；GRL 只约束语言难度，不覆盖套餐允许的页数。
+  const pageCount = resolvePageCount(options.pages, level)
   let constraintsBlock = ''
 
   if (level) {
-    pageCount = level.pageCount
     constraintsBlock = levelPromptConstraints(level)
   }
 

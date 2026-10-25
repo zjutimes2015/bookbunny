@@ -108,11 +108,16 @@ export const WAFFO_PLANS = {
 
 export type WaffoPlanKey = keyof typeof WAFFO_PLANS
 
-/**
- * 每本 Pro 动画消耗的 Pro 额度。
+/** 每本 Pro 动画消耗的 Pro 额度。
  * 用户看到的是「本数」，数据库里存的是 credits（1 本 = 3 credits）。
  */
 export const PRO_CREDITS_PER_BOOK = 3
+
+/**
+ * Pro 动画视频交付是否已上线。
+ * 在 ffmpeg 合成与成品存储打通之前保持 false：宁可暂不销售，也不能收了钱交不出成品。
+ */
+export const PRO_DELIVERY_READY = false
 
 /** Studio 每期附赠的 Pro 动画本数（订阅权益，非一次性商品） */
 export const STUDIO_PRO_BOOKS_PER_PERIOD = 10

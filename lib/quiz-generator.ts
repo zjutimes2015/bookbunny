@@ -16,6 +16,26 @@ export interface Quiz {
 }
 
 /**
+ * 打乱选项顺序并同步正确答案索引。
+ *
+ * 模型有很强的“把正确答案放第一项”的倾向（实测旧版 8/8 题答案都是索引 0），
+ * 孩子只要每次选第一项就能拿满分。洗牌必须在服务端做，不能只靠 prompt。
+ */
+export function shuffleOptions(
+  options: string[],
+  answer: number,
+): { options: string[]; answer: number } {
+  const order = options.map((_, i) => i)
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const tmp = order[i]
+    order[i] = order[j]
+    order[j] = tmp
+  }
+  return { options: order.map((i) => options[i]), answer: order.indexOf(answer) }
+}
+
+/**
  * 生成阅读理解题（comprehension questions）。
  * 复用 OpenRouter/DeepSeek 管线，与 story 生成同一模型。
  * 输出 3-5 题，每题 4 选项 + 答案索引 + 技能类型。
@@ -42,6 +62,7 @@ Rules:
 - Each question has exactly 4 options, only ONE correct answer
 - Options should be short (2-6 words), simple, unambiguous
 - Correct answer index is 0-based
+- Vary the position of the correct option across questions (do not put every answer first)
 - ${languageRule}
 
 Format: Return ONLY a JSON object:
@@ -50,7 +71,7 @@ Format: Return ONLY a JSON object:
     {
       "q": "Question text?",
       "options": ["option A", "option B", "option C", "option D"],
-      "answer": 0,
+      "answer": 2,
       "skill": "literal" | "inference" | "vocabulary"
     }
   ]
@@ -91,14 +112,27 @@ Format: Return ONLY a JSON object:
     }
 
     const questions: QuizQuestion[] = parsed.questions
-      .filter((q: any) => q && q.q && Array.isArray(q.options) && q.options.length === 4)
+      .filter(
+        (q: any) =>
+          q &&
+          q.q &&
+          Array.isArray(q.options) &&
+          q.options.length === 4 &&
+          // 答案索引非法时直接丢弃：默认成 0 会静默产生错题
+          typeof q.answer === 'number' &&
+          q.answer >= 0 &&
+          q.answer < 4,
+      )
       .slice(0, 5)
-      .map((q: any) => ({
-        q: String(q.q),
-        options: q.options.map((o: any) => String(o)),
-        answer: typeof q.answer === 'number' && q.answer >= 0 && q.answer < 4 ? q.answer : 0,
-        skill: ['literal', 'inference', 'vocabulary'].includes(q.skill) ? q.skill : 'literal',
-      }))
+      .map((q: any) => {
+        const shuffled = shuffleOptions(q.options.map((o: any) => String(o)), q.answer)
+        return {
+          q: String(q.q),
+          options: shuffled.options,
+          answer: shuffled.answer,
+          skill: ['literal', 'inference', 'vocabulary'].includes(q.skill) ? q.skill : 'literal',
+        }
+      })
 
     if (questions.length === 0) throw new Error('Quiz questions invalid')
 
