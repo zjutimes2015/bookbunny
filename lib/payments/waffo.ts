@@ -115,9 +115,9 @@ export const PRO_CREDITS_PER_BOOK = 3
 
 /**
  * Pro 动画视频交付是否已上线。
- * 在 ffmpeg 合成与成品存储打通之前保持 false：宁可暂不销售，也不能收了钱交不出成品。
+ * 已用一本 8 页的真实书在生产跑通：逐页动画 + 配音 → R2 → ffmpeg 合成 → 成品 MP4。
  */
-export const PRO_DELIVERY_READY = false
+export const PRO_DELIVERY_READY = true
 
 /** Studio 每期附赠的 Pro 动画本数（订阅权益，非一次性商品） */
 export const STUDIO_PRO_BOOKS_PER_PERIOD = 10
