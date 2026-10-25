@@ -18,6 +18,9 @@ export const maxDuration = 300
 
 const sql = neon(process.env.NEON_DATABASE_URL!)
 
+/** 单次生图请求的页数上限（客户端传入的 outline 必须封顶，否则一次请求就能烧掉整月毛利） */
+const MAX_PAGES_PER_REQUEST = 24
+
 interface JobPage {
   index: number
   status: 'pending' | 'generating' | 'done' | 'failed'
@@ -126,6 +129,19 @@ export async function POST(req: NextRequest) {
 
     if (pageOutline.length === 0) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    }
+
+    // 单次请求的页数上限：outline 完全由客户端传入，不封顶的话
+    // 一次请求就能触发几百张生图，直接击穿毛利。上限取 24 页
+    // （整本最大 12 页 + 批量生成余量），足够所有正常流程。
+    if (pageOutline.length > MAX_PAGES_PER_REQUEST) {
+      return NextResponse.json(
+        {
+          error: `Too many pages in one request (max ${MAX_PAGES_PER_REQUEST}).`,
+          code: 'too_many_pages',
+        },
+        { status: 400 },
+      )
     }
 
     // 人机校验：生图是最贵的一步，必须挡在服务端

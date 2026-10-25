@@ -30,6 +30,15 @@ const sql = neon(process.env.NEON_DATABASE_URL!)
 /** 每本 Pro 动画消耗的 Pro 动画额度（与 Waffo 商品发放口径一致） */
 const PRO_COST = PRO_CREDITS_PER_BOOK
 
+/**
+ * Pro 动画最多做多少页。
+ *
+ * Pro 包定价（$55/5 本、$100/10 本）是按 8 页一本反推的 80% 毛利：
+ *   8 页 = 8 × $0.25(Wan 3 480p 5s) + $0.04(TTS) + $0.15(音乐) ≈ $2.20/本
+ * 12 页 = $3.20/本，$11/本 只有 70.8% 毛利，所以必须卡页数上限。
+ */
+const PRO_MAX_PAGES = 8
+
 /** 超过这个时长还没被推进，说明链条断了，GET 轮询时补一脚 */
 const STALE_MS = 180_000
 
@@ -116,6 +125,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing bookId or pages' }, { status: 400 })
     }
 
+    // 页数上限：Pro 包按 8 页定价，超过就会击穿毛利。
+    // 这里只截取前 N 页（正文优先），不做整本拒绝，避免用户白等。
+    const animatable = body.pages.slice(0, PRO_MAX_PAGES)
+
     // 人机校验（Pro 是最贵的操作，必须挡）
     const human = await requireHuman(req, body.turnstileToken)
     if (!human.ok) return humanCheckFailedResponse()
@@ -129,7 +142,7 @@ export async function POST(req: NextRequest) {
     if (user.proCredits < PRO_COST) {
       return NextResponse.json(
         {
-          error: `Pro animation requires ${PRO_COST} Pro credits. Buy a Pro Animation Pack (5 books for $12).`,
+          error: `Pro animation requires ${PRO_COST} Pro credits. Buy a Pro Animation Pack (5 books for $55).`,
           code: 'insufficient_pro_credits',
           required: PRO_COST,
           available: user.proCredits,
@@ -158,7 +171,7 @@ export async function POST(req: NextRequest) {
     if (deducted.length === 0) {
       return NextResponse.json(
         {
-          error: `Pro animation requires ${PRO_COST} Pro credits. Buy a Pro Animation Pack (5 books for $12).`,
+          error: `Pro animation requires ${PRO_COST} Pro credits. Buy a Pro Animation Pack (5 books for $55).`,
           code: 'insufficient_pro_credits',
           required: PRO_COST,
           available: 0,
@@ -171,7 +184,7 @@ export async function POST(req: NextRequest) {
     const genId = `apro_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
     // 插图与文字在建任务时固化下来，后续每页推进不必再回查 books 表
-    const pages: ProPageJob[] = body.pages.map((p, i) => ({
+    const pages: ProPageJob[] = animatable.map((p, i) => ({
       index: i,
       imageUrl: body.pageImages?.[i],
       pageText: p.pageText,
@@ -182,12 +195,18 @@ export async function POST(req: NextRequest) {
 
     await sql`
       INSERT INTO pro_animation_jobs (id, book_id, user_id, status, total_pages, completed_pages, pages, created_at)
-      VALUES (${genId}, ${body.bookId}, ${user.id}, 'pending', ${body.pages.length}, 0, ${JSON.stringify(pages)}::jsonb, NOW())
+      VALUES (${genId}, ${body.bookId}, ${user.id}, 'pending', ${animatable.length}, 0, ${JSON.stringify(pages)}::jsonb, NOW())
     `
 
     after(async () => { await kick(genId) })
 
-    return NextResponse.json({ genId, totalPages: body.pages.length })
+    return NextResponse.json({
+      genId,
+      totalPages: animatable.length,
+      // 超出上限的页不参与动画，明确告知用户成品只覆盖前 N 页
+      truncated: body.pages.length > animatable.length,
+      maxPages: PRO_MAX_PAGES,
+    })
   } catch (err) {
     console.error('Animate pro POST error:', err)
     return NextResponse.json({ error: 'Failed to create animation job' }, { status: 500 })

@@ -78,12 +78,19 @@ export function validateVocabulary(text: string, level: ReadingLevel): {
   }
 }
 
-/** 生成长度约束描述，用于 prompt 注入 */
-export function levelPromptConstraints(level: ReadingLevel): string {
+/**
+ * 生成长度约束描述，用于 prompt 注入。
+ *
+ * pageCount：调用方（套餐上限）决定的实际页数。缺省时用分级自带的页数目标。
+ * 两者必须一致 —— 分级页数（C=14/D=16/E=18）会超过付费套餐的 12 页上限，
+ * 若同时注入两个互相矛盾的页数，模型可能按分级页数产出，把生图成本顶穿毛利。
+ */
+export function levelPromptConstraints(level: ReadingLevel, pageCount?: number): string {
+  const pages = pageCount ?? level.pageCount
   return [
     `Reading Level: GRL ${level.grl} (${level.label}, ages ${level.ageRange})`,
     `Vocabulary: Use ONLY simple words from a ${level.grl}-level vocabulary list. Each page sentence must be at most ${level.sentenceMaxWords} words.`,
     `Sentence length: ${level.sentenceMaxWords} words max per sentence. ${level.description}.`,
-    `Page count: EXACTLY ${level.pageCount} pages (short sentences, one per page).`,
+    `Page count: EXACTLY ${pages} pages (short sentences, one per page).`,
   ].join('\n')
 }

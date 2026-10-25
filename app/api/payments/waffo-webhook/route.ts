@@ -6,14 +6,9 @@ import {
   type WebhookEvent,
   type WebhookEventData,
 } from '@waffo/pancake-ts'
-import { planTier, planGrant, PRO_CREDITS_PER_BOOK, STUDIO_PRO_BOOKS_PER_PERIOD } from '@/lib/payments/waffo'
+import { planTier, planGrant, planCycle, PRO_CREDITS_PER_BOOK } from '@/lib/payments/waffo'
 import { recordCommissionForPayment } from '@/lib/affiliate'
-
-/** 各订阅档位的月度书籍 allowance */
-const TIER_ALLOWANCE: Record<string, number> = {
-  creator: 30,
-  studio: 100,
-}
+import { allowanceFor } from '@/lib/allocation'
 
 /** 下一次 allowance 重置时间（下个月 1 号 00:00 UTC） */
 function nextResetAt() {
@@ -93,22 +88,20 @@ export async function POST(request: Request) {
             WHERE id = ${userId}
           `
         } else {
-          // 订阅档位：重置月度书籍 allowance，Studio 额外附赠本期 Pro 动画额度。
-          // pro_grant_next_at 记录下次应发放时点：月付靠续费 webhook 推进，
-          // 年付由 /api/cron/pro-grants 按月补发。
-          const allowance = TIER_ALLOWANCE[tier] ?? 0
-          const proCredits = tier === 'studio' ? STUDIO_PRO_BOOKS_PER_PERIOD * PRO_CREDITS_PER_BOOK : 0
+          // 订阅档位：重置月度书籍 allowance。
+          // Pro 动画不再随订阅附赠（Wan 3 单页成本 $0.25，附赠 10 本会吃掉整月毛利），
+          // 统一走一次性 Pro 包；pro_grant_next_at 置空以停掉历史遗留的按月补发。
+          // 计费周期要落库：年付价格是月付的 75%，额度必须按周期区分。
+          const cycle = planCycle(plan)
+          const allowance = allowanceFor(tier, cycle)
           await sql`
             UPDATE bookbunny_users
             SET is_paid = TRUE,
                 subscription_tier = ${tier},
+                billing_cycle = ${cycle},
                 monthly_allowance_remaining = ${allowance},
                 allowance_reset_at = ${nextResetAt()},
-                pro_animation_credits = COALESCE(pro_animation_credits, 0) + ${proCredits},
-                pro_grant_next_at = CASE
-                  WHEN ${proCredits} > 0 THEN NOW() + INTERVAL '1 month'
-                  ELSE pro_grant_next_at
-                END,
+                pro_grant_next_at = NULL,
                 updated_at = NOW()
             WHERE id = ${userId}
           `

@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { resolvePageCount } from './story'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { resolvePageCount, generateStory } from './story'
 import { pickLevel } from '@/lib/reading-levels'
 
 describe('resolvePageCount', () => {
@@ -19,5 +19,65 @@ describe('resolvePageCount', () => {
 
   it('falls back to 20 when neither a plan cap nor a level is available', () => {
     expect(resolvePageCount(undefined, null)).toBe(20)
+  })
+})
+
+/** 构造一个只返回大纲的假模型响应 */
+function mockModelResponse(pageCount: number) {
+  const outline = Array.from({ length: pageCount }, (_, i) => ({
+    pageNumber: i + 1,
+    pageFunction: i === 0 ? 'cover' : 'body',
+    pageText: `page ${i + 1}`,
+  }))
+  return {
+    ok: true,
+    json: async () => ({
+      choices: [{ message: { content: JSON.stringify({ title: 'T', outline }) } }],
+    }),
+  } as unknown as Response
+}
+
+describe('generateStory — page count enforcement', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('truncates an over-long outline to the requested page count', async () => {
+    // 模型多吐了 6 页（14 页）——但套餐只买了 8 页，多出来的页会被整本送去生图
+    const fetchMock = vi.fn(async () => mockModelResponse(14))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const story = await generateStory({
+      theme: 'a brave fox',
+      ageGroup: '3-5',
+      characterName: 'Mia',
+      pages: 8,
+      level: 'C',
+    })
+
+    expect(story.outline).toHaveLength(8)
+    expect(story.outline[7].pageNumber).toBe(8)
+  })
+
+  it('asks the model for the plan page count, not the reading level target', async () => {
+    const fetchMock = vi.fn(async () => mockModelResponse(8))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateStory({
+      theme: 'a brave fox',
+      ageGroup: '3-5',
+      characterName: 'Mia',
+      pages: 8,
+      level: 'C',
+    })
+
+    // @ts-ignore vi.fn() mock calls tuple type is loose in test context
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string)
+    const prompt: string = body.messages[1].content
+    // C 级自带 14 页目标，若 prompt 里仍写 14 页，模型就会按 14 页产出
+    expect(prompt).toContain('Number of pages: 8')
+    expect(prompt).toContain('Page count: EXACTLY 8 pages')
+    expect(prompt).not.toContain('EXACTLY 14 pages')
   })
 })

@@ -118,11 +118,11 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'Is there a free AI picture book generator?',
-    a: 'Yes. SproutTales offers a Free plan that creates 3 eight-page books a month with three art styles. Watermark-free PDF export and KDP-ready files start on the Creator plan at $29/month.',
+    a: 'Yes. SproutTales offers a Free plan that creates 1 eight-page book a month with three art styles. Watermark-free PDF export and KDP-ready files start on the Creator plan at $29/month.',
   },
   {
     q: 'Is there a credit system, and do my books expire?',
-    a: 'Your books never expire. Each plan includes a monthly book allowance (3 on Free, 30 on Creator, 100 on Studio); Studio also includes 10 Pro animated books a month, and extra Pro Animation Packs never expire.',
+    a: 'Your books never expire. Each plan includes a monthly book allowance (1 on Free, 8 on Creator, 22 on Studio), and Pro Animation Packs are sold separately and never expire.',
   },
 ]
 

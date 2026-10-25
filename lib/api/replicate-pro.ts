@@ -29,8 +29,6 @@ export interface ReplicateResult {
   version?: string
 }
 
-export type ModelFallbackChain = [string, ...string[]]
-
 // ─── 模型清单
 //
 // 只写 owner/name，不带 `:latest` 或 version hash。
@@ -39,9 +37,8 @@ export type ModelFallbackChain = [string, ...string[]]
 // 走 model 路径时 Replicate 会自动使用该模型的 latest version。
 
 const VERSIONS = {
-  // 动画：Wan 3（主）→ Seedance 2.5（备）
+  // 动画：Wan 3（Seedance 2.5 已移除：480p $0.1028/秒 是 Wan 3 的 4 倍，击穿毛利）
   wan3: 'alibaba/wan-3',
-  seedance25: 'bytedance/seedance-2.5',
   // 配音
   realtimeTts2: 'inworld/realtime-tts-2',
   // 配乐
@@ -145,30 +142,13 @@ async function callReplicate(
   return result
 }
 
-/** 带 fallback 链的通用调用 */
-async function callWithFallback(
-  replica: Replicate,
-  chain: ModelFallbackChain,
-  input: Record<string, unknown>,
-  timeoutMs = 120_000,
-): Promise<ReplicateResult & { version: string }> {
-  for (const modelVersion of chain) {
-    const r = await callReplicate(replica, modelVersion, input, timeoutMs)
-    if (r.ok) return r
-    console.warn(`[replicate-pro] ${modelVersion} failed: ${r.error}, trying next fallback`)
-  }
-  return {
-    ok: false,
-    error: `All fallbacks failed: ${chain.join(' → ')}`,
-    version: chain[0].split(':')[0],
-  }
-}
-
 // ─── 6 个模型封装 ────────────────────────────────────────────────────
 
 /**
  * FR1: 每页插画 → 动画片段（5–8 秒 / 页，1080p 或降档 480p）
- * fallback: Wan 3 → Seedance 2.5
+ * 注意：不使用 Seedance 2.5 fallback —— 其 480p 成本是 Wan 3 的 4 倍
+ * （$0.1028/秒 vs $0.025/秒），会自动击穿 Pro 动画毛利假设。
+ * Wan 3 失败时返回 { ok: false }，调用方自行决定重试或标记 pending。
  */
 export async function animatePage(
   imageUrl: string,
@@ -186,7 +166,7 @@ export async function animatePage(
     aspect_ratio,
     enable_prompt_expansion: false,
   }
-  return callWithFallback(replicate, [VERSIONS.wan3, VERSIONS.seedance25], input)
+  return callReplicate(replicate, VERSIONS.wan3, input)
 }
 
 /**

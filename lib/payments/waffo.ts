@@ -45,7 +45,10 @@ export interface WaffoPlan {
  * 产品矩阵（productId 需与 Waffo 后台 SproutTales 店铺一一对应）
  *
  * 订阅：Creator $29/月 · $261/年；Studio $79/月 · $711/年
- * 一次性：Pro Animation Pack $12 / 5 本 · $20 / 10 本
+ * 一次性：Pro Animation Pack $55 / 5 本 · $100 / 10 本
+ *
+ * 定价按「满额使用仍有 80% 毛利」反推，改动前先核对成本：
+ * 普通书 ≈ 页数 × $0.06（FLUX.2 flex）；Pro 动画 ≈ 页数 × $0.25（Wan 3 480p 5s）。
  */
 export const WAFFO_PLANS = {
   creator_monthly: {
@@ -55,7 +58,7 @@ export const WAFFO_PLANS = {
     price: 29,
     currency: 'USD',
     cycle: 'month',
-    description: '30 books per month, KDP dual PDF, commercial license',
+    description: '8 books per month, up to 12 pages, KDP dual PDF, commercial license',
   },
   creator_annual: {
     productId: process.env.WAFFO_CREATOR_ANNUAL_PRODUCT_ID || '',
@@ -64,7 +67,7 @@ export const WAFFO_PLANS = {
     price: 261,
     currency: 'USD',
     cycle: 'year',
-    description: '30 books per month, KDP dual PDF, commercial license',
+    description: '6 books per month, up to 12 pages, KDP dual PDF, commercial license',
   },
   studio_monthly: {
     productId: process.env.WAFFO_STUDIO_MONTHLY_PRODUCT_ID || '',
@@ -73,7 +76,7 @@ export const WAFFO_PLANS = {
     price: 79,
     currency: 'USD',
     cycle: 'month',
-    description: '100 books per month + 10 Pro animated books, batch generation',
+    description: '22 books per month, up to 12 pages, KDP dual PDF, batch generation',
   },
   studio_annual: {
     productId: process.env.WAFFO_STUDIO_ANNUAL_PRODUCT_ID || '',
@@ -82,13 +85,13 @@ export const WAFFO_PLANS = {
     price: 711,
     currency: 'USD',
     cycle: 'year',
-    description: '100 books per month + 10 Pro animated books, batch generation',
+    description: '16 books per month, up to 12 pages, KDP dual PDF, batch generation',
   },
   pro_anim_5: {
     productId: process.env.WAFFO_PRO_ANIM_5_PRODUCT_ID || '',
     name: 'Pro Animation Pack · 5',
     tier: 'pro-anim',
-    price: 12,
+    price: 55,
     currency: 'USD',
     cycle: 'once',
     description: '5 Pro animated books (video + voice + music), never expire',
@@ -98,7 +101,7 @@ export const WAFFO_PLANS = {
     productId: process.env.WAFFO_PRO_ANIM_10_PRODUCT_ID || '',
     name: 'Pro Animation Pack · 10',
     tier: 'pro-anim',
-    price: 20,
+    price: 100,
     currency: 'USD',
     cycle: 'once',
     description: '10 Pro animated books (video + voice + music), never expire',
@@ -119,9 +122,6 @@ export const PRO_CREDITS_PER_BOOK = 3
  */
 export const PRO_DELIVERY_READY = true
 
-/** Studio 每期附赠的 Pro 动画本数（订阅权益，非一次性商品） */
-export const STUDIO_PRO_BOOKS_PER_PERIOD = 10
-
 /** 套餐 key 对应的订阅档位；未知 plan（如已下架的历史套餐）返回 null */
 export function planTier(planKey: string): SubscriptionTier | null {
   const plan = WAFFO_PLANS[planKey as WaffoPlanKey]
@@ -132,6 +132,15 @@ export function planTier(planKey: string): SubscriptionTier | null {
 export function planGrant(planKey: string): number {
   const plan = WAFFO_PLANS[planKey as WaffoPlanKey] as WaffoPlan | undefined
   return plan?.grant ?? 0
+}
+
+/**
+ * 套餐的计费周期：年付 / 月付 / 一次性。
+ * 用于区分月度 allowance——年付价格只有月付的 75%，额度必须同步下调。
+ */
+export function planCycle(planKey: string): 'month' | 'year' {
+  const plan = WAFFO_PLANS[planKey as WaffoPlanKey] as WaffoPlan | undefined
+  return plan?.cycle === 'year' ? 'year' : 'month'
 }
 
 export function getPlan(planKey: string): WaffoPlan | null {

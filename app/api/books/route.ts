@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 import { outlineToPages, type CharacterCard, type PageOutline, type StyleLexicon } from '@/lib/types/book'
-import { consumeBookAllocation } from '@/lib/allocation'
+import { consumeBookAllocation, bookCostUnits } from '@/lib/allocation'
 import { createSeries } from '@/lib/series'
 import { getWorld, toWorldSnapshot } from '@/lib/worlds'
 import { isR2Configured, uploadBase64Image, characterKey } from '@/lib/r2'
@@ -106,8 +106,9 @@ export async function POST(req: NextRequest) {
     if (!bookId) throw new Error('Failed to insert book')
 
     // 3. 扣减 credits / 月度 allowance（游客 user.id 为 null 时跳过，免费游客不扣费）
+    //    A4 画幅生图成本翻倍（FLUX 按 MP 计费），扣 2 个额度单位
     if (user?.id) {
-      const alloc = await consumeBookAllocation(user.id)
+      const alloc = await consumeBookAllocation(user.id, bookCostUnits(body.aspect))
       if (!alloc.ok) {
         // book 已经保存了，但 allocation 扣减失败。我们已经初始化过 free tier 的 allowance，
         // 所以走到这里说明 credits=0 且 allowance=0。返回 402 让前端引导用户升级。

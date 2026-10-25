@@ -371,9 +371,9 @@ const COVERS: {
 ]
 
 const TIERS = [
-  { name: 'Free', amount: '$0', note: '3 books a month · watermarked preview' },
-  { name: 'Creator', amount: '$29', note: 'per month · 30 books + KDP + commercial license', featured: true },
-  { name: 'Studio', amount: '$79', note: 'per month · 100 books + 10 Pro animated' },
+  { name: 'Free', amount: '$0', note: '1 book a month · watermarked preview' },
+  { name: 'Creator', amount: '$29', note: 'per month · 8 books + KDP + commercial license', featured: true },
+  { name: 'Studio', amount: '$79', note: 'per month · 22 books + batch generation' },
 ]
 
 const LANGUAGES = ['EN', 'ZH', 'ZH-TW', 'ES', 'FR', 'DE', 'JA', 'KO', 'PT', 'IT']
@@ -813,7 +813,7 @@ export default function HomePage() {
             >
               Compare all plans →
             </Link>
-            <span>Pro Animation Pack · 5 books for $12 · never expires</span>
+            <span>Pro Animation Pack · 5 books for $55 · never expires</span>
           </div>
         </div>
       </section>

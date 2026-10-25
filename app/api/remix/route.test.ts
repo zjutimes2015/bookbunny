@@ -23,7 +23,11 @@ vi.mock('@/lib/series', () => ({
   insertEpisode: insertEpisodeMock,
 }))
 vi.mock('@/lib/api/story', () => ({ generateStory: generateStoryMock }))
-vi.mock('@/lib/allocation', () => ({ consumeBookAllocation: consumeAllocationMock }))
+vi.mock('@/lib/allocation', () => ({
+  consumeBookAllocation: consumeAllocationMock,
+  // A4 画幅生图成本翻倍，扣 2 个额度单位
+  bookCostUnits: (aspect?: string | null) => (aspect === 'a4' ? 2 : 1),
+}))
 vi.mock('@/lib/turnstile', () => ({
   requireHuman: requireHumanMock,
   attachPassCookie: (res: unknown) => res,
@@ -200,5 +204,32 @@ describe('POST /api/remix', () => {
     const res = await POST(makeRequest({ bookId: 'book-1', kind: 'ending' }))
     expect(res.status).toBe(500)
     expect(consumeAllocationMock).not.toHaveBeenCalled()
+  })
+
+  it('caps the sequel at the plan page limit', async () => {
+    // 上一集 16 页（高于付费档 12 页上限），续集必须被砍到 12 页
+    loadRemixSourceMock.mockResolvedValue(
+      makeSource({ content: Array.from({ length: 16 }, (_, i) => `page ${i + 1}`) }),
+    )
+    const res = await POST(makeRequest({ bookId: 'book-1', kind: 'ending' }))
+    expect(res.status).toBe(200)
+    expect(generateStoryMock.mock.calls[0][0].pages).toBe(12)
+  })
+
+  it('caps the sequel at 8 pages for the free tier', async () => {
+    getSessionUserMock.mockResolvedValue({ id: 'user-1', tier: 'free', isPaid: false })
+    loadRemixSourceMock.mockResolvedValue(
+      makeSource({ content: Array.from({ length: 16 }, (_, i) => `page ${i + 1}`) }),
+    )
+    const res = await POST(makeRequest({ bookId: 'book-1', kind: 'ending' }))
+    expect(res.status).toBe(200)
+    expect(generateStoryMock.mock.calls[0][0].pages).toBe(8)
+  })
+
+  it('keeps the sequel the same length as the source book when it fits', async () => {
+    const res = await POST(makeRequest({ bookId: 'book-1', kind: 'ending' }))
+    expect(res.status).toBe(200)
+    // 来源书 2 页 → 至少 4 页（生图下限），且不超过套餐上限
+    expect(generateStoryMock.mock.calls[0][0].pages).toBe(4)
   })
 })

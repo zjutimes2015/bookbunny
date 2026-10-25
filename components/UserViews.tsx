@@ -73,9 +73,9 @@ export function PaidUserView({ children }: { children?: React.ReactNode }) {
 
   const tierDetail =
     user?.subscriptionTier === 'studio'
-      ? '100 books a month, 10 Pro animated books & batch generation.'
+      ? '22 books a month, Pro Animation Packs & batch generation.'
       : user?.subscriptionTier === 'creator'
-      ? '30 books a month, KDP export & commercial rights.'
+      ? '8 books a month, KDP export & commercial rights.'
       : 'Your plan is active.'
 
   return (

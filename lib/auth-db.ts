@@ -21,14 +21,17 @@ sql`
     pro_animation_credits INTEGER DEFAULT 0,
     pro_grant_next_at TIMESTAMPTZ,
     monthly_allowance_remaining INTEGER,
-    allowance_reset_at TIMESTAMPTZ
+    allowance_reset_at TIMESTAMPTZ,
+    billing_cycle TEXT DEFAULT 'month'
   )
 `.catch(() => {})
 
 // 存量库补列（Pro 动画面包是独立商品，额度池与普通 credits 分离）
 sql`ALTER TABLE bookbunny_users ADD COLUMN IF NOT EXISTS pro_animation_credits INTEGER DEFAULT 0`.catch(() => {})
-// 下次应发放 Pro 额度的时点（Studio 年付靠它按月补发）
+// 下次应发放 Pro 额度的时点（Pro 已改为一次性购买，保留列以兼容存量数据）
 sql`ALTER TABLE bookbunny_users ADD COLUMN IF NOT EXISTS pro_grant_next_at TIMESTAMPTZ`.catch(() => {})
+// 计费周期：年付价格是月付的 75%，月度 allowance 必须按此区分（见 lib/allocation.ts）
+sql`ALTER TABLE bookbunny_users ADD COLUMN IF NOT EXISTS billing_cycle TEXT DEFAULT 'month'`.catch(() => {})
 
 export const users = pgTable('bookbunny_users', {
   id: text('id').primaryKey(),
@@ -45,4 +48,5 @@ export const users = pgTable('bookbunny_users', {
   proGrantNextAt: timestamp('pro_grant_next_at', { withTimezone: true }),
   monthlyAllowanceRemaining: integer('monthly_allowance_remaining'),
   allowanceResetAt: timestamp('allowance_reset_at', { withTimezone: true }),
+  billingCycle: text('billing_cycle').default('month'),
 })

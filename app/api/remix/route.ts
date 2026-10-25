@@ -3,7 +3,8 @@ import { generateStory } from '@/lib/api/story'
 import { getSessionUser } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { requireHuman, attachPassCookie, humanCheckFailedResponse } from '@/lib/turnstile'
-import { consumeBookAllocation } from '@/lib/allocation'
+import { consumeBookAllocation, bookCostUnits } from '@/lib/allocation'
+import { maxPagesFor } from '@/lib/tier-limits'
 import { loadRemixSource, insertEpisode } from '@/lib/series'
 import { buildSequelBrief, endingLine, isRemixKind, nextMoral } from '@/lib/remix'
 import { outlineToPages } from '@/lib/types/book'
@@ -84,10 +85,22 @@ export async function POST(req: NextRequest) {
       forbidden: world?.forbiddenZones,
     })
 
+    // 续集页数必须同时受两个约束：
+    // 1. 上一集的实际页数（续集要跟原书一样长）
+    // 2. 当前套餐的页数上限（Free 8 / 付费 12）
+    // 不传 pages 会回退到 GRL 自带的页数（C=14 / D=16 / E=18），
+    // 直接越过套餐上限，把生图成本顶穿毛利。
+    const maxPages = maxPagesFor(user.tier, user.isPaid)
+    const sequelPages = Math.min(
+      Math.max(source.content.length || 8, 4),
+      maxPages,
+    )
+
     const story = await generateStory({
       theme: source.storyTheme || series.theme,
       ageGroup: source.ageGroup || series.ageGroup,
       characterName: series.protagonistName,
+      pages: sequelPages,
       level: source.level ?? series.level ?? undefined,
       characterCards: series.protagonistCard ? [series.protagonistCard] : undefined,
       styleLexicon: series.styleLexicon ?? undefined,
@@ -95,7 +108,8 @@ export async function POST(req: NextRequest) {
     })
 
     // 生成成功后才扣额度，避免 LLM 失败也扣掉一本
-    const allocation = await consumeBookAllocation(user.id)
+    // A4 画幅生图成本翻倍（FLUX 按 MP 计费），扣 2 个额度单位
+    const allocation = await consumeBookAllocation(user.id, bookCostUnits(source.aspect))
     if (!allocation.ok) {
       return NextResponse.json(
         { error: 'No credits or allowance left. Upgrade or buy credits to make more books.', code: 'no_allocation' },

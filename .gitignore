@@ -1,9 +1,42 @@
+# env
+.env.local
+.env.production.local
+.env
+.env.peek
+
+# deps
 node_modules/
 .next/
+out/
+dist/
+
+# build
+*.mp4
+*.mov
+*.avi
+
+# scripts (investigation probes, not part of the app)
+scripts/flux-cost-probe.cjs
+scripts/flux-ref-probe.cjs
+scripts/replicate-billing-probe.cjs
+scripts/replicate-pricing.cjs
+scripts/seedance-input-probe.cjs
+scripts/wan3-price-probe.cjs
+scripts/waffo-update-products.cjs
+tmp-orig.ts
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Vercel project link
 .vercel/
-*.tsbuildinfo
-.env
-.env.local
-.env.peek
-.env*.peek
-*.log
+
+# build artifacts
+tsconfig.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db

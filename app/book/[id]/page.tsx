@@ -388,7 +388,7 @@ export default function BookDetailPage() {
           <div>
             <h2 className="text-lg font-bold text-[#2D2D2D]">Animated Read-Aloud</h2>
             <p className="text-xs text-[#8E8E93] mt-0.5">
-              AI-generated video with voiceover, music &amp; word highlighting · {PRO_COST} credits per book
+              AI-generated video with voiceover &amp; original music · {PRO_COST} credits per book · up to 8 pages
             </p>
             {user && (
               <p className="text-[11px] text-[#8E8E93] mt-1">
@@ -417,7 +417,7 @@ export default function BookDetailPage() {
                 className="text-sm px-6 py-3 w-full sm:w-auto rounded-xl font-medium text-white bg-[#7B3FBF] hover:bg-[#6A2FB0] transition-all"
                 onClick={handleStartPro}
               >
-                ✨ Buy Pro Animation Pack · 5 books for $12
+                ✨ Buy Pro Animation Pack · 5 books for $55
               </button>
               <p className="text-[11px] text-[#8E8E93]">
                 {user

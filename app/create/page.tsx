@@ -15,6 +15,7 @@ import { buildInteriorPdf, buildCoverPdf, type KdpPageInput } from '@/lib/kdp/ex
 import { KDP_TRIM, padToKdpPageCount, interiorDimsIn, coverDimsIn } from '@/lib/kdp/spec'
 import { KdpChecklist } from '@/components/KdpChecklist'
 import { useAuth } from '@/lib/auth-context'
+import { maxPagesFor } from '@/lib/tier-limits'
 import { analyzeStoryForGRL, type GrlReport } from '@/lib/grl/analyzer'
 
 // 阶段6：至简三步状态机（设定 → 生成大纲 → 按纲生图）
@@ -95,10 +96,9 @@ function downloadBytes(bytes: Uint8Array, filename: string) {
 
 export default function CreatePage() {
   const { user } = useAuth()
-  // 套餐页数上限：Free 8 / Creator 20 / Studio 24
+  // 套餐页数上限：Free 8 / Creator 12 / Studio 12（与服务端同一口径）
   const tier = user?.subscriptionTier
-  const maxPages =
-    tier === 'studio' || tier === 'commercial' ? 24 : tier === 'creator' ? 20 : 8
+  const maxPages = maxPagesFor(tier, !!user?.isPaid)
   // 免费档边界，与定价页保持一致：3 种画风 · 1 种语言 · 1 个角色
   const isFreeTier = !tier || tier === 'free'
   const styleOptions = isFreeTier ? STYLE_LIBRARY.slice(0, 3) : STYLE_LIBRARY
@@ -140,7 +140,7 @@ export default function CreatePage() {
   const [theme, setTheme] = useState('')
   const [ageGroup, setAgeGroup] = useState('3-5')
   const [level, setLevel] = useState('C')
-  const [pageCount, setPageCount] = useState(20) // 第一步：页数
+  const [pageCount, setPageCount] = useState(12) // 第一步：页数
   const effectivePages = Math.min(pageCount, maxPages)
 
   // 绘本内容语言（出海默认英语，一本只用一种语言）
@@ -823,7 +823,7 @@ export default function CreatePage() {
                         >
                           <span className="block text-sm font-bold text-[#2D2D2D]">{n}</span>
                           <span className="block text-[10px] text-[#8E8E93]">
-                            {locked ? 'upgrade' : n === 20 ? 'pages · Recommended' : 'pages'}
+                            {locked ? 'upgrade' : n === 12 ? 'pages · Recommended' : 'pages'}
                           </span>
                         </button>
                       )

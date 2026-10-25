@@ -134,7 +134,7 @@ describe('POST /api/payments/waffo-webhook', () => {
   })
 
   describe('subscription activation', () => {
-    it('sets Creator tier with a 30-book allowance', async () => {
+    it('sets Creator tier with an 8-book allowance', async () => {
       mockEvent = {
         eventType: 'subscription.activated',
         data: {
@@ -154,7 +154,7 @@ describe('POST /api/payments/waffo-webhook', () => {
       expect(userUpdate).toContain('is_paid = TRUE')
     })
 
-    it('grants Studio its 10 included Pro animated books', async () => {
+    it('does not grant Studio any Pro animated credits', async () => {
       mockEvent = {
         eventType: 'order.completed',
         data: {
@@ -169,7 +169,8 @@ describe('POST /api/payments/waffo-webhook', () => {
 
       const userUpdate = callLog.find(q => q.includes('subscription_tier = ?'))
       expect(userUpdate).toBeDefined()
-      expect(userUpdate).toContain('pro_animation_credits = COALESCE(pro_animation_credits, 0) + ?')
+      expect(userUpdate).not.toContain('pro_animation_credits')
+      expect(userUpdate).toContain('pro_grant_next_at = NULL')
     })
 
     it('records payment but grants nothing for an unknown plan', async () => {

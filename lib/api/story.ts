@@ -146,7 +146,7 @@ export async function generateStory(options: StoryOptions): Promise<StoryResult>
   let constraintsBlock = ''
 
   if (level) {
-    constraintsBlock = levelPromptConstraints(level)
+    constraintsBlock = levelPromptConstraints(level, pageCount)
   }
 
   const visualDirectionBlock = buildVisualDirectionBlock(options.styleCard, options.styleLexicon)
@@ -247,6 +247,12 @@ Return ONLY a JSON object:
     outline = pagesToOutline(arr(parsed.pages))
   } else {
     throw new Error('AI response missing outline/pages')
+  }
+
+  // 兜底截断：模型偶尔会多吐几页。页数直接决定生图账单，
+  // 多出来的页会被前端整本送去生图，所以在这里按套餐上限砍掉。
+  if (outline.length > pageCount) {
+    outline = outline.slice(0, pageCount)
   }
 
   const story: StoryResult = {

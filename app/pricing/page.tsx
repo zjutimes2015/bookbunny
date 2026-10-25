@@ -16,9 +16,10 @@ const MATRIX: { title: string; rows: MatrixRow[] }[] = [
   {
     title: 'Create',
     rows: [
-      { label: 'Books per month', free: '3', creator: '30', studio: '100' },
-      { label: 'Pro animated books', free: false, creator: 'Add-on packs', studio: '10 included' },
-      { label: 'Pages per book', free: '8 pages', creator: 'Up to 20', studio: 'Up to 24' },
+      { label: 'Books per month', free: '1', creator: '8', studio: '22' },
+      { label: 'Books per month (annual)', free: '1', creator: '6', studio: '16' },
+      { label: 'Pro animated books', free: false, creator: 'Add-on packs', studio: 'Add-on packs' },
+      { label: 'Pages per book', free: '8 pages', creator: 'Up to 12', studio: 'Up to 12' },
       { label: 'Picture-book art styles', free: '3 styles', creator: 'All 15 styles', studio: 'All 15 styles' },
       { label: 'Characters per book', free: '1', creator: '5', studio: '5' },
       { label: 'Book languages', free: '1', creator: 'All 10', studio: 'All 10' },
@@ -32,7 +33,7 @@ const MATRIX: { title: string; rows: MatrixRow[] }[] = [
       { label: 'KDP interior + cover PDFs', free: false, creator: true, studio: true },
       { label: 'Commercial license', free: false, creator: true, studio: true },
       { label: 'Narration & background music', free: true, creator: true, studio: true },
-      { label: 'Animated video (Wan 3 + voice + music)', free: false, creator: 'Add-on packs', studio: '10 included' },
+      { label: 'Animated video (Wan 3 + voice + music)', free: false, creator: 'Add-on packs', studio: 'Add-on packs' },
       { label: 'Batched generation (5 pages at a time)', free: true, creator: true, studio: true },
     ],
   },
@@ -52,6 +53,10 @@ interface PlanCard {
   name: string
   monthly: number
   annualTotal: number | null
+  /** 月付时的每月本数 */
+  books: number
+  /** 年付时的每月本数（年付价格更低，额度按比例下调，见 lib/allocation.ts） */
+  annualBooks: number
   desc: string
   features: string[]
   cta: string
@@ -65,9 +70,11 @@ const PLANS: PlanCard[] = [
     name: 'Free',
     monthly: 0,
     annualTotal: null,
+    books: 1,
+    annualBooks: 1,
     desc: 'Try the whole flow',
     features: [
-      '3 books per month',
+      '1 book per month',
       '8-page book, 3 art styles',
       'Read books in the app',
       '1 character, 1 language',
@@ -80,10 +87,11 @@ const PLANS: PlanCard[] = [
     name: 'Creator',
     monthly: 29,
     annualTotal: 261,
+    books: 8,
+    annualBooks: 6,
     desc: 'For authors publishing on Amazon KDP',
     features: [
-      '30 books per month',
-      'Up to 20 pages per book',
+      'Up to 12 pages per book',
       'KDP interior + cover PDFs',
       'Commercial license included',
       '5 characters · all 10 languages',
@@ -98,12 +106,13 @@ const PLANS: PlanCard[] = [
     name: 'Studio',
     monthly: 79,
     annualTotal: 711,
+    books: 22,
+    annualBooks: 16,
     desc: 'For teams shipping books at volume',
     features: [
-      '100 books per month',
-      '10 Pro animated books included',
-      'Up to 24 pages per book',
+      'Up to 12 pages per book',
       'Everything in Creator',
+      'Batched generation',
       'Priority support',
     ],
     cta: 'Choose Studio',
@@ -123,8 +132,8 @@ interface PackCard {
 }
 
 const PRO_PACKS: PackCard[] = [
-  { key: 'pro_anim_5', name: 'Pro Animation Pack', price: 12, books: 5, available: true },
-  { key: 'pro_anim_10', name: 'Pro Animation Pack ×2', price: 20, books: 10, badge: 'Best value', available: true },
+  { key: 'pro_anim_5', name: 'Pro Animation Pack', price: 55, books: 5, available: true },
+  { key: 'pro_anim_10', name: 'Pro Animation Pack ×2', price: 100, books: 10, badge: 'Best value', available: true },
 ]
 
 function priceLabel(plan: PlanCard, annual: boolean) {
@@ -135,6 +144,12 @@ function priceLabel(plan: PlanCard, annual: boolean) {
     return { amount, suffix: `/mo · $${plan.annualTotal}/year` }
   }
   return { amount: `$${plan.monthly}`, suffix: '/month' }
+}
+
+/** 当前计费周期下的每月本数（年付额度按比例下调） */
+function booksLabel(plan: PlanCard, annual: boolean) {
+  const n = annual ? plan.annualBooks : plan.books
+  return `${n} ${n === 1 ? 'book' : 'books'} per month`
 }
 
 export default function PricingPage() {
@@ -227,6 +242,10 @@ export default function PricingPage() {
               )}
               <p className="text-sm text-[#8E8E93] mt-1">{plan.desc}</p>
               <ul className="mt-5 space-y-2.5 flex-1">
+                <li className="text-sm text-[#2D2D2D] flex items-start gap-2">
+                  <span className="text-[#FF6B8A] mt-0.5">✓</span>
+                  <span>{booksLabel(plan, annual)}</span>
+                </li>
                 {plan.features.map((f) => (
                   <li key={f} className="text-sm text-[#2D2D2D] flex items-start gap-2">
                     <span className="text-[#FF6B8A] mt-0.5">✓</span>
@@ -259,7 +278,7 @@ export default function PricingPage() {
         </div>
         <p className="text-sm text-[#8E8E93] mt-1">
           Turn any finished book into an animated video with AI voiceover and original music.
-          One-time purchase, never expires. Works with every plan.
+          One-time purchase, never expires. Works with every plan. Each book animates up to 8 pages.
         </p>
         <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1">
           {['Wan 3 video clips per page', 'Inworld TTS 2 voiceover', 'MiniMax original music'].map((f) => (
