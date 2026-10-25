@@ -31,21 +31,25 @@ export interface ReplicateResult {
 
 export type ModelFallbackChain = [string, ...string[]]
 
-// ─── 模型版本清单（version hash 从 https://replicate.com 各模型页面获取）
-// 每次模型更新时需要同步这些 hash
+// ─── 模型清单
+//
+// 只写 owner/name，不带 `:latest` 或 version hash。
+// SDK 在传入 model（而非 version）时请求 /models/{model}/predictions，
+// 任何后缀都会被当成模型名的一部分，导致 404。
+// 走 model 路径时 Replicate 会自动使用该模型的 latest version。
 
 const VERSIONS = {
   // 动画：Wan 3（主）→ Seedance 2.5（备）
-  wan3: 'alibaba/wan-3:latest',
-  seedance25: 'bytedance/seedance-2.5:latest',
+  wan3: 'alibaba/wan-3',
+  seedance25: 'bytedance/seedance-2.5',
   // 配音
-  realtimeTts2: 'inworld/realtime-tts-2:latest',
+  realtimeTts2: 'inworld/realtime-tts-2',
   // 配乐
-  minimaxMusic: 'minimax/music-2.6:latest',
+  minimaxMusic: 'minimax/music-2.6',
   // 跟读（Whisper large-v3）
-  whisper: 'openai/whisper:8099696689d249cf8b122d833c36ac3f75505c666a395ca40ef26f68e7d3d16e',
+  whisper: 'openai/whisper',
   // 封面（多参考图 FLUX 3）
-  flux3: 'black-forest-labs/flux-3-image:latest',
+  flux3: 'black-forest-labs/flux-3-image',
 } as const
 
 // ─── 工具函数 ─────────────────────────────────────────────────────────
