@@ -86,7 +86,7 @@ export function refundPolicySections(options?: {
             <span className={DOT}>•</span>
             <span>
               <span className={STRONG}>You have not used the purchase.</span> A subscription charge
-              (Starter, Creator, or Studio, billed monthly or yearly) is eligible only when you have
+              (Creator or Studio, billed monthly or yearly) is eligible only when you have
               not used any monthly book allowance from that billing period and have not generated a
               book during that period. A credit pack is eligible only when none of the credits in
               that pack have been used.
