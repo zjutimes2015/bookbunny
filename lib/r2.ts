@@ -157,7 +157,10 @@ export async function deleteFiles(keys: string[]): Promise<number> {
 /** Utility: generate a unique key for book assets */
 export function bookKey(bookId: string, type: 'cover' | 'page' | 'pdf' | 'video', index?: number): string {
   const base = `books/${bookId}/${type}`
-  return index !== undefined ? `${base}/${index.toString().padStart(3, '0')}.png` : `${base}.pdf`
+  if (index !== undefined) return `${base}/${index.toString().padStart(3, '0')}.png`
+  if (type === 'video') return `${base}.mp4`
+  if (type === 'cover') return `${base}.png`
+  return `${base}.pdf`
 }
 
 /** Utility: generate a unique key for character assets */

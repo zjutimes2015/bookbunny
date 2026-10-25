@@ -47,10 +47,11 @@ export const books = pgTable('books', {
 })
 
 // Pro 动画导出任务表（animate-pro API 使用）
+// book_id 必须与 books.id 同为 uuid，写成 TEXT 时外键建不起来
 sql`
   CREATE TABLE IF NOT EXISTS pro_animation_jobs (
     id TEXT PRIMARY KEY,
-    book_id TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+    book_id UUID NOT NULL REFERENCES books(id) ON DELETE CASCADE,
     user_id TEXT NOT NULL REFERENCES bookbunny_users(id) ON DELETE CASCADE,
     status TEXT NOT NULL DEFAULT 'pending',  -- pending / running / done / error
     total_pages INTEGER NOT NULL DEFAULT 0,

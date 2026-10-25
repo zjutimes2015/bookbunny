@@ -78,11 +78,24 @@ async function pollPrediction(
   return { status: 'timeout', error: 'Prediction timed out after 120s' }
 }
 
-/** 调用单个 Replicate 模型，返回结果 */
-async function callReplicate(
+/**
+ * 调用单个 Replicate 模型，返回结果
+ *
+ * 低余额账户的创建频率被限到 6 次/分钟（突发 1），一本 8 页的书必然撞上 429。
+ * 限流是秒级恢复的，所以这里按退避重试，而不是直接判失败。
+ */
+const RATE_LIMIT_RETRIES = 2
+
+function isRateLimited(message: string): boolean {
+  const m = message.toLowerCase()
+  return m.includes('429') || m.includes('throttled') || m.includes('rate limit')
+}
+
+async function callReplicateOnce(
   replica: Replicate,
   model: string,
   input: Record<string, unknown>,
+  timeoutMs: number,
 ): Promise<ReplicateResult & { version: string }> {
   const t0 = Date.now()
   try {
@@ -91,7 +104,7 @@ async function callReplicate(
       input,
     })
 
-    const result = await pollPrediction(replica, prediction.id)
+    const result = await pollPrediction(replica, prediction.id, timeoutMs)
     const durationMs = Date.now() - t0
 
     if (result.status === 'succeeded' && result.output) {
@@ -115,14 +128,32 @@ async function callReplicate(
   }
 }
 
+async function callReplicate(
+  replica: Replicate,
+  model: string,
+  input: Record<string, unknown>,
+  timeoutMs = 120_000,
+): Promise<ReplicateResult & { version: string }> {
+  let result = await callReplicateOnce(replica, model, input, timeoutMs)
+
+  for (let attempt = 0; attempt < RATE_LIMIT_RETRIES; attempt++) {
+    if (result.ok || !isRateLimited(result.error ?? '')) break
+    await new Promise((r) => setTimeout(r, 6000 * (attempt + 1)))
+    result = await callReplicateOnce(replica, model, input, timeoutMs)
+  }
+
+  return result
+}
+
 /** 带 fallback 链的通用调用 */
 async function callWithFallback(
   replica: Replicate,
   chain: ModelFallbackChain,
   input: Record<string, unknown>,
+  timeoutMs = 120_000,
 ): Promise<ReplicateResult & { version: string }> {
   for (const modelVersion of chain) {
-    const r = await callReplicate(replica, modelVersion, input)
+    const r = await callReplicate(replica, modelVersion, input, timeoutMs)
     if (r.ok) return r
     console.warn(`[replicate-pro] ${modelVersion} failed: ${r.error}, trying next fallback`)
   }
@@ -176,16 +207,15 @@ export async function generateTTS(
 
 /**
  * FR3: 故事配乐（纯音乐、慢速、轻柔）
- * 生成 1 轨 / 本，~60 秒
+ * 生成 1 轨 / 本；音乐模型比动画慢，给 180s 轮询窗口
  */
-export async function generateMusic(prompt: string, options?: { duration?: number }): Promise<ReplicateResult & { version: string }> {
-  const { duration = 30 } = options ?? {}
+export async function generateMusic(prompt: string): Promise<ReplicateResult & { version: string }> {
   const input = {
     prompt: `${prompt}, gentle ambient music for children's book, soft piano and strings, no vocals, no lyrics, looping-friendly`,
     is_instrumental: true,
     audio_format: 'mp3',
   }
-  return callReplicate(replicate, VERSIONS.minimaxMusic, input)
+  return callReplicate(replicate, VERSIONS.minimaxMusic, input, 180_000)
 }
 
 /**
