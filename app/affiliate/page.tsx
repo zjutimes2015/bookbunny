@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { SITE_NAME, SITE_URL } from '@/lib/site'
 import AffiliateClient from './affiliate-client'
 
-const TITLE = `Affiliate Program — Earn Recurring Commission | ${SITE_NAME}`
+const TITLE = 'Affiliate Program — Earn Recurring Commission'
 const DESCRIPTION =
   'Earn 30% on the first payment and 15% recurring for every creator you refer to SproutTales. Real-time dashboard, 90-day attribution, PayPal/Stripe/Wise payouts.'
 

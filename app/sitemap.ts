@@ -2,70 +2,34 @@ import type { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/site'
 
 /**
- * Search + AI answer engines read /sitemap.xml (referenced by app/robots.ts) to discover
- * the routes we want indexed and cited. Only the public marketing and product-entry
- * routes are listed — private surfaces such as /api, /admin and /progress stay uncrawled.
+ * sitemap.xml — the crawl map for search engines and AI crawlers.
+ *
+ * Only publicly indexable pages are listed. Private surfaces (/create,
+ * /progress, /book/*) are excluded here and disallowed in robots.ts.
+ * World detail pages are intentionally omitted: every world is still in
+ * `draft` status, so listing them would advertise unreleased content.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date()
-  const monthly = () => ({ lastModified: now, changeFrequency: 'monthly' as const })
-  const weekly = () => ({ lastModified: now, changeFrequency: 'weekly' as const })
 
-  return [
-    {
-      url: `${SITE_URL}/`,
-      ...weekly(),
-      priority: 1,
-    },
-    {
-      url: `${SITE_URL}/ai-picture-book-generator`,
-      ...monthly(),
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/pricing`,
-      ...monthly(),
-      priority: 0.8,
-    },
-    {
-      url: `${SITE_URL}/vs/readkidz`,
-      ...monthly(),
-      priority: 0.7,
-    },
-    {
-      url: `${SITE_URL}/affiliate`,
-      ...monthly(),
-      priority: 0.6,
-    },
-    {
-      url: `${SITE_URL}/personalized-childrens-books`,
-      ...monthly(),
-      priority: 0.7,
-    },
-    {
-      url: `${SITE_URL}/blog/how-to-make-a-childrens-book`,
-      ...monthly(),
-      priority: 0.6,
-    },
-    {
-      url: `${SITE_URL}/about`,
-      ...monthly(),
-      priority: 0.5,
-    },
-    {
-      url: `${SITE_URL}/safety`,
-      ...monthly(),
-      priority: 0.6,
-    },
-    {
-      url: `${SITE_URL}/privacy`,
-      ...monthly(),
-      priority: 0.5,
-    },
-    {
-      url: `${SITE_URL}/terms`,
-      ...monthly(),
-      priority: 0.5,
-    },
+  const staticPages: { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] }[] = [
+    { path: '', priority: 1.0, changeFrequency: 'weekly' },
+    { path: '/ai-picture-book-generator', priority: 0.95, changeFrequency: 'weekly' },
+    { path: '/personalized-childrens-books', priority: 0.9, changeFrequency: 'weekly' },
+    { path: '/pricing', priority: 0.9, changeFrequency: 'monthly' },
+    { path: '/blog/how-to-make-a-childrens-book', priority: 0.85, changeFrequency: 'monthly' },
+    { path: '/vs/readkidz', priority: 0.8, changeFrequency: 'monthly' },
+    { path: '/about', priority: 0.6, changeFrequency: 'monthly' },
+    { path: '/affiliate', priority: 0.5, changeFrequency: 'monthly' },
+    { path: '/safety', priority: 0.5, changeFrequency: 'yearly' },
+    { path: '/privacy', priority: 0.4, changeFrequency: 'yearly' },
+    { path: '/terms', priority: 0.4, changeFrequency: 'yearly' },
   ]
+
+  return staticPages.map((page) => ({
+    url: `${SITE_URL}${page.path}`,
+    lastModified: now,
+    changeFrequency: page.changeFrequency,
+    priority: page.priority,
+  }))
 }

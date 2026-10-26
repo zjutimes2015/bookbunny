@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { GENERAL_FORBIDDEN_ZONES } from '@/data/worlds'
-import { SITE_URL, SITE_NAME } from '@/lib/site'
+import { SITE_URL } from '@/lib/site'
 import { getWorld } from '@/lib/worlds'
 import { getWorldInsights } from '@/lib/analytics'
 
@@ -13,11 +13,11 @@ type PageProps = { params: Promise<{ id: string }> }
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params
   const world = await getWorld(id)
-  if (!world) return { title: `World not found — ${SITE_NAME}` }
+  if (!world) return { title: 'World not found' }
 
   const description = `${world.name} — ages ${world.ageRange}, theme: ${world.theme}. ${world.scene.slice(0, 120)}`
   return {
-    title: `${world.name} — World Library — ${SITE_NAME}`,
+    title: `${world.name} — Illustrated Story World for Kids`,
     description,
     alternates: { canonical: `${SITE_URL}/worlds/${world.id}` },
     // Draft worlds are for internal review only — keep them out of search results

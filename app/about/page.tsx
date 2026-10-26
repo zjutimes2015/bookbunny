@@ -4,7 +4,7 @@ import { SITE_URL, SITE_NAME } from '@/lib/site'
 
 const TITLE = 'About SproutTales — The Team Behind AI Children\'s Books'
 const DESCRIPTION =
-  'Meet the team behind SproutTales. We build AI picture book tools because we believe every child deserves a story where they are the hero. Learn about our mission, values, and commitment to child privacy.'
+  'Meet the team behind SproutTales, the AI picture book generator built for families, teachers and self-publishers. Our mission, values, and commitment to child privacy and print quality.'
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -31,6 +31,13 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     images: ['/twitter-image.png'],
   },
+  keywords: [
+    'about SproutTales',
+    'AI picture book generator team',
+    'AI children book company',
+    'childrens book startup',
+    'why we build AI picture books',
+  ],
 }
 
 const VALUES = [

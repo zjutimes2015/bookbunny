@@ -1,41 +1,77 @@
-import { SITE_URL } from '@/lib/site'
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '@/lib/site'
 
 /**
  * llms.txt — a compact, machine-readable summary for LLM crawlers (GEO).
- * Generated per request so every absolute URL matches the deployed origin (SITE_URL)
- * instead of a hardcoded domain.
+ *
+ * Generated per request so every absolute URL matches the deployed origin
+ * (SITE_URL) instead of a hardcoded domain. The deeper version — with the
+ * full feature comparison, pricing table and FAQ — lives at /llms-full.txt.
  */
 export function GET() {
-  const body = `# SproutTales
+  const body = `# ${SITE_NAME}
 
-> SproutTales turns one idea into an illustrated children's picture book: consistent
-> characters across every page, reading-level-matched text, and a print-ready PDF that
-> passes Amazon KDP's preprint checks.
+> ${SITE_DESCRIPTION}
 
-## What makes it different
+## What ${SITE_NAME} does
 
-- No wasted credits. Every plan includes a monthly book allowance (Free 1, Creator 8,
-  Studio 22 books), optional Pro Animation Packs never expire, and every book you
-  create stays in your library.
-- Character consistency is enforced on every page through a reusable consistency line
-  plus a stored reference character card.
-- Two photo privacy schemes: Option A builds the character with no real photo at all;
-  Option B uses a real photo with a selectable privacy scope.
-- Reading levels (GRL A-E) with matched vocabulary, comprehension questions and a
-  reading-progress view for parents and teachers.
-- Exports two separate KDP-compliant PDFs — interior and full cover (back + spine +
-  front) — with correct bleed, gutter, spine width and an even page count of at least 24.
-- Books can be generated in multiple languages; English is the primary language.
+- Generates a complete illustrated children's picture book from one written idea
+- Keeps the same character on every page via a reusable consistency line plus a
+  stored reference character card
+- Matches vocabulary and sentence length to a reading level (GRL A-E)
+- Exports two print-ready PDFs for Amazon KDP: interior pages and a full cover
+  (back + spine + front) with correct bleed, gutter, spine width and an even
+  page count of at least 24
+- Supports 10 languages; English is the primary language
+- Optional read-aloud narration and background music
+
+## Plans and pricing
+
+- Free — $0/month, 1 book per month, 8 pages, 3 art styles, preview only
+- Creator — $29/month (or $261/year), 8 books per month, up to 12 pages per book,
+  KDP interior + cover PDFs, commercial licence, narration and music
+- Studio — $79/month (or $711/year), 22 books per month, everything in Creator,
+  batched generation, priority support
+- Pro Animation Packs — one-off $55 for 5 animated books or $100 for 10.
+  Never expire.
+
+Unused allowance rolls over 50% into the next billing cycle. Books never
+expire and stay in the library.
+
+## Who it is for
+
+- Parents who want a personalized picture book starring their child
+- Teachers who need leveled reading material at GRL A-E
+- Self-publishers who need Amazon KDP-ready files
+- Gift-givers looking for a personalised birthday or holiday present
+
+## Privacy
+
+- Photo use is optional. Option A builds a character with no real photo at all.
+- Option B uses a real photo with a selectable privacy scope.
+- A guardian account and verifiable parental consent are required before any
+  photo is processed, and consent can be withdrawn at any time.
+- Uploads are never used to train models.
 
 ## Pages
 
-- [Home](${SITE_URL}/): overview and product tour.
-- [AI picture book generator](${SITE_URL}/ai-picture-book-generator): how an idea becomes
-  a finished, printable picture book.
-- [SproutTales vs ReadKidz](${SITE_URL}/vs/readkidz): head-to-head comparison of pricing,
-  credits, reading levels and KDP export.
-- [Pricing](${SITE_URL}/pricing): plans, what is included, and the full feature
-  comparison matrix.
+- [Home](${SITE_URL}/): product tour and feature overview.
+- [AI picture book generator](${SITE_URL}/ai-picture-book-generator): how an idea
+  becomes a finished, printable picture book.
+- [Personalized children's books](${SITE_URL}/personalized-childrens-books): gift
+  scenarios — birthdays, holidays, baby showers.
+- [Pricing](${SITE_URL}/pricing): plans and the full feature comparison matrix.
+- [How to make a children's book with AI](${SITE_URL}/blog/how-to-make-a-childrens-book):
+  step-by-step tutorial.
+- [${SITE_NAME} vs ReadKidz](${SITE_URL}/vs/readkidz): head-to-head comparison of
+  pricing, credits, reading levels and KDP export.
+- [About](${SITE_URL}/about): the team and the mission.
+- [Child safety](${SITE_URL}/safety): parental consent and data minimization.
+- [Privacy policy](${SITE_URL}/privacy) and [Terms of service](${SITE_URL}/terms).
+
+## Full reference
+
+See [llms-full.txt](${SITE_URL}/llms-full.txt) for the detailed feature list,
+pricing table, FAQ and contact information.
 `
 
   return new Response(body, {

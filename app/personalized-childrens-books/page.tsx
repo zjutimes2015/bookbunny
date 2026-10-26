@@ -3,9 +3,9 @@ import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
-const TITLE = "Personalized Children's Books — AI-Generated Gifts Your Kids Will Love"
+const TITLE = "Personalized Children's Books — Make a Custom Storybook with Your Child's Photo"
 const DESCRIPTION =
-  "Create a personalized children's book in minutes with SproutTales AI. Your child is the hero, with consistent illustrations across every page. Perfect birthday, Christmas, and holiday gifts. Start free today."
+  "Create a personalized children's book in minutes: your child is the hero, illustrated consistently on every page. Perfect birthday, Christmas and baby shower gifts. Free plan — no credit card."
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -34,13 +34,15 @@ export const metadata: Metadata = {
   },
   keywords: [
     'personalized childrens book',
+    'personalized children book with photo',
     'custom kids book',
-    'personalized baby book',
+    'personalized book for child',
+    'make a personalized storybook',
     'AI children book gift',
-    'personalized book with child photo',
     'birthday gift for kids AI book',
     'Christmas book for kids personalized',
     'custom storybook for children',
+    'personalized baby book',
   ],
 }
 

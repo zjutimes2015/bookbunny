@@ -3,7 +3,7 @@ import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
-const TITLE = 'SproutTales vs ReadKidz — AI Children\'s Picture Book Comparison (2026)'
+const TITLE = "SproutTales vs ReadKidz — Which AI Picture Book Generator Is Better?"
 const DESCRIPTION =
   'An honest comparison of SproutTales and ReadKidz: pricing model, credits, free-plan exports, pages per book, character consistency, photo privacy, GRL reading levels, and print-ready PDF export for Amazon KDP.'
 
@@ -34,10 +34,11 @@ export const metadata: Metadata = {
   },
   keywords: [
     'SproutTales vs ReadKidz',
-    'AI children book generator comparison',
-    'best AI picture book maker',
     'ReadKidz alternative',
-    'AI storybook comparison 2026',
+    'AI picture book generator comparison',
+    'best AI picture book maker',
+    'AI storybook comparison',
+    'ReadKidz vs AI children book',
   ],
 }
 

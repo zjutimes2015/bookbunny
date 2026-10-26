@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
-const TITLE = "How to Make a Children's Book with AI — Step-by-Step Guide (2026)"
+const TITLE = "How to Make a Children's Book with AI — 8 Steps to a Printable Book"
 const DESCRIPTION =
-  "Learn how to make a children's book with AI in 8 easy steps. SproutTales turns your idea into a fully illustrated storybook with consistent characters, GRL A-E leveled text, and print-ready PDFs for Amazon KDP."
+  "Learn how to make a children's book with AI in 8 steps: a consistent character on every page, GRL A–E leveled text, and print-ready Amazon KDP PDFs. Free plan — no credit card."
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -40,9 +40,11 @@ export const metadata: Metadata = {
     'how to make a childrens book',
     'make a childrens book with AI',
     'create a childrens book online',
+    'how to make a picture book',
     'AI storybook tutorial',
     'printable book template',
     'Amazon KDP children book guide',
+    'make a childrens book for free',
   ],
 }
 

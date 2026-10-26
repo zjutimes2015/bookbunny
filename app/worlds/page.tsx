@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 import { filterWorlds, listWorlds, worldThemes } from '@/lib/worlds'
 
-const TITLE = `Story Worlds — ${SITE_NAME}`
+const TITLE = 'Story Worlds — Illustrated Story Worlds for Kids'
 const DESCRIPTION =
   'Pick a story world, then let your child star in it. Twenty illustrated worlds across ages 3–5 and 6–8, each with its own cast and lesson pool.'
 

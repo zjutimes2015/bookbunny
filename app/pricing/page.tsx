@@ -152,6 +152,43 @@ function booksLabel(plan: PlanCard, annual: boolean) {
   return `${n} ${n === 1 ? 'book' : 'books'} per month`
 }
 
+const PRICING_FAQS: { q: string; a: string }[] = [
+  {
+    q: 'Is there a free AI picture book generator?',
+    a: 'Yes. The Free plan costs $0 forever and includes 1 complete book per month, 8 pages, 3 art styles, 1 character and 1 language, with a watermarked preview PDF. No credit card is required.',
+  },
+  {
+    q: 'How much does an AI children\'s book cost?',
+    a: 'Creator is $29/month for 8 books ($3.63 per book), or $261/year. Studio is $79/month for 22 books ($3.59 per book), or $711/year. Pro Animation Packs are one-off: $55 for 5 animated books, $100 for 10.',
+  },
+  {
+    q: 'Can I sell the books I make on Amazon KDP?',
+    a: 'Yes on Creator and Studio. Those plans include KDP interior and cover PDFs, a commercial licence, and no watermark.',
+  },
+  {
+    q: 'Do my credits or books expire?',
+    a: 'Books never expire and stay in your library. Plan allowances reset monthly, with 50% of the unused allowance rolling into the next cycle. Pro Animation Packs never expire.',
+  },
+  {
+    q: 'How many pages can a book have?',
+    a: 'Up to 8 pages on the Free plan and up to 12 pages on Creator and Studio. Pro Animation Packs cover up to 8 pages per book. KDP exports are automatically padded to an even page count of at least 24.',
+  },
+  {
+    q: 'Is there an unlimited plan?',
+    a: 'No. Every plan has a hard monthly book allowance and there is no unlimited tier, because each illustrated page has a real generation cost. Pro Animation Packs give extra volume without a subscription.',
+  },
+]
+
+const PRICING_FAQ_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: PRICING_FAQS.map(({ q, a }) => ({
+    '@type': 'Question',
+    name: q,
+    acceptedAnswer: { '@type': 'Answer', text: a },
+  })),
+}
+
 export default function PricingPage() {
   const [annual, setAnnual] = useState(false)
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
@@ -188,6 +225,10 @@ export default function PricingPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(PRICING_FAQ_SCHEMA) }}
+      />
       <div className="text-center mb-10">
         <BunnyMascot size={60} />
         <h1 className="text-3xl sm:text-4xl font-bold text-[#2D2D2D] mt-4">Simple Pricing</h1>
@@ -385,6 +426,26 @@ export default function PricingPage() {
         <p className="text-xs text-[#8E8E93]">
           Cancel anytime. Pro Animation Packs never expire and are never resold as &quot;unlimited&quot;.
         </p>
+      </div>
+
+      {/* FAQ — visible text so the answers are quotable by AI answer engines */}
+      <div className="mx-auto mt-16 max-w-3xl">
+        <h2 className="text-center text-2xl font-bold text-[#2D2D2D]">Pricing questions</h2>
+        <p className="mt-2 text-center text-sm text-[#8E8E93]">
+          What you actually get on each plan.
+        </p>
+        <div className="mt-6">
+          {PRICING_FAQS.map((item) => (
+            <details key={item.q} className="group border-b border-[#E5E5EA] py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-[#2D2D2D] [&::-webkit-details-marker]:hidden">
+                {item.q}
+                <span className="shrink-0 text-[#8E8E93] group-open:hidden">+</span>
+                <span className="hidden shrink-0 text-[#8E8E93] group-open:block">–</span>
+              </summary>
+              <p className="mt-2.5 text-sm leading-relaxed text-[#8E8E93]">{item.a}</p>
+            </details>
+          ))}
+        </div>
       </div>
     </div>
   )

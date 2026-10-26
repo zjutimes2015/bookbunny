@@ -3,9 +3,9 @@ import Link from 'next/link'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
 export const metadata: Metadata = {
-  title: 'Home — AI Children\'s Picture Book Generator | SproutTales',
+  title: "AI Children's Picture Book Generator — Free Plan",
   description:
-    'Turn an idea into a real picture book with consistent characters and up to 24 illustrated pages. GRL A–E leveled readers, print-ready PDFs for Amazon KDP, and 10 languages. Start free — no credit card required.',
+    'AI picture book generator with consistent characters on every page, GRL A–E leveled text, and print-ready Amazon KDP PDFs. Free plan: 1 book/month, no credit card.',
   alternates: {
     canonical: SITE_URL,
   },
@@ -13,9 +13,9 @@ export const metadata: Metadata = {
     type: 'website',
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: 'AI Children\'s Picture Book Generator — SproutTales',
+    title: "AI Children's Picture Book Generator — SproutTales",
     description:
-      'Turn an idea into a real picture book with consistent characters and up to 24 illustrated pages. GRL A–E leveled readers, print-ready PDFs for Amazon KDP.',
+      'Turn an idea into a real picture book with consistent characters. GRL A–E leveled text, print-ready Amazon KDP PDFs, 10 languages. Free plan — no credit card.',
     images: [
       {
         url: '/og-image.png',
@@ -27,22 +27,24 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AI Children\'s Picture Book Generator — SproutTales',
+    title: "AI Children's Picture Book Generator — SproutTales",
     description:
       'Turn an idea into a real picture book with consistent characters. GRL A–E, KDP-ready PDFs, 10 languages. Start free.',
     images: ['/twitter-image.png'],
   },
   keywords: [
+    'AI picture book generator',
     'AI children book generator',
-    'AI picture book maker',
-    'children story book creator',
-    'KDP book generator',
-    'Amazon KDP children book',
+    'AI storybook generator',
+    'make a children book with AI',
+    'create a children book online',
+    'AI picture book generator free',
+    'personalized children book AI',
+    'KDP picture book AI',
     'leveled reader AI GRL A-E',
     'character consistent AI illustration',
     'AI book creator for kids',
     'photo to character AI',
-    'parental consent children app',
     'SproutTales',
   ],
   robots: {
@@ -396,7 +398,7 @@ const FAQS = [
   },
   {
     q: 'What exactly is included in the free plan?',
-    a: 'Three complete 8-page books each month with a watermarked preview and three art styles. Watermark-free PDF export starts on Creator.',
+    a: 'One complete 8-page book each month with a watermarked preview and three art styles. Watermark-free PDF export starts on Creator.',
   },
   {
     q: 'Do I need design or writing skills?',
@@ -414,9 +416,23 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <p className="mb-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8E8E93]">{children}</p>
 )
 
+const FAQ_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQS.map(({ q, a }) => ({
+    '@type': 'Question',
+    name: q,
+    acceptedAnswer: { '@type': 'Answer', text: a },
+  })),
+}
+
 export default function HomePage() {
   return (
     <div className="bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }}
+      />
       {/* 01 · Hero */}
       <section className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 lg:px-8 lg:pb-24 lg:pt-16">
         <div className="grid items-center gap-12 lg:grid-cols-[1.02fr_1fr] lg:gap-14">
@@ -427,13 +443,13 @@ export default function HomePage() {
             </span>
 
             <h1 className="mt-6 text-4xl font-bold leading-[1.05] tracking-[-0.02em] text-[#2D2D2D] sm:text-5xl lg:text-[52px]">
-              Turn an idea into a real{' '}
-              <span className="bunny-text-gradient whitespace-nowrap">picture book</span>
+              AI picture book generator for{' '}
+              <span className="bunny-text-gradient whitespace-nowrap">real storybooks</span>
             </h1>
 
             <p className="mt-5 max-w-md text-[17px] leading-relaxed text-[#8E8E93]">
-              Describe a story. Get consistent characters, up to 24 illustrated pages,
-              and print-ready PDFs — in minutes.
+              Describe a story. Get consistent characters on every page, GRL A–E leveled text,
+              and print-ready Amazon KDP PDFs — in minutes.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">

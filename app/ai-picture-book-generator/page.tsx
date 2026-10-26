@@ -3,9 +3,9 @@ import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
-const TITLE = "AI Picture Book Generator for Kids — Create & Print KDP Books (2026)"
+const TITLE = 'AI Picture Book Generator — Free AI Storybook Maker for Kids'
 const DESCRIPTION =
-  'SproutTales is the best AI picture book generator in 2026: turn an idea into a fully illustrated children\'s storybook with consistent characters, GRL A–E leveled text, and print-ready PDFs for Amazon KDP. Start free today.'
+  'Free AI picture book generator: turn an idea into a fully illustrated children\'s storybook with the same character on every page, GRL A–E leveled text, and print-ready Amazon KDP PDFs. No credit card needed.'
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -34,15 +34,17 @@ export const metadata: Metadata = {
   },
   keywords: [
     'AI picture book generator',
-    'AI children book creator',
+    'AI storybook generator',
+    'AI children book generator',
     'AI storybook maker',
+    'free AI picture book generator',
     'illustrated children book AI',
-    'AI picture book generator free',
+    'make a children book with AI',
+    'create a children book online',
     'KDP picture book AI',
     'consistent character AI illustration',
-    'how to make a childrens book with AI',
-    'make a childrens book free',
-    'best AI picture book generator 2026',
+    'AI picture book generator for kids',
+    'best AI picture book generator',
   ],
 }
 

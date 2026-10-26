@@ -10,7 +10,7 @@ import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: {
-    default: `${SITE_NAME} — AI Children's Book Generator | Consistent Characters & KDP Export`,
+    default: "AI Children's Picture Book Generator — Free Plan | SproutTales",
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -22,22 +22,33 @@ export const metadata: Metadata = {
     type: 'website',
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `${SITE_NAME} — AI Children's Book Generator`,
+    title: "AI Children's Picture Book Generator — SproutTales",
     description: SITE_DESCRIPTION,
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: `${SITE_NAME} — AI picture book generator`,
+        alt: `${SITE_NAME} — AI children's picture book generator`,
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: `${SITE_NAME} — AI Children's Book Generator`,
+    title: "AI Children's Picture Book Generator — SproutTales",
     description: SITE_DESCRIPTION,
     images: ['/twitter-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
   },
 }
 
@@ -79,11 +90,29 @@ const softwareAppJsonLd = {
   operatingSystem: 'Web',
   description: SITE_DESCRIPTION,
   url: SITE_URL,
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'USD',
-  },
+  offers: [
+    {
+      '@type': 'Offer',
+      name: 'Free',
+      price: '0',
+      priceCurrency: 'USD',
+      description: '1 book per month, 8 pages, 3 art styles, preview PDF export.',
+    },
+    {
+      '@type': 'Offer',
+      name: 'Creator',
+      price: '29',
+      priceCurrency: 'USD',
+      description: '8 books per month, up to 12 pages, KDP interior + cover PDFs, commercial licence.',
+    },
+    {
+      '@type': 'Offer',
+      name: 'Studio',
+      price: '79',
+      priceCurrency: 'USD',
+      description: '22 books per month, up to 12 pages, batched generation, priority support.',
+    },
+  ],
   featureList: [
     'AI-generated children storybooks',
     'Character-consistent illustrations',

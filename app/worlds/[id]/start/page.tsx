@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getWorld } from '@/lib/worlds'
 import WorldStartForm, { type StartWorld } from '@/components/WorldStartForm'
-import { SITE_NAME } from '@/lib/site'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +11,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { id } = await params
   const world = await getWorld(id)
   return {
-    title: world ? `Start an episode in ${world.name} — ${SITE_NAME}` : `World not found — ${SITE_NAME}`,
+    title: world ? `Start an episode in ${world.name}` : 'World not found',
     // 生成流程页不参与收录
     robots: { index: false, follow: false },
   }
