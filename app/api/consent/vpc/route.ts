@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { neon } from '@neondatabase/serverless'
-import { getCreem, isCreemConfigured, VPC_VERIFICATION } from '@/lib/payments/creem'
 import { VPC_METHODS, recordConsent } from '@/lib/compliance/consent'
-
-const sql = neon(process.env.NEON_DATABASE_URL!)
+import { sql } from '@/lib/neon'
+import { getCreem, isCreemConfigured, VPC_VERIFICATION } from '@/lib/payments/creem'
 
 async function getUserId(req: NextRequest): Promise<string | null> {
   const token = req.cookies.get('auth_token')?.value

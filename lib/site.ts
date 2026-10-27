@@ -23,9 +23,15 @@ export const LEGAL_CONTACT_EMAIL = process.env.LEGAL_CONTACT_EMAIL || 'privacy@s
 export const LEGAL_JURISDICTION = process.env.LEGAL_JURISDICTION || "the People's Republic of China"
 
 /**
+ * Days after the charge date during which an unused subscription period or an
+ * unused credit pack may be refunded. Kept equal to the affiliate commission hold.
+ */
+export const REFUND_WINDOW_DAYS = 30
+
+/**
  * Version of the privacy policy and parental-consent notice.
  * Bump this whenever the policy text changes: every stored consent record
  * carries the version it was granted under, so a bump invalidates old consents
  * and forces parents to re-consent.
  */
-export const POLICY_VERSION = '2026-10-19'
+export const POLICY_VERSION = '2026-10-24'

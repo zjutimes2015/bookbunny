@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { neon } from '@neondatabase/serverless'
 import {
   CONSENT_PURPOSES,
   VPC_METHODS,
@@ -8,9 +7,8 @@ import {
 } from '@/lib/compliance/consent'
 import { deleteFiles, keyFromAssetUrl } from '@/lib/r2'
 import { isCreemConfigured } from '@/lib/payments/creem'
+import { sql } from '@/lib/neon'
 import { POLICY_VERSION } from '@/lib/site'
-
-const sql = neon(process.env.NEON_DATABASE_URL!)
 
 // Same cookie session lookup used by /api/auth/me and /api/books.
 async function getUserId(req: NextRequest): Promise<string | null> {
