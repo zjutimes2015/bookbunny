@@ -1,4 +1,4 @@
-import { neon, type NeonQueryFunction } from '@neondatabase/serverless'
+import { sql } from './neon'
 
 /**
  * 各订阅档位的月度书籍 allowance。
@@ -80,11 +80,6 @@ export function allowanceAfterReset(tier: string, cycle: 'month' | 'year', rollo
   return (allowanceFor(tier, cycle) || 0) + Math.max(0, rollover)
 }
 
-let client: NeonQueryFunction<false, false> | null = null
-function sql(): NeonQueryFunction<false, false> {
-  return (client ??= neon(process.env.NEON_DATABASE_URL!))
-}
-
 /**
  * 确保 allowance_rollover 列存在（每个进程只跑一次）。
  *
@@ -101,7 +96,7 @@ function sql(): NeonQueryFunction<false, false> {
  */
 let ensureColumnPromise: Promise<void> | null = null
 function ensureRolloverColumn(): Promise<void> {
-  ensureColumnPromise ??= sql()`
+  ensureColumnPromise ??= sql`
     ALTER TABLE bookbunny_users ADD COLUMN IF NOT EXISTS allowance_rollover INTEGER DEFAULT 0
   `.then(() => undefined).catch(() => undefined)
   return ensureColumnPromise
@@ -127,7 +122,7 @@ export async function consumeBookAllocation(
   // 先保证列存在：SELECT 里带了这一列，缺列会直接抛错
   await ensureRolloverColumn()
 
-  const rows = (await sql()`
+  const rows = (await sql`
     SELECT credits, subscription_tier, billing_cycle, monthly_allowance_remaining, allowance_reset_at, allowance_rollover
     FROM bookbunny_users WHERE id = ${userId}
   `) as {
@@ -151,7 +146,7 @@ export async function consumeBookAllocation(
     const carried = Math.floor(Math.max(0, allowance) * ROLLOVER_RATIO)
     allowance = allowanceAfterReset(tier, cycle, carried)
     resetAt = nextResetAt()
-    await sql()`
+    await sql`
       UPDATE bookbunny_users
       SET monthly_allowance_remaining = ${allowance},
           allowance_rollover = ${carried},
@@ -164,7 +159,7 @@ export async function consumeBookAllocation(
   // Free tier 用户首次创作前 allowance 可能是 null —— 先初始化一次
   if (allowance === null) {
     const initial = allowanceFor(tier, cycle) || 1
-    await sql()`
+    await sql`
       UPDATE bookbunny_users
       SET monthly_allowance_remaining = ${initial},
           allowance_reset_at = ${nextResetAt()},
@@ -175,7 +170,7 @@ export async function consumeBookAllocation(
   }
 
   // 原子扣减：credits 优先，其次月度 allowance
-  const deducted = (await sql()`
+  const deducted = (await sql`
     UPDATE bookbunny_users
     SET credits = credits - CASE WHEN credits >= ${units} THEN ${units} ELSE 0 END,
         monthly_allowance_remaining = monthly_allowance_remaining

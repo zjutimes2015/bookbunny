@@ -1,5 +1,5 @@
-import { neon } from '@neondatabase/serverless'
 import { NextRequest } from 'next/server'
+import { sql } from '@/lib/neon'
 import { getSessionUser } from '@/lib/auth'
 import { buildBookVocabulary, renderVocabularySheet, renderClassroomSheet } from '@/lib/grl/vocabulary'
 import { analyzeStoryForGRL } from '@/lib/grl/analyzer'
@@ -42,7 +42,6 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const sql = neon(process.env.NEON_DATABASE_URL!)
     const rows = await sql`
       SELECT b.id, b.title, b.level, b.user_id,
              s.content, s.outline

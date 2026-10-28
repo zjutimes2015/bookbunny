@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless'
+import { sql as neonSql } from '@/lib/neon'
 import type { CharacterCard, StyleLexicon } from '@/lib/types/book'
 import type { WorldSnapshot } from '@/lib/worlds'
 
@@ -56,10 +56,8 @@ function toSeries(row: SeriesRow): SeriesRecord {
   }
 }
 
-let client: ReturnType<typeof neon> | null = null
-function sql() {
-  return (client ??= neon(process.env.NEON_DATABASE_URL!))
-}
+// 与其它模块共用同一个懒连接客户端，避免每个模块各开一条连接池
+const sql = neonSql
 
 export interface CreateSeriesInput {
   userId: string
@@ -79,7 +77,7 @@ export interface CreateSeriesInput {
 
 /** 第一集落库时创建 series（此后所有续集复用同一个主角档案） */
 export async function createSeries(input: CreateSeriesInput): Promise<string> {
-  const rows = (await sql()`
+  const rows = (await sql`
     INSERT INTO series (
       user_id, title, world_id, world_snapshot, protagonist_name, protagonist_card,
       protagonist_consistency_line, protagonist_image_url, style, style_lexicon,
@@ -100,7 +98,7 @@ export async function createSeries(input: CreateSeriesInput): Promise<string> {
 }
 
 export async function getSeries(id: string): Promise<SeriesRecord | null> {
-  const rows = (await sql()`
+  const rows = (await sql`
     SELECT id, user_id, title, world_id, world_snapshot, protagonist_name,
            protagonist_card, protagonist_consistency_line, protagonist_image_url,
            style, style_lexicon, theme, age_group, level
@@ -144,7 +142,7 @@ interface BookStoryRow {
 
 /** 读取一次 remix 所需的全部上下文（来源书 → 故事 → 系列 → 已播集数） */
 export async function loadRemixSource(bookId: string): Promise<RemixSource | null> {
-  const rows = (await sql()`
+  const rows = (await sql`
     SELECT b.id AS book_id, b.user_id AS book_user_id, b.aspect,
            s.id AS story_id, s.title AS story_title, s.theme AS story_theme,
            s.age_group, s.level, s.content, s.moral, s.series_id
@@ -161,7 +159,7 @@ export async function loadRemixSource(bookId: string): Promise<RemixSource | nul
   let latestEpisode = 1
   if (row.series_id) {
     series = await getSeries(row.series_id)
-    const maxRows = (await sql()`
+    const maxRows = (await sql`
       SELECT COALESCE(MAX(episode_number), 1)::int AS max_episode
       FROM stories WHERE series_id = ${row.series_id}
     `) as { max_episode: number }[]
@@ -204,7 +202,7 @@ export interface InsertEpisodeInput {
 export async function insertEpisode(
   input: InsertEpisodeInput,
 ): Promise<{ storyId: string; bookId: string }> {
-  const storyRows = (await sql()`
+  const storyRows = (await sql`
     INSERT INTO stories (
       title, content, outline, age_group, theme, level, quiz,
       series_id, episode_number, remix_kind, moral
@@ -219,7 +217,7 @@ export async function insertEpisode(
   const storyId = storyRows[0]?.id
   if (!storyId) throw new Error('Failed to insert episode story')
 
-  const bookRows = (await sql()`
+  const bookRows = (await sql`
     INSERT INTO books (title, story_id, user_id, status, format, level, aspect)
     VALUES (${input.title}, ${storyId}, ${input.userId}, 'ready', 'ebook', ${input.level}, ${input.aspect})
     RETURNING id
