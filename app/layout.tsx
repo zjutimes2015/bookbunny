@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import '@/styles/globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import AuthNotice from '@/components/AuthNotice'
 import CrispChat from '@/components/CrispChat'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 import ReferralCapture from '@/components/ReferralCapture'
@@ -157,6 +158,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ReferralCapture />
         <AuthProvider>
           <main className="pt-16">
+            <AuthNotice />
             {children}
           </main>
           <Footer />

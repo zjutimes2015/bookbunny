@@ -7,6 +7,13 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || ''
 const CALLBACK_URL = `${process.env.SITE_URL || 'http://localhost:3000'}/api/auth/callback`
 
 export async function GET(req: NextRequest) {
+  // 凭据缺失时直接换 token 一定失败，且错误信息毫无指向性。
+  // 这里先拦下来，跳回站内并带上可读的原因。
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    console.error('GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET is not configured — Google sign-in is unavailable.')
+    return NextResponse.redirect(new URL('/?error=oauth_not_configured', req.url))
+  }
+
   const code = req.nextUrl.searchParams.get('code')
   if (!code) return NextResponse.redirect(new URL('/?error=no_code', req.url))
 

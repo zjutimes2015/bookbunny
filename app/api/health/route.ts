@@ -11,31 +11,31 @@ import { sql } from '@/lib/neon'
 export const dynamic = 'force-dynamic'
 
 /** 应用依赖的关键列；缺任何一列都会让对应功能 500 */
-const REQUIRED_COLUMNS: { table: string; column: string; script: string }[] = [
+const REQUIRED_COLUMNS: { table: string; column: string; fix: string }[] = [
   {
     table: 'bookbunny_users',
     column: 'allowance_rollover',
-    script: 'node scripts/migrate-allowance-rollover.cjs',
+    fix: 'node scripts/migrate-allowance-rollover.cjs',
   },
   {
     table: 'bookbunny_users',
     column: 'billing_cycle',
-    script: 'node scripts/migrate-billing-cycle.cjs',
+    fix: 'node scripts/migrate-billing-cycle.cjs',
   },
   {
     table: 'bookbunny_users',
     column: 'monthly_allowance_remaining',
-    script: 'node scripts/setup-auth-tables.cjs',
+    fix: 'node scripts/setup-auth-tables.cjs',
   },
   {
     table: 'stories',
     column: 'outline',
-    script: 'node scripts/migrate-story-outline.cjs',
+    fix: 'node scripts/migrate-story-outline.cjs',
   },
   {
     table: 'stories',
     column: 'level',
-    script: 'node scripts/migrate-leveled-reading.cjs',
+    fix: 'node scripts/migrate-leveled-reading.cjs',
   },
 ]
 
@@ -55,7 +55,7 @@ export async function GET() {
     const present = new Set(rows.map((r) => `${r.table_name}.${r.column_name}`))
     const missing = REQUIRED_COLUMNS.filter(
       (c) => !present.has(`${c.table}.${c.column}`),
-    ).map((c) => ({ ...c, fix: `node scripts/${c.script.split(' ').pop()}` }))
+    )
 
     return NextResponse.json(
       {

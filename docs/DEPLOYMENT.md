@@ -17,9 +17,18 @@
 | `OPENROUTER_API_KEY` | 故事、角色、生图全部失败 |
 | `ADMIN_EMAILS` | `/admin` 一律 404（fail-closed） |
 | `TURNSTILE_SECRET_KEY` | 生产环境三个生成接口全部 403（fail-closed） |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | 无法登录 |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | 无法登录（站点会回退到站内提示，不再跳 Google 错误页） |
 | `WAFFO_MERCHANT_ID` / `WAFFO_PRIVATE_KEY` | 无法收款 |
 | `WAFFO_TEST_MODE=false` | 忘记设置会走**测试环境**收款（必须显式关闭） |
+
+> ⚠️ Google OAuth 配置（登录的前提）：
+> 1. Google Cloud Console → 启用 **People API**（OAuth consent screen 也要配）；
+> 2. 创建 **Web application** 类型的 OAuth Client；
+> 3. Authorized redirect URIs 填 `${SITE_URL}/api/auth/callback`（本地开发再加一条 `http://localhost:3000/api/auth/callback`）；
+> 4. 把 Client ID / Client Secret 写成 Vercel 生产环境变量。
+>
+> 验证是否配好：`GET ${SITE_URL}/api/auth/google` —— 跳向 `accounts.google.com/...client_id=<你的ID>` 即为正常；
+> 跳回站内并带 `?error=oauth_not_configured` 说明凭据没配。
 
 ### 强烈建议
 
