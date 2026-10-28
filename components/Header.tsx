@@ -22,7 +22,10 @@ export default function Header() {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-4 lg:gap-7">
+            <Link href="/buddy" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
+              Lila & Kai
+            </Link>
             <Link href="/create" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
               Create Book
             </Link>
@@ -58,6 +61,10 @@ export default function Header() {
         {/* Mobile Nav */}
         {menuOpen && (
           <div className="md:hidden pb-4 space-y-3">
+            <Link href="/buddy" className="block px-3 py-2 rounded-xl text-sm text-[#8E8E93] hover:bg-[#F2F2F7]"
+                  onClick={() => setMenuOpen(false)}>
+              Lila & Kai
+            </Link>
             <Link href="/create" className="block px-3 py-2 rounded-xl text-sm text-[#8E8E93] hover:bg-[#F2F2F7]"
                   onClick={() => setMenuOpen(false)}>
               Create Book

@@ -19,6 +19,9 @@ export default function Footer() {
           <nav className="grid grid-cols-2 gap-x-12 gap-y-3 text-sm sm:grid-cols-3" aria-label="Footer">
             <div className="space-y-3">
               <p className="font-semibold text-[#2D2D2D]">Product</p>
+              <Link href="/buddy" className="block text-[#8E8E93] hover:text-[#FF6B8A]">
+                Talk to Lila & Kai
+              </Link>
               <Link href="/create" className="block text-[#8E8E93] hover:text-[#FF6B8A]">
                 Create a book
               </Link>

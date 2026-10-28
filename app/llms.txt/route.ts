@@ -25,6 +25,9 @@ export function GET() {
   page count of at least 24
 - Supports 10 languages; English is the primary language
 - Optional read-aloud narration and background music
+- Two in-site story buddies, Lila and Kai. A parent describes a book in chat;
+  after one confirmation the buddy runs the normal character, outline, save,
+  and illustration steps. Photos are not accepted in the chat.
 
 ## Plans and pricing
 
