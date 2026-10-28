@@ -15,6 +15,8 @@ const { mockSql, responseQueue, callLog } = vi.hoisted(() => {
     callLog.push(query)
     // DDL 自愈语句不消耗预置响应队列（它们没有对应的数据行）
     if (/^\s*ALTER TABLE/i.test(query)) return Promise.resolve([])
+    // 自愈之后回读 information_schema 确认列在；测试里假设它在
+    if (/information_schema\.columns/i.test(query)) return Promise.resolve([{ 1: 1 }])
     const next = responseQueue.shift()
     return Promise.resolve(next ?? [])
   })

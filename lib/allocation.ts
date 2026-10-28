@@ -91,14 +91,33 @@ export function allowanceAfterReset(tier: string, cycle: 'month' | 'year', rollo
  * 都不能信。本模块被 app/api/books 与 app/api/remix 直接 import，
  * 所以这里的自愈一定会执行。
  *
- * ALTER TABLE ... IF NOT EXISTS 在 Postgres 里是幂等的，失败也不影响后续逻辑
- * （下面 catch 掉，交给真正的查询报错）。
+ * ALTER 之后会回读 information_schema 确认列真的在：
+ *   - 并发 ALTER 可能撞车，吞掉异常会让后面的 SELECT 报一个毫无信息量的
+ *     "column does not exist"，看不出是权限问题还是迁移没跑；
+ *   - 回读失败就抛一条能指明下一步动作的错误（跑哪个脚本）。
  */
 let ensureColumnPromise: Promise<void> | null = null
 function ensureRolloverColumn(): Promise<void> {
-  ensureColumnPromise ??= sql`
-    ALTER TABLE bookbunny_users ADD COLUMN IF NOT EXISTS allowance_rollover INTEGER DEFAULT 0
-  `.then(() => undefined).catch(() => undefined)
+  ensureColumnPromise ??= (async () => {
+    await sql`
+      ALTER TABLE bookbunny_users ADD COLUMN IF NOT EXISTS allowance_rollover INTEGER DEFAULT 0
+    `.then(() => undefined).catch(() => undefined)
+
+    const rows = (await sql`
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'bookbunny_users' AND column_name = 'allowance_rollover'
+      LIMIT 1
+    `) as { '1': number }[]
+    if (!rows || rows.length === 0) {
+      throw new Error(
+        'bookbunny_users.allowance_rollover is missing — run: node scripts/migrate-allowance-rollover.cjs',
+      )
+    }
+  })().catch((err) => {
+    // 失败后清空缓存，下次调用重试（可能是临时 DB 抖动）
+    ensureColumnPromise = null
+    throw err
+  })
   return ensureColumnPromise
 }
 

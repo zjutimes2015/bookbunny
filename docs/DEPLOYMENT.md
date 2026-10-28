@@ -68,15 +68,17 @@ node scripts/migrate-allowance-rollover.cjs # allowance_rollover（50% 额度滚
 
 ## 4. 部署后冒烟（10 分钟）
 
+0. **先查数据库**：`GET /api/health` → 必须返回 `{"ok":true}`。缺列时它会直接告诉你该跑哪个迁移脚本。
 1. 打开 `/` → 首屏无 500，图片与字体正常加载。
 2. 登录 → 右上角出现用户态；`/api/auth/me` 返回当前用户。
 3. `/create`：加 1 个角色（不传照片）→ 生成大纲 → 试生成 4-5 页 → 保存 → 页面跳转 `/book/[id]`。
 4. **人机校验**：新开无痕窗口，跳过前端直接 `POST /api/create-story`（不带 cookie、不带 token）→ 必须返回 `403 bot_check_required`。
 5. **后台**：未登录访问 `/admin` → 404；用 `ADMIN_EMAILS` 里的邮箱登录后访问 → 能看到用户/书籍列表。
-6. **支付**：用 Waffo 测试卡走一次 `starter_monthly` → `bookbunny_users` 的 `subscription_tier=starter`、`monthly_allowance_remaining=10`、`allowance_reset_at` 为下月 1 号。
-7. **额度**：连续创建 11 本书 → 第 11 本返回 402（allowance 用尽）。
+6. **支付**：用 Waffo 测试卡走一次 `creator_monthly` → `bookbunny_users` 的 `subscription_tier=creator`、`monthly_allowance_remaining=8`、`allowance_reset_at` 为下月 1 号。
+7. **额度**：连续创建到 allowance 用尽 → 下一本返回 402（allowance 用尽）。
 8. **导出**：`/create` 导出内页 PDF 与 KDP 封面，检查页数、书脊宽度、出血。
 9. **删除链路**：调用 `DELETE /api/consent?include_content=1` → `books`/`stories` 与 R2 对象都被删除。
+10. **套餐开关**：`GET /api/plans` → 每个套餐的 `purchasable` 必须与 Waffo 后台是否建好商品一致。
 
 ---
 
