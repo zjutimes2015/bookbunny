@@ -81,3 +81,89 @@ describe('generateStory — page count enforcement', () => {
     expect(prompt).not.toContain('EXACTLY 14 pages')
   })
 })
+
+/** 取出发送给模型的 prompt 文本 */
+function promptOf(fetchMock: ReturnType<typeof vi.fn>): string {
+  // @ts-ignore vi.fn() mock calls tuple type is loose in test context
+  const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string)
+  return body.messages[1].content as string
+}
+
+describe('generateStory — ELL mode', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('injects the ELL constraints into the prompt', async () => {
+    const fetchMock = vi.fn(async () => mockModelResponse(8))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateStory({
+      theme: 'a brave fox',
+      ageGroup: '3-5',
+      characterName: 'Mia',
+      pages: 8,
+      level: 'C',
+      ell: { enabled: true, homeLanguage: 'Spanish' },
+    })
+
+    const prompt = promptOf(fetchMock)
+    expect(prompt).toContain('English language learners')
+    expect(prompt).toContain('Illustration support')
+    expect(prompt).toContain('Do NOT use Spanish')
+  })
+
+  it('forces the book language to English even when another language was requested', async () => {
+    const fetchMock = vi.fn(async () => mockModelResponse(8))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateStory({
+      theme: 'a brave fox',
+      ageGroup: '3-5',
+      characterName: 'Mia',
+      pages: 8,
+      level: 'C',
+      language: 'zh',
+      ell: { enabled: true },
+    })
+
+    const prompt = promptOf(fetchMock)
+    // ELL 读物教的是英语，不能写成中文
+    expect(prompt).toContain('written in English')
+    expect(prompt).not.toContain('written in Simplified Chinese')
+  })
+
+  it('keeps the requested language when ELL is off', async () => {
+    const fetchMock = vi.fn(async () => mockModelResponse(8))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateStory({
+      theme: 'a brave fox',
+      ageGroup: '3-5',
+      characterName: 'Mia',
+      pages: 8,
+      level: 'C',
+      language: 'zh',
+    })
+
+    const prompt = promptOf(fetchMock)
+    expect(prompt).toContain('written in Simplified Chinese')
+    expect(prompt).not.toContain('English language learners')
+  })
+
+  it('does not inject ELL constraints when the option is absent', async () => {
+    const fetchMock = vi.fn(async () => mockModelResponse(8))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateStory({
+      theme: 'a brave fox',
+      ageGroup: '3-5',
+      characterName: 'Mia',
+      pages: 8,
+      level: 'C',
+    })
+
+    expect(promptOf(fetchMock)).not.toContain('English language learners')
+  })
+})

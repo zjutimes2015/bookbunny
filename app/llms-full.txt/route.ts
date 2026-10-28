@@ -28,9 +28,9 @@ Yes. The Free plan is $0/month and includes 1 complete book per month, 8 pages,
 card is required to start.
 
 **Can I sell the books I make on Amazon KDP?**
-Yes, on the Creator and Studio plans. Those plans include two print-ready PDFs
-(one interior file and one full cover file with back, spine and front), a
-commercial licence, and no watermark.
+Yes, on the Creator, Studio and Teacher plans. Those plans include two
+print-ready PDFs (one interior file and one full cover file with back, spine and
+front), a commercial licence, and no watermark.
 
 **Does the character look the same on every page?**
 Yes. ${SITE_NAME} stores a reference character card for the book and injects a
@@ -49,9 +49,16 @@ level, and each book includes comprehension questions and a reading-progress
 view for parents and teachers.
 
 **How long is a book?**
-Up to 8 pages on the Free plan, up to 12 pages on Creator and Studio, and up
-to 8 pages for Pro Animation Packs. KDP exports require an even page count of
-at least 24, which the exporter handles automatically.
+Up to 8 pages on the Free plan, up to 16 pages on Creator, up to 24 pages on
+Studio and Teacher, and up to 8 pages for Pro Animation Packs. Books over 12
+pages use 2 book credits because each extra illustrated page costs more to
+generate. KDP exports require an even page count of at least 24, which the
+exporter handles automatically.
+
+**What does the Teacher plan add?**
+Teacher is $99/month for 40 books of up to 24 pages, plus everything in Creator.
+It adds GRL A-E leveled vocabulary lists you can export per book, GRL score
+reports, shareable student progress reports, and classroom-ready sheets.
 
 **Do credits or books expire?**
 Books never expire. Plan allowances reset monthly with 50% of the unused
@@ -60,6 +67,14 @@ allowance rolling into the next cycle. Pro Animation Packs never expire.
 **How many languages are supported?**
 10, with English as the primary language.
 
+**Can I make graded English books for a child who is learning English?**
+Yes. English learner (ELL) mode keeps the story in English while pitching the
+vocabulary and sentence length to the selected GRL level, reusing high-frequency
+teaching words across pages, avoiding idioms and phrasal verbs, and depicting
+every concrete noun in the illustration. The home language is used only to keep
+it out of the text — nothing is translated. Each book exports a pre-teach list
+of above-level words that repeat through the story.
+
 ## Feature list
 
 - AI-generated illustrated children's storybooks from a one-sentence idea
@@ -67,24 +82,28 @@ allowance rolling into the next cycle. Pro Animation Packs never expire.
 - Reference character card stored per book
 - Photo-to-character conversion with two privacy schemes
 - GRL A-E leveled reading with vocabulary and sentence-length control
+- English learner (ELL) mode for graded English readers
+- Per-book vocabulary list export, pre-teach word list and scored GRL report
 - Comprehension questions and a parent/teacher progress view
+- Shareable student progress reports and classroom-ready sheets on Teacher
 - Amazon KDP print-ready PDF export (interior + full cover, correct bleed,
   gutter, spine width, even page count of 24 or more)
 - 15 illustration styles, aspect ratios 1:1, 4:3, 3:4, 16:9 and A4
 - 10 languages
 - Read-aloud narration and background music
 - Pro Animation Packs: per-page video, voice and music, up to 8 pages
-- Batch generation on the Studio plan
+- Batch generation on the Studio and Teacher plans
 - Verifiable parental consent with audit trail and automatic invalidation on
   policy changes
 
 ## Pricing table
 
-| Plan | Price | Books / month | Pages per book | KDP export | Commercial licence | Narration + music |
-|---|---|---|---|---|---|---|
-| Free | $0/month | 1 | 8 | preview only | no | no |
-| Creator | $29/month or $261/year | 8 (6 when billed yearly) | 12 | yes | yes | yes |
-| Studio | $79/month or $711/year | 22 (16 when billed yearly) | 12 | yes | yes | yes |
+| Plan | Price | Books / month | Pages per book | KDP export | Commercial licence | Narration + music | Teaching exports |
+|---|---|---|---|---|---|---|---|
+| Free | $0/month | 1 | 8 | watermarked preview | no | yes | no |
+| Creator | $29/month or $261/year | 8 (6 when billed yearly) | 16 | yes | yes | yes | vocabulary list + score report |
+| Studio | $79/month or $711/year | 22 (16 when billed yearly) | 24 | yes | yes | yes | vocabulary list + score report |
+| Teacher | $99/month or $891/year | 40 (30 when billed yearly) | 24 | yes | yes | yes | + progress reports and classroom sheets |
 
 | Pro Animation Pack | Price | Animated books | Price per book |
 |---|---|---|---|
@@ -97,6 +116,7 @@ Pro Animation Packs never expire.
 
 - [Home](${SITE_URL}/)
 - [AI picture book generator](${SITE_URL}/ai-picture-book-generator)
+- [English reading for beginners](${SITE_URL}/english-reading-for-beginners)
 - [Personalized children's books](${SITE_URL}/personalized-childrens-books)
 - [Pricing](${SITE_URL}/pricing)
 - [How to make a children's book with AI](${SITE_URL}/blog/how-to-make-a-childrens-book)

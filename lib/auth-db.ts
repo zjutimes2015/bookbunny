@@ -32,6 +32,8 @@ sql`ALTER TABLE bookbunny_users ADD COLUMN IF NOT EXISTS pro_animation_credits I
 sql`ALTER TABLE bookbunny_users ADD COLUMN IF NOT EXISTS pro_grant_next_at TIMESTAMPTZ`.catch(() => {})
 // 计费周期：年付价格是月付的 75%，月度 allowance 必须按此区分（见 lib/allocation.ts）
 sql`ALTER TABLE bookbunny_users ADD COLUMN IF NOT EXISTS billing_cycle TEXT DEFAULT 'month'`.catch(() => {})
+// 额度滚存：未用完的 allowance 有 50% 结转到下一周期（对外承诺过的规则）
+sql`ALTER TABLE bookbunny_users ADD COLUMN IF NOT EXISTS allowance_rollover INTEGER DEFAULT 0`.catch(() => {})
 
 export const users = pgTable('bookbunny_users', {
   id: text('id').primaryKey(),
@@ -48,5 +50,6 @@ export const users = pgTable('bookbunny_users', {
   proGrantNextAt: timestamp('pro_grant_next_at', { withTimezone: true }),
   monthlyAllowanceRemaining: integer('monthly_allowance_remaining'),
   allowanceResetAt: timestamp('allowance_reset_at', { withTimezone: true }),
+  allowanceRollover: integer('allowance_rollover').default(0),
   billingCycle: text('billing_cycle').default('month'),
 })

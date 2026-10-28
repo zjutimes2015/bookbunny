@@ -80,11 +80,37 @@ function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): 
 }
 
 /**
+ * 在页面上叠加对角半透明水印（免费档导出用）。
+ *
+ * 走 pdf-lib 的 opacity 参数，不改变页面内容本身；旋转 35° 斜跨页面中心。
+ */
+function drawWatermark(
+  page: ReturnType<PDFDocument['addPage']>,
+  text: string,
+  font: PDFFont,
+  pageW: number,
+  pageH: number,
+) {
+  const size = Math.max(18, Math.min(pageW, pageH) * 0.075)
+  const textW = font.widthOfTextAtSize(text, size)
+  page.drawText(text, {
+    x: (pageW - textW) / 2,
+    y: pageH / 2,
+    size,
+    font,
+    color: rgb(0.45, 0.45, 0.45),
+    opacity: 0.18,
+    rotate: degrees(35),
+  })
+}
+
+/**
  * 生成内页 PDF（印刷就绪）。
  * - 页面尺寸 = interiorDimsIn(trim)（含四边出血）
  * - 有图 → 满版出血铺满整个 MediaBox
  * - 无图 → 白底 + 文字排在安全区内（按页奇偶应用订口规则）
  * - 末尾用 padToKdpPageCount 补空白页
+ * - watermark 非空时，每页叠加半透明水印（免费档导出用）
  */
 export async function buildInteriorPdf(opts: {
   title: string
@@ -92,8 +118,10 @@ export async function buildInteriorPdf(opts: {
   pages: KdpPageInput[]
   trim: string
   paper?: KdpPaper
+  /** 水印文案；为空则不加水印 */
+  watermark?: string
 }): Promise<Uint8Array> {
-  const { title, author, pages, trim } = opts
+  const { title, author, pages, trim, watermark } = opts
 
   const pdf = await PDFDocument.create()
   pdf.setTitle(title)
@@ -117,6 +145,7 @@ export async function buildInteriorPdf(opts: {
       // 满版出血：铺满整个 MediaBox（含出血区）
       const img = await embedImage(pdf, input.imageDataUrl)
       page.drawImage(img, { x: 0, y: 0, width: pageW, height: pageH })
+      if (watermark) drawWatermark(page, watermark, font, pageW, pageH)
       continue
     }
 
@@ -128,29 +157,38 @@ export async function buildInteriorPdf(opts: {
     const contentW = pageW - (insets.leftIn + insets.rightIn) * IN
     const topY = pageH - insets.topIn * IN
 
+    let y = topY - BODY_FONT_SIZE
+
     if (i === 0) {
       // 首页（封面页）文字：标题 + 作者
+      // 注意这里不能 return —— 第 1 页如果同时有正文，必须一并画出来，
+      // 否则这一页的正文会被静默吞掉。
       const titleLines = wrapText(title, bold, 32, contentW)
-      let y = topY - 32
+      y = topY - 32
       for (const line of titleLines) {
         page.drawText(line, { x, y, size: 32, font: bold, color: TEXT_COLOR })
         y -= 32 * 1.3
       }
       if (author) {
         page.drawText(author, { x, y: y - 12, size: 14, font, color: rgb(0.45, 0.45, 0.45) })
+        y -= 14 * 2
       }
-      continue
     }
 
     const text = input?.text
-    if (!text) continue // 空白补页
+    if (!text) {
+      // 空白补页
+      if (watermark) drawWatermark(page, watermark, font, pageW, pageH)
+      continue
+    }
 
     const lines = wrapText(text, font, BODY_FONT_SIZE, contentW)
-    let y = topY - BODY_FONT_SIZE
+    if (i === 0) y -= BODY_FONT_SIZE
     for (const line of lines) {
       page.drawText(line, { x, y, size: BODY_FONT_SIZE, font, color: TEXT_COLOR })
       y -= BODY_FONT_SIZE * BODY_LEADING
     }
+    if (watermark) drawWatermark(page, watermark, font, pageW, pageH)
   }
 
   return pdf.save()
@@ -171,8 +209,10 @@ export async function buildCoverPdf(opts: {
   frontImageDataUrl?: string
   backImageDataUrl?: string
   blurb?: string
+  /** 水印文案；为空则不加水印 */
+  watermark?: string
 }): Promise<Uint8Array> {
-  const { title, author, pages, trim, paper = 'white', frontImageDataUrl, backImageDataUrl, blurb } = opts
+  const { title, author, pages, trim, paper = 'white', frontImageDataUrl, backImageDataUrl, blurb, watermark } = opts
 
   const pdf = await PDFDocument.create()
   pdf.setTitle(`${title} — Cover`)
@@ -244,6 +284,8 @@ export async function buildCoverPdf(opts: {
   if (author) {
     page.drawText(author, { x: frontX + bleed + 0.25 * IN, y: ty - 6, size: 16, font, color: rgb(0.32, 0.32, 0.32) })
   }
+
+  if (watermark) drawWatermark(page, watermark, bold, pageW, pageH)
 
   return pdf.save()
 }

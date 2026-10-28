@@ -15,8 +15,9 @@ import { buildInteriorPdf, buildCoverPdf, type KdpPageInput } from '@/lib/kdp/ex
 import { KDP_TRIM, padToKdpPageCount, interiorDimsIn, coverDimsIn } from '@/lib/kdp/spec'
 import { KdpChecklist } from '@/components/KdpChecklist'
 import { useAuth } from '@/lib/auth-context'
-import { maxPagesFor } from '@/lib/tier-limits'
+import { maxPagesFor, pageCostUnits } from '@/lib/tier-limits'
 import { analyzeStoryForGRL, type GrlReport } from '@/lib/grl/analyzer'
+import { ELL_HOME_LANGUAGES } from '@/lib/grl/ell'
 
 // 阶段6：至简三步状态机（设定 → 生成大纲 → 按纲生图）
 type Step = 'setup' | 'outline' | 'illustrate'
@@ -145,6 +146,10 @@ export default function CreatePage() {
 
   // 绘本内容语言（出海默认英语，一本只用一种语言）
   const [language, setLanguage] = useState<BookLanguage>(DEFAULT_BOOK_LANGUAGE)
+
+  // ELL 教学语言模式：面向「英语不是母语」的孩子，正文强制英语
+  const [ellEnabled, setEllEnabled] = useState(false)
+  const [ellHomeLanguage, setEllHomeLanguage] = useState('')
 
   // 规格层（阶段3）：画幅比例 + 宝宝照片方案
   const [aspect, setAspect] = useState<AspectRatio>('1:1')
@@ -290,7 +295,8 @@ export default function CreatePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           theme, ageGroup, characterName: charNames, pages: effectivePages, level,
-          language,
+          language: ellEnabled ? 'en' : language,
+          ell: ellEnabled ? { enabled: true, support: 'full', homeLanguage: ellHomeLanguage || undefined } : undefined,
           styleLexicon, styleCard,
           characterCards: characters.map(c => c.card).filter(Boolean), // 阶段3：角色一致性
           turnstileToken: turnstileToken || '', // cookie 缺失时的兜底
@@ -489,9 +495,13 @@ export default function CreatePage() {
   const interiorIn = interiorDimsIn(trim)
   const coverIn = coverDimsIn(trim, kdpPageCount)
 
-  // 导出权限：Creator 及以上导出内页与 KDP 封面
-  const canExport = !!user && (user.isPaid || (tier !== undefined && tier !== 'free'))
-  const canKdp = !!user && (tier === 'creator' || tier === 'studio' || tier === 'commercial')
+  // 导出权限：
+  // - PDF 内页：任何登录用户都能导出。Free 档带水印（预览用途），付费档无水印。
+  // - KDP 封面 + 商用授权：Creator 及以上。
+  const canExport = !!user
+  const canKdp = !!user && (tier === 'creator' || tier === 'studio' || tier === 'teacher' || tier === 'commercial')
+  /** Free 档导出加水印；付费档不加 */
+  const exportWatermark = isFreeTier ? 'SproutTales Preview — upgrade to remove' : undefined
 
   const requirePlan = (allowed: boolean, message: string) => {
     if (allowed) return true
@@ -502,7 +512,7 @@ export default function CreatePage() {
   // Export KDP-ready interior PDF — generated in the browser (images live client-side)
   const handleExportPDF = async () => {
     if (!story) return
-    if (!requirePlan(canExport, 'PDF export is available on Creator and Studio.')) return
+    if (!requirePlan(canExport, 'Sign in to export your book as a PDF.')) return
     setLoading(true)
     try {
       const images = await hydrateImages(pageImages)
@@ -513,6 +523,7 @@ export default function CreatePage() {
         pages: buildPageInputs(images),
         trim,
         paper: 'white',
+        watermark: exportWatermark,
       })
       downloadBytes(bytes, `${slugify(story.title)}-interior.pdf`)
     } catch (err: unknown) {
@@ -542,6 +553,7 @@ export default function CreatePage() {
         frontImageDataUrl: coverPage ? images[coverPage.pageNumber] : undefined,
         backImageDataUrl: backPage ? images[backPage.pageNumber] : undefined,
         blurb: backPage?.pageText,
+        watermark: exportWatermark,
       })
       downloadBytes(bytes, `${slugify(story.title)}-cover.pdf`)
     } catch (err: unknown) {
@@ -753,6 +765,44 @@ export default function CreatePage() {
                     One book uses a single language — the story text is written in it.
                   </p>
                 </div>
+                {/* ELL 教学语言模式：内容仍是英语，但按 GRL 控制词汇与句长 */}
+                <div className="rounded-xl border border-[#E5E5EA] p-3.5">
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={ellEnabled}
+                      onChange={(e) => setEllEnabled(e.target.checked)}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <span className="block text-sm font-medium text-[#2D2D2D]">
+                        English learner mode (ELL)
+                      </span>
+                      <span className="block text-[11px] text-[#8E8E93] mt-0.5 leading-relaxed">
+                        For a child whose home language isn&apos;t English. The book stays in English, but
+                        the wording is pitched at the reading level and every concrete noun is shown in
+                        the illustration.
+                      </span>
+                    </span>
+                  </label>
+                  {ellEnabled && (
+                    <div className="mt-3 pl-7">
+                      <label className="text-[11px] font-medium text-[#2D2D2D] block mb-1">
+                        Home language (optional)
+                      </label>
+                      <select className="apple-input text-sm" value={ellHomeLanguage}
+                              onChange={(e) => setEllHomeLanguage(e.target.value)}>
+                        <option value="">Prefer not to say</option>
+                        {ELL_HOME_LANGUAGES.map(l => (
+                          <option key={l.id} value={l.label}>{l.label}</option>
+                        ))}
+                      </select>
+                      <p className="text-[11px] text-[#8E8E93] mt-1.5">
+                        Used only to keep that language out of the story text. The book itself is English.
+                      </p>
+                    </div>
+                  )}
+                </div>
                 <div>
                   <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Reading Level (GRL)</label>
                   <div className="grid grid-cols-5 gap-2">
@@ -804,7 +854,7 @@ export default function CreatePage() {
                 <div>
                   <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Page Count</label>
                   <div className="grid grid-cols-4 gap-2">
-                    {[8, 12, 20, 24].map(n => {
+                    {[8, 12, 16, 24].map(n => {
                       const locked = n > maxPages
                       return (
                         <button
@@ -823,12 +873,17 @@ export default function CreatePage() {
                         >
                           <span className="block text-sm font-bold text-[#2D2D2D]">{n}</span>
                           <span className="block text-[10px] text-[#8E8E93]">
-                            {locked ? 'upgrade' : n === 12 ? 'pages · Recommended' : 'pages'}
+                            {locked ? 'upgrade' : n === 12 ? 'pages · Recommended' : n === 24 ? 'pages · KDP ready' : 'pages'}
                           </span>
                         </button>
                       )
                     })}
                   </div>
+                  {pageCostUnits(effectivePages) > 1 && (
+                    <p className="mt-1.5 text-[11px] text-[#8E8E93]">
+                      Books over 12 pages use 2 book credits because each illustrated page costs more to generate.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Aspect Ratio</label>

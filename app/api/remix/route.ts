@@ -108,8 +108,8 @@ export async function POST(req: NextRequest) {
     })
 
     // 生成成功后才扣额度，避免 LLM 失败也扣掉一本
-    // A4 画幅生图成本翻倍（FLUX 按 MP 计费），扣 2 个额度单位
-    const allocation = await consumeBookAllocation(user.id, bookCostUnits(source.aspect))
+    // A4 画幅或 13 页以上的长书生图成本翻倍（FLUX 按 MP / 张数计费），扣 2 个额度单位
+    const allocation = await consumeBookAllocation(user.id, bookCostUnits(source.aspect, sequelPages))
     if (!allocation.ok) {
       return NextResponse.json(
         { error: 'No credits or allowance left. Upgrade or buy credits to make more books.', code: 'no_allocation' },

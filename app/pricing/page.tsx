@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import BunnyMascot from '@/components/BunnyMascot'
 
 type MatrixValue = string | boolean
@@ -10,36 +10,48 @@ interface MatrixRow {
   free: MatrixValue
   creator: MatrixValue
   studio: MatrixValue
+  teacher: MatrixValue
 }
 
 const MATRIX: { title: string; rows: MatrixRow[] }[] = [
   {
     title: 'Create',
     rows: [
-      { label: 'Books per month', free: '1', creator: '8', studio: '22' },
-      { label: 'Books per month (annual)', free: '1', creator: '6', studio: '16' },
-      { label: 'Pro animated books', free: false, creator: 'Add-on packs', studio: 'Add-on packs' },
-      { label: 'Pages per book', free: '8 pages', creator: 'Up to 12', studio: 'Up to 12' },
-      { label: 'Picture-book art styles', free: '3 styles', creator: 'All 15 styles', studio: 'All 15 styles' },
-      { label: 'Characters per book', free: '1', creator: '5', studio: '5' },
-      { label: 'Book languages', free: '1', creator: 'All 10', studio: 'All 10' },
-      { label: 'Photo-to-character', free: false, creator: true, studio: true },
+      { label: 'Books per month', free: '1', creator: '8', studio: '22', teacher: '40' },
+      { label: 'Books per month (annual)', free: '1', creator: '6', studio: '16', teacher: '30' },
+      { label: 'Pro animated books', free: false, creator: 'Add-on packs', studio: 'Add-on packs', teacher: 'Add-on packs' },
+      { label: 'Pages per book', free: '8 pages', creator: 'Up to 16', studio: 'Up to 24', teacher: 'Up to 24' },
+      { label: 'Picture-book art styles', free: '3 styles', creator: 'All 15 styles', studio: 'All 15 styles', teacher: 'All 15 styles' },
+      { label: 'Characters per book', free: '1', creator: '5', studio: '5', teacher: '5' },
+      { label: 'Book languages', free: '1', creator: 'All 10', studio: 'All 10', teacher: 'All 10' },
+      { label: 'Photo-to-character', free: false, creator: true, studio: true, teacher: true },
     ],
   },
   {
     title: 'Export & publish',
     rows: [
-      { label: 'PDF export', free: 'Preview only', creator: true, studio: true },
-      { label: 'KDP interior + cover PDFs', free: false, creator: true, studio: true },
-      { label: 'Commercial license', free: false, creator: true, studio: true },
-      { label: 'Narration & background music', free: true, creator: true, studio: true },
-      { label: 'Animated video (Wan 3 + voice + music)', free: false, creator: 'Add-on packs', studio: 'Add-on packs' },
-      { label: 'Batched generation (5 pages at a time)', free: true, creator: true, studio: true },
+      { label: 'PDF export', free: 'Watermarked preview', creator: true, studio: true, teacher: true },
+      { label: 'KDP interior + cover PDFs', free: false, creator: true, studio: true, teacher: true },
+      { label: 'Commercial license', free: false, creator: true, studio: true, teacher: true },
+      { label: 'Narration & background music', free: true, creator: true, studio: true, teacher: true },
+      { label: 'Animated video (Wan 3 + voice + music)', free: false, creator: 'Add-on packs', studio: 'Add-on packs', teacher: 'Add-on packs' },
+      { label: 'Batched generation (5 pages at a time)', free: true, creator: true, studio: true, teacher: true },
+    ],
+  },
+  {
+    title: 'Teaching',
+    rows: [
+      { label: 'GRL A–E leveled text', free: '1 level', creator: 'All 5', studio: 'All 5', teacher: 'All 5' },
+      { label: 'English learner (ELL) mode', free: false, creator: true, studio: true, teacher: true },
+      { label: 'Vocabulary list export', free: false, creator: true, studio: true, teacher: true },
+      { label: 'GRL score report export', free: false, creator: true, studio: true, teacher: true },
+      { label: 'Student progress report', free: false, creator: false, studio: false, teacher: true },
+      { label: 'Classroom sheets (worksheet-ready)', free: false, creator: false, studio: false, teacher: true },
     ],
   },
 ]
 
-const COLUMNS = ['Free', 'Creator', 'Studio'] as const
+const COLUMNS = ['Free', 'Creator', 'Studio', 'Teacher'] as const
 
 function MatrixCell({ value, highlight }: { value: MatrixValue; highlight: boolean }) {
   const base = highlight ? 'bg-[#FFF9F7]' : ''
@@ -91,7 +103,7 @@ const PLANS: PlanCard[] = [
     annualBooks: 6,
     desc: 'For authors publishing on Amazon KDP',
     features: [
-      'Up to 12 pages per book',
+      'Up to 16 pages per book',
       'KDP interior + cover PDFs',
       'Commercial license included',
       '5 characters · all 10 languages',
@@ -110,12 +122,31 @@ const PLANS: PlanCard[] = [
     annualBooks: 16,
     desc: 'For teams shipping books at volume',
     features: [
-      'Up to 12 pages per book',
+      'Up to 24 pages per book',
       'Everything in Creator',
       'Batched generation',
       'Priority support',
     ],
     cta: 'Choose Studio',
+    checkout: true,
+  },
+  {
+    key: 'teacher',
+    name: 'Teacher',
+    monthly: 99,
+    annualTotal: 891,
+    books: 40,
+    annualBooks: 30,
+    desc: 'For classrooms building leveled readers',
+    features: [
+      'Up to 24 pages per book',
+      'GRL A–E leveled readers',
+      'English learner (ELL) mode',
+      'Vocabulary & score reports',
+      'Student progress reports',
+      'Classroom-ready sheets',
+    ],
+    cta: 'Choose Teacher',
     checkout: true,
   },
 ]
@@ -155,15 +186,15 @@ function booksLabel(plan: PlanCard, annual: boolean) {
 const PRICING_FAQS: { q: string; a: string }[] = [
   {
     q: 'Is there a free AI picture book generator?',
-    a: 'Yes. The Free plan costs $0 forever and includes 1 complete book per month, 8 pages, 3 art styles, 1 character and 1 language, with a watermarked preview PDF. No credit card is required.',
+    a: 'Yes. The Free plan costs $0 forever and includes 1 complete book per month, 8 pages, 3 art styles, 1 character and 1 language. You can export a watermarked preview PDF. No credit card is required.',
   },
   {
     q: 'How much does an AI children\'s book cost?',
-    a: 'Creator is $29/month for 8 books ($3.63 per book), or $261/year. Studio is $79/month for 22 books ($3.59 per book), or $711/year. Pro Animation Packs are one-off: $55 for 5 animated books, $100 for 10.',
+    a: 'Creator is $29/month for 8 books ($3.63 per book), or $261/year. Studio is $79/month for 22 books ($3.59 per book), or $711/year. Teacher is $99/month for 40 books, or $891/year. Pro Animation Packs are one-off: $55 for 5 animated books, $100 for 10.',
   },
   {
     q: 'Can I sell the books I make on Amazon KDP?',
-    a: 'Yes on Creator and Studio. Those plans include KDP interior and cover PDFs, a commercial licence, and no watermark.',
+    a: 'Yes on Creator, Studio and Teacher. Those plans include KDP interior and cover PDFs, a commercial licence, and no watermark.',
   },
   {
     q: 'Do my credits or books expire?',
@@ -171,7 +202,15 @@ const PRICING_FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'How many pages can a book have?',
-    a: 'Up to 8 pages on the Free plan and up to 12 pages on Creator and Studio. Pro Animation Packs cover up to 8 pages per book. KDP exports are automatically padded to an even page count of at least 24.',
+    a: 'Up to 8 pages on the Free plan, 16 pages on Creator, and 24 pages on Studio and Teacher. Books over 12 pages use 2 book credits because each extra illustrated page costs more to generate. Pro Animation Packs cover up to 8 pages per book. KDP exports are automatically padded to an even page count of at least 24.',
+  },
+  {
+    q: 'What does the Teacher plan add?',
+    a: 'Teacher is $99/month for 40 books of up to 24 pages, plus everything in Creator. It adds GRL A–E leveled vocabulary lists you can export per book, GRL score reports, shareable student progress reports, and classroom-ready sheets.',
+  },
+  {
+    q: 'Can I make graded English books for a child learning English?',
+    a: 'Yes. English learner (ELL) mode writes the story in English only — nothing is translated — but pitches the vocabulary and sentence length to the GRL level you pick, reuses the same core words across pages, avoids idioms and phrasal verbs, and draws every concrete noun in the illustration. The home language you select is used only to keep that language out of the text.',
   },
   {
     q: 'Is there an unlimited plan?',
@@ -192,6 +231,20 @@ const PRICING_FAQ_SCHEMA = {
 export default function PricingPage() {
   const [annual, setAnnual] = useState(false)
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
+  // 哪些套餐已开售（后端建好商品才为 true）；null = 还没拉到
+  const [purchasable, setPurchasable] = useState<Record<string, boolean> | null>(null)
+
+  useEffect(() => {
+    fetch('/api/plans')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d?.plans) return
+        const map: Record<string, boolean> = {}
+        for (const p of d.plans) map[p.key] = p.purchasable
+        setPurchasable(map)
+      })
+      .catch(() => {})
+  }, [])
 
   const handleSelect = async (planKey: string, displayKey: string) => {
     setCheckingOut(displayKey)
@@ -222,6 +275,13 @@ export default function PricingPage() {
     }
     handleSelect(annual ? `${plan.key}_annual` : `${plan.key}_monthly`, plan.key)
   }
+
+  /**
+   * 套餐是否可下单：后端还没建好 Waffo 商品时置灰按钮，
+   * 避免用户点到一个必然失败的结账页。拉取失败时保持可用（乐观假设）。
+   */
+  const isAvailable = (planKey: string): boolean =>
+    !purchasable || purchasable[planKey] !== false
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -258,9 +318,11 @@ export default function PricingPage() {
         </button>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {PLANS.map((plan) => {
           const price = priceLabel(plan, annual)
+          const planKey = annual ? `${plan.key}_annual` : `${plan.key}_monthly`
+          const available = isAvailable(planKey)
           return (
             <div
               key={plan.name}
@@ -297,15 +359,24 @@ export default function PricingPage() {
               <button
                 type="button"
                 onClick={() => selectPlan(plan)}
-                disabled={checkingOut !== null}
+                disabled={checkingOut !== null || !available}
                 className={`mt-6 text-center text-sm font-medium px-5 py-3 rounded-xl transition-all disabled:opacity-50 ${
                   plan.featured
                     ? 'bg-[#2D2D2D] text-white hover:opacity-85'
                     : 'bg-[#F2F2F7] text-[#2D2D2D] hover:bg-[#E5E5EA]'
                 }`}
               >
-                {checkingOut === plan.key ? 'Opening checkout…' : plan.cta}
+                {checkingOut === plan.key
+                  ? 'Opening checkout…'
+                  : !available
+                    ? 'Coming soon'
+                    : plan.cta}
               </button>
+              {!available && (
+                <p className="mt-2 text-[11px] text-[#8E8E93] text-center">
+                  This plan is being prepared. Free and Creator are available now.
+                </p>
+              )}
             </div>
           )
         })}
@@ -330,7 +401,9 @@ export default function PricingPage() {
         </ul>
 
         <div className="grid sm:grid-cols-2 gap-4 mt-5">
-          {PRO_PACKS.map((pack) => (
+          {PRO_PACKS.map((pack) => {
+            const available = pack.available && isAvailable(pack.key)
+            return (
             <div
               key={pack.key}
               className={`rounded-2xl border p-5 flex items-center justify-between gap-4 ${
@@ -353,17 +426,18 @@ export default function PricingPage() {
               <button
                 type="button"
                 onClick={() => handleSelect(pack.key, pack.key)}
-                disabled={checkingOut !== null || !pack.available}
+                disabled={checkingOut !== null || !available}
                 className="text-sm font-medium px-4 py-2.5 rounded-xl shrink-0 text-white bg-[#7B3FBF] hover:bg-[#6A2FB0] transition-all disabled:opacity-50"
               >
-                {!pack.available
+                {!available
                   ? 'Coming soon'
                   : checkingOut === pack.key
                     ? 'Opening…'
                     : `Buy · $${pack.price}`}
               </button>
             </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
@@ -376,10 +450,10 @@ export default function PricingPage() {
 
         <div className="apple-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-sm border-collapse">
+            <table className="w-full min-w-[760px] text-sm border-collapse">
               <thead>
                 <tr className="border-b border-[#E5E5EA]">
-                  <th className="w-1/3 px-5 py-4 text-left font-semibold text-[#2D2D2D]">Feature</th>
+                  <th className="w-1/4 px-5 py-4 text-left font-semibold text-[#2D2D2D]">Feature</th>
                   {COLUMNS.map((name) => (
                     <th
                       key={name}
@@ -391,6 +465,9 @@ export default function PricingPage() {
                       {name === 'Creator' && (
                         <span className="mt-0.5 block text-[10px] font-medium text-[#8E8E93]">Most popular</span>
                       )}
+                      {name === 'Teacher' && (
+                        <span className="mt-0.5 block text-[10px] font-medium text-[#8E8E93]">For classrooms</span>
+                      )}
                     </th>
                   ))}
                 </tr>
@@ -400,7 +477,7 @@ export default function PricingPage() {
                   <Fragment key={section.title}>
                     <tr className="bg-[#FAFAFB]">
                       <td
-                        colSpan={4}
+                        colSpan={5}
                         className="px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-[#8E8E93]"
                       >
                         {section.title}
@@ -412,6 +489,7 @@ export default function PricingPage() {
                         <MatrixCell value={row.free} highlight={false} />
                         <MatrixCell value={row.creator} highlight />
                         <MatrixCell value={row.studio} highlight={false} />
+                        <MatrixCell value={row.teacher} highlight={false} />
                       </tr>
                     ))}
                   </Fragment>

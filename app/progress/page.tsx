@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
+import ProgressReport from '@/components/ProgressReport'
 import { useAuth } from '@/lib/auth-context'
 
 interface BookItem {
@@ -139,6 +140,19 @@ export default function ProgressPage() {
             : `Next up: Level ${data.nextLevel} — books with longer sentences and richer vocabulary.`}
         </p>
       </div>
+
+      {/* 可分享的成长报告：家长主动分享给老师或亲戚 */}
+      {data.books.length > 0 && (
+        <div className="mb-8">
+          <ProgressReport
+            shareId={data.books[0].id}
+            childName={user?.name || undefined}
+            bookTitle={data.books[0].title}
+            level={data.books[0].level || undefined}
+            pageCount={data.books[0].pageCount}
+          />
+        </div>
+      )}
 
       {/* Book list */}
       <div className="apple-card p-6">

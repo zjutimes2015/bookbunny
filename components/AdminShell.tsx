@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import BrandMark from './BrandMark'
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard', icon: '📊' },
@@ -28,9 +29,7 @@ export default function AdminShell({
       <aside className={`${collapsed ? 'w-16' : 'w-56'} transition-all duration-200 bg-white border-r border-[#E5E5EA] flex flex-col`}>
         {/* Logo */}
         <div className="p-4 border-b border-[#E5E5EA] flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bunny-gradient flex items-center justify-center text-white text-xs font-bold shrink-0">
-            B
-          </div>
+          <BrandMark size={28} radius={0.22} className="shrink-0" />
           {!collapsed && <span className="font-semibold text-sm text-[#2D2D2D]">SproutTales</span>}
         </div>
 

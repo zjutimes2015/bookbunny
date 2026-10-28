@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#7BC96F"/>
-      <stop offset="100%" stop-color="#3E9B4F"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
-  <path d="M32 14c-2 6-6 8-12 9v17c0 6 5 10 12 10s12-4 12-10V23c-6-1-10-3-12-9z" fill="#FFF8E7"/>
-  <path d="M32 50V28" stroke="#7BC96F" stroke-width="2.5" stroke-linecap="round"/>
-  <path d="M32 30c-3-1-5-3-6-6 4 0 6 1 6 4 0-3 2-4 6-4-1 3-3 5-6 6z" fill="#3E9B4F"/>
+<defs><linearGradient id="ic" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#FF6B8A"/>
+    <stop offset="50%" stop-color="#C8A2E8"/>
+    <stop offset="100%" stop-color="#87CEEB"/>
+  </linearGradient></defs>
+<rect width="64" height="64" rx="14" fill="url(#ic)"/>
+<g fill="#FFFFFF" stroke="none" transform="translate(7 7) scale(0.78125)"><path d="M32 33.5C26 28.5 18 26.5 10 27.5V43.5C18 42.5 26 44.5 32 50.5C38 44.5 46 42.5 54 43.5V27.5C46 26.5 38 28.5 32 33.5Z"/>
+  <path d="M32 34V21" fill="none" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round"/>
+  <path d="M32 25C25.5 23.5 21.5 18 21.5 10.5C29 11.5 32 17 32 25Z"/>
+  <path d="M32 25C38.5 23.5 42.5 18 42.5 10.5C35 11.5 32 17 32 25Z"/></g>
 </svg>

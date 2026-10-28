@@ -104,9 +104,10 @@ export async function POST(req: NextRequest) {
     if (!bookId) throw new Error('Failed to insert book')
 
     // 3. 扣减 credits / 月度 allowance（游客 user.id 为 null 时跳过，免费游客不扣费）
-    //    A4 画幅生图成本翻倍（FLUX 按 MP 计费），扣 2 个额度单位
+    //    A4 画幅或 13 页以上的长书生图成本翻倍（FLUX 按 MP / 张数计费），扣 2 个额度单位
     if (user?.id) {
-      const alloc = await consumeBookAllocation(user.id, bookCostUnits(body.aspect))
+      const pageCount = hasOutline ? body.outline!.length : (body.pages?.length ?? 0)
+      const alloc = await consumeBookAllocation(user.id, bookCostUnits(body.aspect, pageCount))
       if (!alloc.ok) {
         // book 已经保存了，但 allocation 扣减失败。我们已经初始化过 free tier 的 allowance，
         // 所以走到这里说明 credits=0 且 allowance=0。返回 402 让前端引导用户升级。

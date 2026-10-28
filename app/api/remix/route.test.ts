@@ -207,13 +207,13 @@ describe('POST /api/remix', () => {
   })
 
   it('caps the sequel at the plan page limit', async () => {
-    // 上一集 16 页（高于付费档 12 页上限），续集必须被砍到 12 页
+    // 上一集 32 页（高于付费档 16 页上限），续集必须被砍到 16 页
     loadRemixSourceMock.mockResolvedValue(
-      makeSource({ content: Array.from({ length: 16 }, (_, i) => `page ${i + 1}`) }),
+      makeSource({ content: Array.from({ length: 32 }, (_, i) => `page ${i + 1}`) }),
     )
     const res = await POST(makeRequest({ bookId: 'book-1', kind: 'ending' }))
     expect(res.status).toBe(200)
-    expect(generateStoryMock.mock.calls[0][0].pages).toBe(12)
+    expect(generateStoryMock.mock.calls[0][0].pages).toBe(16)
   })
 
   it('caps the sequel at 8 pages for the free tier', async () => {

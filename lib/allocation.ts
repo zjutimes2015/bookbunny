@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless'
+import { neon, type NeonQueryFunction } from '@neondatabase/serverless'
 
 /**
  * 各订阅档位的月度书籍 allowance。
@@ -15,12 +15,14 @@ export const TIER_ALLOWANCE: Record<string, number> = {
   free: 1,
   creator: 8,
   studio: 22,
+  teacher: 40,
 }
 
 /** 年付档位的月度 allowance（价格是月付的 75%，额度同步下调） */
 export const TIER_ALLOWANCE_ANNUAL: Record<string, number> = {
   creator: 6,
   studio: 16,
+  teacher: 30,
 }
 
 /**
@@ -39,9 +41,14 @@ export function allowanceFor(tier: string, cycle: 'month' | 'year' = 'month'): n
  *   1:1 / 4:3 / 3:4 / 16:9 都在 1 MP 内 → $0.05/张
  *   A4(1024×1448) = 1.41 MP → 取整 2 MP → $0.10/张（翻倍）
  * 所以 A4 画幅扣 2 个单位，保证任何档位满额使用时都有 80% 以上毛利。
+ *
+ * 13 页以上的长书（16 / 24 页档）生图张数翻倍，成本同样翻倍 → 扣 2 个单位。
+ * A4 与长书同时命中时只扣 2（取最大值），不叠加，避免双重计价。
  */
-export function bookCostUnits(aspect?: string | null): number {
-  return aspect === 'a4' ? 2 : 1
+export function bookCostUnits(aspect?: string | null, pages?: number | null): number {
+  const wideFormat = aspect === 'a4' ? 2 : 1
+  const longBook = pages && pages > 12 ? 2 : 1
+  return Math.max(wideFormat, longBook)
 }
 
 /** 根据 tier 计算下一次 allowance 重置时间（下个月 1 号 00:00 UTC） */
@@ -52,9 +59,52 @@ export function nextResetAt(): Date {
   return d
 }
 
-let client: ReturnType<typeof neon> | null = null
-function sql() {
+/**
+ * 额度滚存比例：未用完的 allowance 有 50% 结转到下一个周期。
+ *
+ * 这是对外承诺过的规则（定价页 / llms.txt 都写了 "50% of the unused
+ * allowance rolling into the next cycle"），必须真正落地，否则属于虚假宣传。
+ * 结转部分单独存一列，不与当月额度混在一个字段里——重置时才能算出
+ * 「当月剩余 × 50%」这个正确的基数。
+ */
+export const ROLLOVER_RATIO = 0.5
+
+/**
+ * 计算下一周期的起始额度：本周期基础额度 + 上一周期剩余额度的 50%。
+ *
+ * @param tier 当前档位
+ * @param cycle 计费周期
+ * @param rollover 上一次结转进来的额度（已乘好比例的整数值）
+ */
+export function allowanceAfterReset(tier: string, cycle: 'month' | 'year', rollover: number): number {
+  return (allowanceFor(tier, cycle) || 0) + Math.max(0, rollover)
+}
+
+let client: NeonQueryFunction<false, false> | null = null
+function sql(): NeonQueryFunction<false, false> {
   return (client ??= neon(process.env.NEON_DATABASE_URL!))
+}
+
+/**
+ * 确保 allowance_rollover 列存在（每个进程只跑一次）。
+ *
+ * 这一列是额度滚存的落地点，必须有。没有它，consumeBookAllocation 的
+ * SELECT 会直接报错（column does not exist），所有创作请求 500。
+ *
+ * 为什么放在运行时而不是只放迁移脚本：lib/auth-db.ts 里的自动 ALTER 从未生效
+ * （那个模块没有被任何路由 import），凡是靠「模块加载时自动建表/补列」保命的地方
+ * 都不能信。本模块被 app/api/books 与 app/api/remix 直接 import，
+ * 所以这里的自愈一定会执行。
+ *
+ * ALTER TABLE ... IF NOT EXISTS 在 Postgres 里是幂等的，失败也不影响后续逻辑
+ * （下面 catch 掉，交给真正的查询报错）。
+ */
+let ensureColumnPromise: Promise<void> | null = null
+function ensureRolloverColumn(): Promise<void> {
+  ensureColumnPromise ??= sql()`
+    ALTER TABLE bookbunny_users ADD COLUMN IF NOT EXISTS allowance_rollover INTEGER DEFAULT 0
+  `.then(() => undefined).catch(() => undefined)
+  return ensureColumnPromise
 }
 
 /**
@@ -74,8 +124,11 @@ export async function consumeBookAllocation(
   userId: string,
   units = 1,
 ): Promise<{ ok: boolean; reason?: string }> {
+  // 先保证列存在：SELECT 里带了这一列，缺列会直接抛错
+  await ensureRolloverColumn()
+
   const rows = (await sql()`
-    SELECT credits, subscription_tier, billing_cycle, monthly_allowance_remaining, allowance_reset_at
+    SELECT credits, subscription_tier, billing_cycle, monthly_allowance_remaining, allowance_reset_at, allowance_rollover
     FROM bookbunny_users WHERE id = ${userId}
   `) as {
     credits: number | null
@@ -83,6 +136,7 @@ export async function consumeBookAllocation(
     billing_cycle: string | null
     monthly_allowance_remaining: number | null
     allowance_reset_at: Date | null
+    allowance_rollover: number | null
   }[]
   const row = rows[0]
   if (!row) return { ok: false, reason: 'user_not_found' }
@@ -92,13 +146,15 @@ export async function consumeBookAllocation(
   let allowance = row.monthly_allowance_remaining
   let resetAt = row.allowance_reset_at
 
-  // allowance 到期：按当前档位与计费周期重置（写绝对值，重复执行无副作用）
+  // allowance 到期：结转 50% 未用额度后重置（写绝对值，重复执行无副作用）
   if (allowance !== null && resetAt && new Date() >= resetAt) {
-    allowance = allowanceFor(tier, cycle)
+    const carried = Math.floor(Math.max(0, allowance) * ROLLOVER_RATIO)
+    allowance = allowanceAfterReset(tier, cycle, carried)
     resetAt = nextResetAt()
     await sql()`
       UPDATE bookbunny_users
       SET monthly_allowance_remaining = ${allowance},
+          allowance_rollover = ${carried},
           allowance_reset_at = ${resetAt},
           updated_at = NOW()
       WHERE id = ${userId}

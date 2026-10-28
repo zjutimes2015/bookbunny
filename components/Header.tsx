@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { UserAvatar } from './UserViews'
+import BrandMark from './BrandMark'
 import clsx from 'clsx'
 
 export default function Header() {
@@ -14,9 +15,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bunny-gradient flex items-center justify-center text-white text-lg font-bold">
-              B
-            </div>
+            <BrandMark size={32} radius={0.22} className="shrink-0" />
             <span className="font-semibold text-lg text-[#2D2D2D] group-hover:opacity-70 transition-opacity">
               SproutTales
             </span>

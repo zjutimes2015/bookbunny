@@ -1,5 +1,6 @@
 import { pickLevel, grlFromAgeGroup, levelPromptConstraints, validateVocabulary, type ReadingLevel } from '@/lib/reading-levels'
 import { generateQuiz, type Quiz } from '@/lib/quiz-generator'
+import { ellPromptConstraints, type EllOptions } from '@/lib/grl/ell'
 import {
   splitOutline,
   outlineToPages,
@@ -36,6 +37,13 @@ interface StoryOptions {
   worldBrief?: string
   /** 内容语言（可选）：面向读者的文字语言，缺省英语 */
   language?: BookLanguage
+  /**
+   * ELL 模式（可选）：面向「英语不是母语」的学习者。
+   *
+   * 启用后正文强制为英语（不管 language 传什么），
+   * 并在 GRL 之上叠加「高频教学词 + 图文对应」的 ELL 约束。
+   */
+  ell?: EllOptions
 }
 
 // === 解析防御：字段归一化 ===
@@ -151,8 +159,13 @@ export async function generateStory(options: StoryOptions): Promise<StoryResult>
 
   const visualDirectionBlock = buildVisualDirectionBlock(options.styleCard, options.styleLexicon)
   const characterBibleBlock = buildCharacterBibleBlock(options.characterCards)
-  const lang = options.language ?? DEFAULT_BOOK_LANGUAGE
+  // ELL 模式下正文强制为英语：ELL 读物教的是英语，不能因为孩子母语非英语就写成母语
+  const ellEnabled = !!options.ell?.enabled
+  const lang: BookLanguage = ellEnabled ? 'en' : (options.language ?? DEFAULT_BOOK_LANGUAGE)
   const languageRule = contentLanguageRule(lang)
+
+  // ELL 约束叠在 GRL 约束之后：分级管「难度」，ELL 管「怎么教」
+  const ellBlock = ellEnabled ? ellPromptConstraints(grl, options.ell!) : ''
 
   const prompt = `You are a professional children's book author and illustrator-director. Produce a per-page production blueprint (single-page outline) for a children's picture book.
 
@@ -162,7 +175,7 @@ Parameters:
 - Main Character(s): ${options.characterName}
 - Number of pages: ${pageCount} (page 1 is the COVER, the rest are BODY)
 
-${constraintsBlock ? constraintsBlock + '\n' : ''}${languageRule}\n\n${characterBibleBlock ? characterBibleBlock + '\n\n' : ''}${visualDirectionBlock ? visualDirectionBlock + '\n\n' : ''}${options.worldBrief ? options.worldBrief + '\n\n' : ''}${options.sequelBrief ? options.sequelBrief + '\n\n' : ''}For EACH page output the following 18 fields (this is a "construction drawing", be concrete, NEVER vague like "warm scene").
+${constraintsBlock ? constraintsBlock + '\n' : ''}${languageRule}\n\n${ellBlock ? ellBlock + '\n\n' : ''}${characterBibleBlock ? characterBibleBlock + '\n\n' : ''}${visualDirectionBlock ? visualDirectionBlock + '\n\n' : ''}${options.worldBrief ? options.worldBrief + '\n\n' : ''}${options.sequelBrief ? options.sequelBrief + '\n\n' : ''}For EACH page output the following 18 fields (this is a "construction drawing", be concrete, NEVER vague like "warm scene").
 
 LANGUAGE CONTRACT (strictly enforced, no exceptions):
 - Reader-facing fields (3, 4, 6, 7, 8, 18) and the title MUST be written in ${languageName(lang)}.

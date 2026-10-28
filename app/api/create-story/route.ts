@@ -4,10 +4,11 @@ import { getSessionUser, getClientIp } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { requireHuman, attachPassCookie, humanCheckFailedResponse } from '@/lib/turnstile'
 import { maxPagesFor } from '@/lib/tier-limits'
+import { parseEllOptions } from '@/lib/grl/ell'
 
 export async function POST(req: NextRequest) {
   try {
-    const { theme, ageGroup, characterName, pages, level, styleLexicon, styleCard, characterCards, language, worldBrief, turnstileToken } = await req.json()
+    const { theme, ageGroup, characterName, pages, level, styleLexicon, styleCard, characterCards, language, worldBrief, turnstileToken, ell } = await req.json()
 
     if (!theme || !ageGroup || !characterName) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
       characterCards, // 可选：角色设定卡（一致性）
       worldBrief, // 可选：官方世界简报（舞台/配角/画风/禁区/本集寓意）
       language, // 可选：内容语言（缺省英语）
+      ell: parseEllOptions(ell), // 可选：ELL 教学语言模式（强制英语正文）
     })
 
     const res = NextResponse.json(story)

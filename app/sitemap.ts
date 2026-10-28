@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages: { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] }[] = [
     { path: '', priority: 1.0, changeFrequency: 'weekly' },
     { path: '/ai-picture-book-generator', priority: 0.95, changeFrequency: 'weekly' },
+    { path: '/english-reading-for-beginners', priority: 0.9, changeFrequency: 'weekly' },
     { path: '/personalized-childrens-books', priority: 0.9, changeFrequency: 'weekly' },
     { path: '/pricing', priority: 0.9, changeFrequency: 'monthly' },
     { path: '/blog/how-to-make-a-childrens-book', priority: 0.85, changeFrequency: 'monthly' },

@@ -174,3 +174,76 @@ describe('CreatePage — audio narration & comic export', () => {
     expect(window.speechSynthesis.cancel).toHaveBeenCalled()
   }, 20000)
 })
+
+describe('CreatePage — English learner (ELL) mode', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFetch.mockReset()
+
+    mockFetch.mockImplementation(async (url: string) => {
+      if (url === '/api/verify-turnstile') {
+        return { ok: true, json: async () => ({ success: true }) }
+      }
+      if (url === '/api/create-character') {
+        return { ok: true, json: async () => ({ card: { name: 'Luna' }, consistencyLine: '', imageB64: '', refSeed: 1 }) }
+      }
+      if (url === '/api/create-story') {
+        return { ok: true, json: async () => makeStoryResponse() }
+      }
+      return { ok: true, json: async () => ({}) }
+    })
+  })
+
+  it('shows the ELL toggle once a character exists', async () => {
+    render(<CreatePage />)
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /generate outline/i })).toBeInTheDocument()
+    })
+    expect(screen.getByText(/English learner mode/i)).toBeInTheDocument()
+  })
+
+  it('sends the ELL payload and forces English when enabled', async () => {
+    render(<CreatePage />)
+
+    const themeInput = await waitFor(() => screen.getByTestId('theme-input')) as HTMLInputElement
+    fireEvent.change(themeInput, { target: { value: 'A magical forest' } })
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /generate outline/i })).not.toBeDisabled()
+    })
+
+    const toggle = screen.getByRole('checkbox') as HTMLInputElement
+    fireEvent.click(toggle)
+    await waitFor(() => expect(toggle.checked).toBe(true))
+
+    fireEvent.click(screen.getByRole('button', { name: /generate outline/i }))
+
+    await waitFor(() => {
+      const call = mockFetch.mock.calls.find(([url]) => url === '/api/create-story')
+      expect(call).toBeDefined()
+      const body = JSON.parse((call![1] as RequestInit).body as string)
+      expect(body.ell).toMatchObject({ enabled: true, support: 'full' })
+      expect(body.language).toBe('en')
+    })
+  }, 20000)
+
+  it('does not send an ELL payload when the toggle is off', async () => {
+    render(<CreatePage />)
+
+    const themeInput = await waitFor(() => screen.getByTestId('theme-input')) as HTMLInputElement
+    fireEvent.change(themeInput, { target: { value: 'A magical forest' } })
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /generate outline/i })).not.toBeDisabled()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /generate outline/i }))
+
+    await waitFor(() => {
+      const call = mockFetch.mock.calls.find(([url]) => url === '/api/create-story')
+      expect(call).toBeDefined()
+      const body = JSON.parse((call![1] as RequestInit).body as string)
+      expect(body.ell).toBeUndefined()
+    })
+  }, 20000)
+})

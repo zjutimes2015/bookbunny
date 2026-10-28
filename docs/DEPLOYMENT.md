@@ -44,9 +44,14 @@ node scripts/migrate-character-consistency.cjs
 node scripts/migrate-parental-consent.cjs  # parental_consents
 node scripts/migrate-payments.cjs          # payments
 node scripts/migrate-generation-jobs.cjs   # generation_jobs / rate_limits
+node scripts/migrate-billing-cycle.cjs     # billing_cycle（年付额度区分）
+node scripts/migrate-allowance-rollover.cjs # allowance_rollover（50% 额度滚存）
 ```
 
 ⚠️ `rate_limits` 表缺失时限流会 fail-open（直接放行），务必确认第 8 条脚本执行成功。
+
+⚠️ `allowance_rollover` 缺失会让所有创作请求 500（SELECT 报 column does not exist）。
+`lib/allocation.ts` 里有一层运行时自愈兜底，但仍建议显式跑一次迁移脚本。
 
 ---
 

@@ -52,33 +52,34 @@ const ROWS: CompareRow[] = [
   {
     feature: 'Pricing model',
     bookbunny:
-      'Free $0 (1 book/mo); Creator $29/mo ($261/yr) with KDP export and commercial rights; Studio $79/mo ($711/yr) with 22 books. Pro Animation Packs sold separately. No per-creation charges.',
+      'Free $0 (1 book/mo); Creator $29/mo ($261/yr); Studio $79/mo ($711/yr); Teacher $99/mo ($891/yr) for classrooms. Books are counted, not credits. No per-creation charges.',
     readkidz:
       'Tiered monthly plans: Free $0, Standard $10/mo, Pro $30/mo ($25 annual), Mega $50/mo ($42 annual), Max $99/mo ($83 annual), plus Teams plans.',
   },
   {
     feature: 'Credits',
     bookbunny:
-      'Pro Animation Packs: 5 animated books for $55 or 10 for $100. Packs never expire — they stay in your account until you use them.',
+      'No credit system. Each plan includes a book allowance, and 50% of the unused allowance rolls into the next cycle. Pro Animation Packs never expire.',
     readkidz:
       'Monthly plan credits that do not roll over and expire with the month. Creation steps draw credits, deducted at 50% off the listed cost.',
   },
   {
     feature: 'Free-plan export',
     bookbunny:
-      'The Free plan is preview-only: 1 eight-page book a month with 3 art styles and a watermark. Watermark-free PDF export starts on Creator.',
+      'The Free plan exports a watermarked preview PDF: 1 eight-page book a month with 3 art styles. Watermark-free PDF export starts on Creator.',
     readkidz: 'Free-plan exports carry a watermark.',
   },
   {
     feature: 'Pages per book',
-    bookbunny: '8 pages on Free; up to 20 on Creator and 24 on Studio.',
-    readkidz: '5 pages on the Free plan; paid tiers go to 50–60 pages per story.',
+    bookbunny: '8 pages on Free; up to 16 on Creator; up to 24 on Studio and Teacher.',
+    readkidz: '8–30 interior pages per story, plus a cover.',
   },
   {
     feature: 'Reading levels & comprehension',
     bookbunny:
-      'GRL A–E leveled text with matched vocabulary, comprehension questions, and a reading-progress view.',
-    readkidz: '—',
+      'GRL A–E leveled text validated against a per-level vocabulary list, with a scored report, exportable vocabulary lists, comprehension questions, and a reading-progress view.',
+    readkidz:
+      'Age bands (0–3, 5–7, 9–12) that adjust sentence density per page. No leveled vocabulary validation.',
   },
   {
     feature: 'Character consistency',
@@ -89,7 +90,7 @@ const ROWS: CompareRow[] = [
   {
     feature: 'Photo privacy options',
     bookbunny:
-      'Option A builds the character with no real photo at all; Option B uses a real photo with a privacy scope you select.',
+      'Option A builds the character with no real photo at all; Option B uses a real photo with a privacy scope you select. Verifiable parental consent with an audit trail is required before any photo is processed.',
     readkidz: '—',
   },
   {
@@ -97,7 +98,7 @@ const ROWS: CompareRow[] = [
     bookbunny:
       'Two separate print-spec PDFs — interior plus a full cover (back, spine, front) — with bleed, gutter, spine width, and an even padded page count of at least 24.',
     readkidz:
-      'Terms allow commercial use of output, such as publishing to Amazon KDP. AI outputs are non-exclusive.',
+      'Terms allow commercial use of output, such as publishing to Amazon KDP, and a KDP guide. AI outputs are non-exclusive.',
   },
   {
     feature: 'Physical printing',
@@ -106,23 +107,36 @@ const ROWS: CompareRow[] = [
   },
   {
     feature: 'Languages',
-    bookbunny: 'Multi-language book output.',
-    readkidz: '—',
+    bookbunny:
+      'Multi-language book output, plus an English learner (ELL) mode that writes English-only stories pitched to a GRL level for children whose home language is not English.',
+    readkidz: '25 languages across the whole site, mirrored page by page.',
   },
 ]
 
 const FAQS: { q: string; a: string }[] = [
   {
     q: 'Is SproutTales cheaper than ReadKidz?',
-    a: 'SproutTales starts free with 1 book a month. Creator is $29/month ($261/year) for 8 books and adds KDP interior and cover PDFs plus a commercial license; Studio is $79/month ($711/year) for 22 books. Pro Animation Packs are one-time add-ons. ReadKidz offers a free tier and paid plans from $10/mo up to $99/mo that use monthly plan credits.',
+    a: 'SproutTales starts free with 1 book a month. Creator is $29/month ($261/year) for 8 books and adds KDP interior and cover PDFs plus a commercial license; Studio is $79/month ($711/year) for 22 books; Teacher is $99/month ($891/year) for 40 books with classroom materials. Pro Animation Packs are one-time add-ons. ReadKidz offers a free tier and paid plans from $10/mo up to $99/mo that use monthly plan credits.',
   },
   {
     q: 'Do SproutTales books expire like monthly credits?',
-    a: 'Your books never expire. Plan allowances reset monthly, and Pro Animation Packs ($55 for 5 books, $100 for 10) never expire at all.',
+    a: 'Your books never expire. Plan allowances reset monthly, but 50% of the unused allowance rolls into the next cycle, and Pro Animation Packs ($55 for 5 books, $100 for 10) never expire at all. ReadKidz monthly credits do not roll over.',
   },
   {
     q: 'Does SproutTales watermark free exports?',
-    a: 'The Free plan is preview-only with a watermark — 1 eight-page book a month, three art styles, and no PDF export. Watermark-free PDF export starts on Creator at $29/month. ReadKidz\'s free-plan exports carry a watermark.',
+    a: 'Yes. The Free plan exports a watermarked preview PDF — 1 eight-page book a month and three art styles. Watermark-free PDF export starts on Creator at $29/month. ReadKidz\'s free-plan exports carry a watermark too.',
+  },
+  {
+    q: 'Which one is better for leveled classroom reading?',
+    a: 'SproutTales. It validates every book against GRL A–E vocabulary lists, scores the result, and exports the vocabulary list, the score report, and shareable student progress reports. ReadKidz offers age bands that adjust sentence density, but does not level text against a vocabulary standard.',
+  },
+  {
+    q: 'How many pages does each tool produce?',
+    a: 'SproutTales allows 8 pages on Free, up to 16 on Creator, and up to 24 on Studio and Teacher. ReadKidz produces 8–30 interior pages plus a cover. Books over 12 pages on SproutTales use 2 book credits because each illustrated page costs more to generate.',
+  },
+  {
+    q: 'Which one is better for a child learning English as an additional language?',
+    a: 'SproutTales. Its English learner (ELL) mode writes English-only stories pitched to a GRL level, reuses high-frequency teaching words across pages, avoids idioms and phrasal verbs, and draws every concrete noun in the illustration. The home language is used only to keep it out of the text — nothing is translated. ReadKidz can translate a story into 25 languages, but translating does not lower the difficulty of a sentence.',
   },
   {
     q: 'Which is better if I want a printed hardcover book?',
@@ -217,6 +231,7 @@ export default function VsReadKidzPage() {
                   'You mainly want animated videos with voice dubbing and background music.',
                   'You want a physical hardcover printed and shipped to you.',
                   'You prefer a large page count per story and a free tier you can export from.',
+                  'You need the same story in many languages across your whole site.',
                 ].map((item) => (
                   <li key={item} className="text-sm text-[#8E8E93] flex items-start gap-2 leading-relaxed">
                     <span className="text-[#8E8E93] mt-0.5">•</span>
@@ -231,8 +246,10 @@ export default function VsReadKidzPage() {
                 {[
                   'You want a monthly book allowance with Pro Animation Packs that never expire.',
                   'You need the same character to look consistent on every single page.',
-                  'You want leveled reading (GRL A–E) with comprehension questions and progress tracking.',
+                  'You want leveled reading (GRL A–E) with exportable vocabulary lists, comprehension questions and progress tracking.',
+                  'You are teaching English to a child whose home language is not English, and you need English-only stories pitched to a reading level.',
                   'You want a print-ready interior and full cover you can upload straight to Amazon KDP.',
+                  'You want books that are 24 pages so a KDP export needs no blank padding pages.',
                 ].map((item) => (
                   <li key={item} className="text-sm text-[#2D2D2D] flex items-start gap-2 leading-relaxed">
                     <span className="text-[#FF6B8A] mt-0.5">✓</span>

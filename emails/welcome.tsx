@@ -32,7 +32,7 @@ export default function WelcomeEmail({
         <Container style={container}>
           <Section style={logoSection}>
             <Img
-              src={`${baseUrl}/bookbunny-logo.png`}
+              src={`${baseUrl}/logo.png`}
               width="48"
               height="48"
               alt="SproutTales"

@@ -18,6 +18,8 @@ export function GET() {
 - Keeps the same character on every page via a reusable consistency line plus a
   stored reference character card
 - Matches vocabulary and sentence length to a reading level (GRL A-E)
+- English learner (ELL) mode: English-only stories pitched to a GRL level for
+  children whose home language is not English
 - Exports two print-ready PDFs for Amazon KDP: interior pages and a full cover
   (back + spine + front) with correct bleed, gutter, spine width and an even
   page count of at least 24
@@ -26,16 +28,20 @@ export function GET() {
 
 ## Plans and pricing
 
-- Free — $0/month, 1 book per month, 8 pages, 3 art styles, preview only
-- Creator — $29/month (or $261/year), 8 books per month, up to 12 pages per book,
+- Free — $0/month, 1 book per month, 8 pages, 3 art styles, watermarked preview PDF
+- Creator — $29/month (or $261/year), 8 books per month, up to 16 pages per book,
   KDP interior + cover PDFs, commercial licence, narration and music
-- Studio — $79/month (or $711/year), 22 books per month, everything in Creator,
-  batched generation, priority support
+- Studio — $79/month (or $711/year), 22 books per month, up to 24 pages per book,
+  everything in Creator, batched generation, priority support
+- Teacher — $99/month (or $891/year), 40 books per month, up to 24 pages per book,
+  plus exportable GRL vocabulary lists, GRL score reports, shareable student
+  progress reports and classroom-ready sheets
 - Pro Animation Packs — one-off $55 for 5 animated books or $100 for 10.
   Never expire.
 
-Unused allowance rolls over 50% into the next billing cycle. Books never
-expire and stay in the library.
+Books over 12 pages use 2 book credits because each extra illustrated page
+costs more to generate. Unused allowance rolls over 50% into the next billing
+cycle. Books never expire and stay in the library.
 
 ## Who it is for
 
@@ -43,6 +49,8 @@ expire and stay in the library.
 - Teachers who need leveled reading material at GRL A-E
 - Self-publishers who need Amazon KDP-ready files
 - Gift-givers looking for a personalised birthday or holiday present
+- Families where English is not the home language, looking for graded English
+  readers that match a classroom reading level
 
 ## Privacy
 
@@ -57,6 +65,8 @@ expire and stay in the library.
 - [Home](${SITE_URL}/): product tour and feature overview.
 - [AI picture book generator](${SITE_URL}/ai-picture-book-generator): how an idea
   becomes a finished, printable picture book.
+- [English reading for beginners](${SITE_URL}/english-reading-for-beginners):
+  graded English readers for children learning English as an additional language.
 - [Personalized children's books](${SITE_URL}/personalized-childrens-books): gift
   scenarios — birthdays, holidays, baby showers.
 - [Pricing](${SITE_URL}/pricing): plans and the full feature comparison matrix.

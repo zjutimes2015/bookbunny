@@ -30,10 +30,12 @@ const TAX = 'digital_goods'
 
 /** 产品清单：与 lib/payments/waffo.ts 的 WAFFO_PLANS 一一对应 */
 const PRODUCTS = [
-  { kind: 'subscription', key: 'WAFFO_CREATOR_MONTHLY_PRODUCT_ID', name: 'Creator Monthly', billingPeriod: 'monthly', amount: '29.00', description: '30 books/month, KDP export, commercial license' },
-  { kind: 'subscription', key: 'WAFFO_CREATOR_ANNUAL_PRODUCT_ID', name: 'Creator Annual', billingPeriod: 'yearly', amount: '261.00', description: '30 books/month, KDP export, commercial license (annual)' },
-  { kind: 'subscription', key: 'WAFFO_STUDIO_MONTHLY_PRODUCT_ID', name: 'Studio Monthly', billingPeriod: 'monthly', amount: '79.00', description: '100 books/month + 10 Pro animated books, batch generation' },
-  { kind: 'subscription', key: 'WAFFO_STUDIO_ANNUAL_PRODUCT_ID', name: 'Studio Annual', billingPeriod: 'yearly', amount: '711.00', description: '100 books/month + 10 Pro animated books (annual)' },
+  { kind: 'subscription', key: 'WAFFO_CREATOR_MONTHLY_PRODUCT_ID', name: 'Creator Monthly', billingPeriod: 'monthly', amount: '29.00', description: '8 books/month, up to 16 pages, KDP dual PDF, commercial license' },
+  { kind: 'subscription', key: 'WAFFO_CREATOR_ANNUAL_PRODUCT_ID', name: 'Creator Annual', billingPeriod: 'yearly', amount: '261.00', description: '6 books/month, up to 16 pages, KDP dual PDF, commercial license (annual)' },
+  { kind: 'subscription', key: 'WAFFO_STUDIO_MONTHLY_PRODUCT_ID', name: 'Studio Monthly', billingPeriod: 'monthly', amount: '79.00', description: '22 books/month, up to 24 pages, KDP dual PDF, batch generation' },
+  { kind: 'subscription', key: 'WAFFO_STUDIO_ANNUAL_PRODUCT_ID', name: 'Studio Annual', billingPeriod: 'yearly', amount: '711.00', description: '16 books/month, up to 24 pages, KDP dual PDF, batch generation (annual)' },
+  { kind: 'subscription', key: 'WAFFO_TEACHER_MONTHLY_PRODUCT_ID', name: 'Teacher Monthly', billingPeriod: 'monthly', amount: '99.00', description: '40 books/month, up to 24 pages, GRL leveled vocabulary lists, classroom sheets' },
+  { kind: 'subscription', key: 'WAFFO_TEACHER_ANNUAL_PRODUCT_ID', name: 'Teacher Annual', billingPeriod: 'yearly', amount: '891.00', description: '30 books/month, up to 24 pages, GRL leveled vocabulary lists, classroom sheets (annual)' },
   { kind: 'onetime', key: 'WAFFO_PRO_ANIM_5_PRODUCT_ID', name: 'Pro Animation Pack · 5 Books', amount: '12.00', description: '5 animated books with video, voice and music — never expires' },
   { kind: 'onetime', key: 'WAFFO_PRO_ANIM_10_PRODUCT_ID', name: 'Pro Animation Pack · 10 Books', amount: '20.00', description: '10 animated books with video, voice and music — never expires' },
 ]
