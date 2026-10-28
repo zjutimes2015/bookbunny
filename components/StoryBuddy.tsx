@@ -1,25 +1,32 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { emptyBrief, type BookBrief, type Proposal } from '@/lib/assistant/brief'
+import {
+  BUDDY_SIGN_IN_PATH,
+  clearBuddyDraft,
+  loadBuddyDraft,
+  saveBuddyDraft,
+  type BuddyChatMessage,
+} from '@/lib/assistant/draft'
 import { produceConfirmedBook, ProduceError } from '@/lib/assistant/produce'
 import { personaById, PERSONAS, type PersonaId } from '@/lib/assistant/personas'
 import { KaiPortrait, LilaPortrait } from '@/components/BuddyPortraits'
 import TurnstileWidget from '@/components/TurnstileWidget'
 
-interface ChatMessage {
-  id: string
-  role: 'buddy' | 'parent'
-  text: string
-}
+type ChatMessage = BuddyChatMessage
 
 interface AssistResponse {
   reply: string
   brief: BookBrief
   proposal: Proposal | null
   signedIn: boolean
+}
+
+function isAbort(err: unknown): boolean {
+  return err instanceof DOMException && err.name === 'AbortError'
 }
 
 function Portrait({ id, size }: { id: PersonaId; size: number }) {
@@ -36,7 +43,7 @@ function Portrait({ id, size }: { id: PersonaId; size: number }) {
 }
 
 export default function StoryBuddy() {
-  const { user, login } = useAuth()
+  const { user } = useAuth()
   const [personaId, setPersonaId] = useState<PersonaId | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [brief, setBrief] = useState<BookBrief>(emptyBrief())
@@ -50,7 +57,17 @@ export default function StoryBuddy() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [humanError, setHumanError] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
+  const produceAbort = useRef<AbortController | null>(null)
   const persona = personaById(personaId)
+
+  useEffect(() => {
+    const saved = loadBuddyDraft(sessionStorage)
+    if (!saved) return
+    setPersonaId(saved.personaId)
+    setMessages(saved.messages)
+    setBrief(saved.brief)
+    setProposal(saved.proposal)
+  }, [])
 
   const scrollDown = () => {
     requestAnimationFrame(() => {
@@ -58,25 +75,45 @@ export default function StoryBuddy() {
     })
   }
 
+  const remember = (next: {
+    personaId: PersonaId
+    messages: ChatMessage[]
+    brief: BookBrief
+    proposal: Proposal | null
+  }) => {
+    saveBuddyDraft(sessionStorage, next)
+  }
+
+  const stopMaking = () => {
+    produceAbort.current?.abort()
+    produceAbort.current = null
+  }
+
   const choose = (id: PersonaId) => {
     const next = personaById(id)
     if (!next) return
+    stopMaking()
+    const hello: ChatMessage[] = [{ id: 'hello', role: 'buddy', text: next.greeting }]
+    const blank = emptyBrief()
     setPersonaId(id)
-    setBrief(emptyBrief())
+    setBrief(blank)
     setProposal(null)
     setBook(null)
     setTrouble(null)
     setStatus('')
-    setMessages([{ id: 'hello', role: 'buddy', text: next.greeting }])
+    setMessages(hello)
+    remember({ personaId: id, messages: hello, brief: blank, proposal: null })
   }
 
   const send = async () => {
     const text = draft.trim()
     if (!text || !personaId || sending || producing) return
+    const parentMessage: ChatMessage = { id: `p-${Date.now()}`, role: 'parent', text }
+    const spoken = [...messages, parentMessage]
     setDraft('')
     setTrouble(null)
     setBook(null)
-    setMessages((prev) => [...prev, { id: `p-${Date.now()}`, role: 'parent', text }])
+    setMessages(spoken)
     setSending(true)
     scrollDown()
     try {
@@ -87,9 +124,16 @@ export default function StoryBuddy() {
       })
       const data = (await res.json()) as AssistResponse & { error?: string }
       if (!res.ok) throw new Error(data.error || 'The buddy could not answer.')
+      const nextMessages: ChatMessage[] = [
+        ...spoken,
+        { id: `b-${Date.now()}`, role: 'buddy', text: data.reply },
+      ]
       setBrief(data.brief)
       setProposal(data.proposal)
-      setMessages((prev) => [...prev, { id: `b-${Date.now()}`, role: 'buddy', text: data.reply }])
+      setMessages(nextMessages)
+      if (personaId) {
+        remember({ personaId, messages: nextMessages, brief: data.brief, proposal: data.proposal })
+      }
       scrollDown()
     } catch (err) {
       setTrouble({ text: err instanceof Error ? err.message : 'Something went wrong.' })
@@ -101,7 +145,8 @@ export default function StoryBuddy() {
   const makeBook = async () => {
     if (!proposal || producing) return
     if (!user) {
-      login()
+      if (personaId) remember({ personaId, messages, brief, proposal })
+      window.location.href = BUDDY_SIGN_IN_PATH
       return
     }
     if (!turnstileToken) {
@@ -111,16 +156,20 @@ export default function StoryBuddy() {
     setHumanError(false)
     setTrouble(null)
     setProducing(true)
+    const controller = new AbortController()
+    produceAbort.current = controller
     try {
       const made = await produceConfirmedBook({
         proposal,
         turnstileToken,
+        signal: controller.signal,
         onProgress: (progress) => setStatus(progress.detail),
       })
       setBook({ id: made.bookId, title: made.title })
       setStatus('')
       setProposal(null)
       setBrief(emptyBrief())
+      clearBuddyDraft(sessionStorage)
       setMessages((prev) => [
         ...prev,
         {
@@ -131,6 +180,10 @@ export default function StoryBuddy() {
       ])
       scrollDown()
     } catch (err) {
+      if (isAbort(err)) return
+      if (err instanceof ProduceError && err.bookId) {
+        setBook({ id: err.bookId, title: proposal.theme })
+      }
       if (err instanceof ProduceError && err.code === 'allowance') {
         setTrouble({ text: err.message, href: '/pricing', hrefLabel: 'See plans' })
       } else if (err instanceof ProduceError && err.code === 'auth') {
@@ -140,6 +193,7 @@ export default function StoryBuddy() {
       }
       setStatus('')
     } finally {
+      produceAbort.current = null
       setProducing(false)
     }
   }
@@ -186,7 +240,13 @@ export default function StoryBuddy() {
         </div>
         <button
           type="button"
-          onClick={() => setPersonaId(null)}
+          onClick={() => {
+            stopMaking()
+            clearBuddyDraft(sessionStorage)
+            setPersonaId(null)
+            setProducing(false)
+            setStatus('')
+          }}
           className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D]"
         >
           Switch

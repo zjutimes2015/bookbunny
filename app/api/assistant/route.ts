@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSessionUser } from '@/lib/auth'
+import { getClientIp, getSessionUser } from '@/lib/auth'
 import { absorb, nextFocus, planPageCap, sanitizeBrief, toProposal } from '@/lib/assistant/brief'
 import { personaById } from '@/lib/assistant/personas'
 import { replyFor } from '@/lib/assistant/voice'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,6 +34,16 @@ export async function POST(req: NextRequest) {
   const focus = nextFocus(prev)
   const brief = absorb(prev, message, focus)
   const user = await getSessionUser(req)
+  const rateKey = user
+    ? `assistant:user:${user.id}:hour`
+    : `assistant:ip:${getClientIp(req)}:hour`
+  const rate = await checkRateLimit(rateKey, user ? 60 : 20, 3600)
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Too many messages. Try again in a little while.', code: 'rate_limited' },
+      { status: 429 },
+    )
+  }
   const proposal = toProposal(brief, planPageCap(user?.tier, user?.isPaid ?? false))
   const reply = await replyFor({
     persona: persona.id,

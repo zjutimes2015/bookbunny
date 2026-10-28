@@ -3,8 +3,14 @@ import type { NextRequest } from 'next/server'
 
 vi.mock('@/lib/auth', () => ({
   getSessionUser: vi.fn(async () => null),
+  getClientIp: vi.fn(() => '127.0.0.1'),
 }))
 
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn(async () => ({ allowed: true, count: 1, limit: 20 })),
+}))
+
+import { checkRateLimit } from '@/lib/rate-limit'
 import { POST } from './route'
 
 function makeRequest(body: unknown): NextRequest {
@@ -54,5 +60,13 @@ describe('POST /api/assistant', () => {
     })
     expect(body.reply).toMatch(/Make this book/)
     expect(body.signedIn).toBe(false)
+  })
+
+  it('stops a burst before calling the model', async () => {
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({ allowed: false, count: 21, limit: 20 })
+    const res = await POST(makeRequest({ persona: 'lila', message: 'hello again' }))
+    expect(res.status).toBe(429)
+    const body = await res.json()
+    expect(body.code).toBe('rate_limited')
   })
 })

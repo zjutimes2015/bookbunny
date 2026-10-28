@@ -20,6 +20,8 @@ export interface ProduceProgress {
 
 export class ProduceError extends Error {
   code: 'human' | 'auth' | 'allowance' | 'rate' | 'failed'
+  /** 书已经写入图书馆、但后面的插画没画完时带上，方便家长打开已扣额度的那本 */
+  bookId?: string
 
   constructor(message: string, code: ProduceError['code']) {
     super(message)
@@ -59,8 +61,39 @@ export async function produceConfirmedBook(opts: {
     completed: 0,
     total: story.outline.length,
   })
-  const bookId = await saveBook(proposal, character, story, signal)
+  let bookId = ''
+  try {
+    bookId = await saveBook(proposal, character, story, signal)
+    await illustrateSavedBook({
+      bookId,
+      story,
+      character,
+      turnstileToken,
+      signal,
+      onProgress,
+    })
+  } catch (err) {
+    if (!bookId) throw err
+    if (isAbort(err)) throw err
+    const failed = err instanceof ProduceError
+      ? err
+      : new ProduceError(err instanceof Error ? err.message : 'The book could not be finished.', 'failed')
+    failed.bookId = bookId
+    throw failed
+  }
 
+  return { bookId, title: story.title }
+}
+
+async function illustrateSavedBook(input: {
+  bookId: string
+  story: StoryResult
+  character: CharacterDraft
+  turnstileToken: string
+  signal?: AbortSignal
+  onProgress: (progress: ProduceProgress) => void
+}): Promise<void> {
+  const { bookId, story, character, turnstileToken, signal, onProgress } = input
   const batches = illustrationBatches(story.outline, 5)
   let completed = 0
   for (const batch of batches) {
@@ -88,8 +121,10 @@ export async function produceConfirmedBook(opts: {
     })
     completed += drawn
   }
+}
 
-  return { bookId, title: story.title }
+function isAbort(err: unknown): boolean {
+  return err instanceof DOMException && err.name === 'AbortError'
 }
 
 async function ensureHumanPass(token: string, signal?: AbortSignal): Promise<void> {
