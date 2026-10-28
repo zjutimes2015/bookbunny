@@ -14,7 +14,7 @@ import { SITE_URL } from '@/lib/site'
  * the account that generated them, not by the site).
  */
 export default function robots(): MetadataRoute.Robots {
-  const disallow = ['/create', '/progress', '/book/', '/admin', '/affiliate/']
+  const disallow = ['/create', '/progress', '/book/', '/buddy', '/admin', '/affiliate/']
 
   return {
     rules: [

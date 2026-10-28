@@ -456,6 +456,12 @@ export default function HomePage() {
               <Link href="/create" className="apple-button px-7 py-3.5 text-base">
                 Start free — no credit card
               </Link>
+              <Link
+                href="/buddy"
+                className="text-sm font-medium text-[#2D2D2D] underline decoration-[#C7C7CC] underline-offset-4 transition-colors hover:decoration-[#2D2D2D]"
+              >
+                Or talk to Lila & Kai
+              </Link>
               <a
                 href="#samples"
                 className="text-sm font-medium text-[#2D2D2D] underline decoration-[#C7C7CC] underline-offset-4 transition-colors hover:decoration-[#2D2D2D]"

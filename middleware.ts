@@ -7,7 +7,7 @@ import { REFERRAL_COOKIE, REFERRAL_COOKIE_MAX_AGE, isValidCode, normalizeCode } 
  * `X-Robots-Tag` header, because a robots.txt Disallow only stops crawling —
  * it does not stop a page that was already linked from being indexed.
  */
-const PRIVATE_PREFIXES = ['/create', '/progress', '/book/', '/admin']
+const PRIVATE_PREFIXES = ['/create', '/progress', '/book/', '/buddy', '/admin']
 
 function isPrivatePath(pathname: string): boolean {
   return PRIVATE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix))
