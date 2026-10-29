@@ -12,6 +12,7 @@ import { getSessionUser, getClientIp } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { isR2Configured, uploadBase64Image, bookKey, keyFromAssetUrl, getObjectFile } from '@/lib/r2'
 import { requireHuman, attachPassCookie, humanCheckFailedResponse } from '@/lib/turnstile'
+import { ageArtDirection } from '@/lib/age-art'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -54,6 +55,7 @@ function buildPrompt(
   providedStyle?: string,
   styleLexicon?: StyleLexicon,
   consistencyLine?: string,
+  ageGroup?: string,
 ): string {
   const prefix = buildStylePrefix(styleLexicon)
 
@@ -72,10 +74,15 @@ function buildPrompt(
   let styleSuffix = ''
   if (!page.visualStyle) {
     if (providedStyle) styleSuffix = providedStyle
-    else if (!styleLexicon) styleSuffix = FALLBACK_STYLE
+    else if (!styleLexicon) {
+      styleSuffix = ageGroup
+        ? `, ${ageArtDirection(ageGroup).fallbackStyle}`
+        : FALLBACK_STYLE
+    }
   }
+  const proportionLock = ageGroup ? ageArtDirection(ageGroup).proportionLock : ''
 
-  return [prefix, consistencyLine, ...parts, BOOK_CONSTRAINTS, styleSuffix]
+  return [prefix, consistencyLine, ...parts, BOOK_CONSTRAINTS, styleSuffix, proportionLock]
     .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
     .join(', ')
 }
@@ -117,7 +124,7 @@ async function referenceBase64FromUrl(url?: string | null): Promise<string | und
 
 export async function POST(req: NextRequest) {
   try {
-    const { outline, pages, characterImageB64, characterImageUrl, style, styleLexicon, consistencyLine, aspect, language, bookId, turnstileToken } =
+    const { outline, pages, characterImageB64, characterImageUrl, style, styleLexicon, consistencyLine, aspect, language, bookId, turnstileToken, ageGroup } =
       await req.json()
     void language
 
@@ -193,6 +200,7 @@ export async function POST(req: NextRequest) {
         styleLexicon,
         consistencyLine,
         size,
+        ageGroup: typeof ageGroup === 'string' ? ageGroup : undefined,
       }),
     )
 
@@ -240,8 +248,9 @@ async function runGeneration(opts: {
   styleLexicon?: StyleLexicon
   consistencyLine?: string
   size: string
+  ageGroup?: string
 }) {
-  const { genId, bookId, outline, characterImageB64, style, styleLexicon, consistencyLine, size } = opts
+  const { genId, bookId, outline, characterImageB64, style, styleLexicon, consistencyLine, size, ageGroup } = opts
   const pages: JobPage[] = outline.map(p => ({ index: p.pageNumber, status: 'pending' }))
   const refImage = characterImageB64 ? `data:image/png;base64,${characterImageB64}` : undefined
   const canUpload = isR2Configured() && !!bookId
@@ -256,7 +265,7 @@ async function runGeneration(opts: {
   }
 
   for (let i = 0; i < outline.length; i++) {
-    const prompt = buildPrompt(outline[i], style, styleLexicon, consistencyLine)
+    const prompt = buildPrompt(outline[i], style, styleLexicon, consistencyLine, ageGroup)
     pages[i] = { index: outline[i].pageNumber, status: 'generating' }
     await flush('running')
 

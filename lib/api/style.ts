@@ -1,4 +1,5 @@
 import { STYLE_LIBRARY, AGE_COLOR_GUIDE, type StyleLibraryEntry } from '@/data/style-library'
+import { ageArtBrief, ageArtDirection } from '@/lib/age-art'
 import {
   contentLanguageRule,
   DEFAULT_BOOK_LANGUAGE,
@@ -13,11 +14,6 @@ const OR_BASE = 'https://openrouter.ai/api/v1'
 /** 禁止项兜底文案（含「禁止写具体风格名」约束） */
 const DEFAULT_FORBIDDEN =
   'no text or letters in the image, no scary or violent elements, no dark gloomy background, do not imitate any specific artist, studio or franchise (e.g. Ghibli / Disney / Pixar), background must not compete with the main character'
-
-const DEFAULT_SCENE =
-  'simple clean background, one clear focal point, keep the background from competing with the main character, always leave whitespace for text'
-
-const DEFAULT_EMOTION = 'warm, gentle, positive and age-appropriate'
 
 const str = (v: unknown, fb = ''): string =>
   typeof v === 'string' && v.trim() ? v.trim() : v == null ? fb : String(v)
@@ -38,6 +34,7 @@ function findStyle(styleId: string): StyleLibraryEntry {
 /** 确定性兜底：由风格库条目 + 护眼配色指南拼装 */
 function buildFallback(styleId: string, ageGroup: string, theme: string): { card: StyleCard; lexicon: StyleLexicon } {
   const entry = findStyle(styleId)
+  const art = ageArtDirection(ageGroup)
   const colorGuide = AGE_COLOR_GUIDE[normalizeAgeGroup(ageGroup)] ?? AGE_COLOR_GUIDE['3-6']
 
   const card: StyleCard = {
@@ -46,9 +43,9 @@ function buildFallback(styleId: string, ageGroup: string, theme: string): { card
     mainStyle: entry.name,
     colorMood: colorGuide,
     eyeCare: colorGuide,
-    characterStyling: entry.features,
-    sceneComplexity: DEFAULT_SCENE,
-    emotionTexture: DEFAULT_EMOTION,
+    characterStyling: `${entry.features}. ${art.character}`,
+    sceneComplexity: art.scene,
+    emotionTexture: art.emotion,
     styleKeywords: entry.aiKeywords,
     forbiddenStyles: DEFAULT_FORBIDDEN,
   }
@@ -56,8 +53,8 @@ function buildFallback(styleId: string, ageGroup: string, theme: string): { card
   const lexicon: StyleLexicon = {
     technique: entry.features,
     colorMood: colorGuide,
-    characterStyling: entry.features,
-    sceneComplexity: DEFAULT_SCENE,
+    characterStyling: `${entry.features}. ${art.character}`,
+    sceneComplexity: art.scene,
     texture: entry.aiKeywords,
     forbidden: DEFAULT_FORBIDDEN,
   }
@@ -121,6 +118,7 @@ Inputs:
 - Style traits: ${entry.features}
 - English AI keywords for this style: ${entry.aiKeywords}
 - Eye-friendly color guide for this age band: ${colorGuide}
+- Age art direction (must follow): ${ageArtBrief(ageGroup)}
 
 Rules:
 - The whole book uses exactly ONE main style.

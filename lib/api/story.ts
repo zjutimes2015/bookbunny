@@ -1,3 +1,4 @@
+import { ageArtBrief } from '@/lib/age-art'
 import { pickLevel, grlFromAgeGroup, levelPromptConstraints, validateVocabulary, type ReadingLevel } from '@/lib/reading-levels'
 import { generateQuiz, type Quiz } from '@/lib/quiz-generator'
 import { ellPromptConstraints, type EllOptions } from '@/lib/grl/ell'
@@ -172,6 +173,7 @@ export async function generateStory(options: StoryOptions): Promise<StoryResult>
 Parameters:
 - Theme: ${options.theme}
 - Target Age: ${options.ageGroup}
+- Age art direction (must follow on every image-facing field): ${ageArtBrief(options.ageGroup)}
 - Main Character(s): ${options.characterName}
 - Number of pages: ${pageCount} (page 1 is the COVER, the rest are BODY)
 

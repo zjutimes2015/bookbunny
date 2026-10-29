@@ -255,6 +255,7 @@ export default function BookDetailPage() {
             characterImageUrl: data.protagonistImageUrl || null,
             consistencyLine: data.consistencyLine || null,
             style: data.style || null,
+            ageGroup: book.ageGroup,
             aspect: data.aspect || book.aspect || '1:1',
           }),
         })

@@ -155,6 +155,7 @@ export default function WorldStartForm({ world }: { world: StartWorld }) {
               characterImageB64: character.imageB64 || null,
               consistencyLine: character.consistencyLine || null,
               style: world.artStyle,
+              ageGroup: world.ageRange,
               aspect: '1:1',
               turnstileToken: token || '',
             }),

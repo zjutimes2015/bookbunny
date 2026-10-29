@@ -117,6 +117,9 @@ const softwareAppJsonLd = {
     'AI-generated children storybooks',
     'Character-consistent illustrations',
     'GRL A-E leveled reading',
+    'Age-graded books for 3–5, 5–7, and 7–10',
+    'Page video with voice and music',
+    'One-click PDF export',
     'Amazon KDP print-ready PDF export',
     'Parental consent compliance',
     '10 book languages',
@@ -132,7 +135,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400..800;1,400..800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
         {/* Favicon fallbacks */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
@@ -151,11 +154,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareAppJsonLd) }}
         />
-        <Header />
         <CrispChat />
         <GoogleAnalytics />
         <ReferralCapture />
         <AuthProvider>
+          <Header />
           <main className="pt-16">
             {children}
           </main>
