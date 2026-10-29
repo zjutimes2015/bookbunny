@@ -343,6 +343,7 @@ export default function CreatePage() {
           aspect,                                       // 阶段3：画幅比例
           styleLexicon,
           language,
+          ageGroup,
           turnstileToken: turnstileToken || '',          // cookie 缺失时的兜底
         }),
       })

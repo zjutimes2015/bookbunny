@@ -167,3 +167,28 @@ describe('generateStory — ELL mode', () => {
     expect(promptOf(fetchMock)).not.toContain('English language learners')
   })
 })
+
+describe('generateStory — age art direction', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('asks for an illustrated chapter when the reader is 7–10', async () => {
+    const fetchMock = vi.fn(async () => mockModelResponse(8))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateStory({
+      theme: 'a radio signal on a ridge',
+      ageGroup: '7-10',
+      characterName: 'Nora',
+      pages: 8,
+      level: 'E',
+    })
+
+    const prompt = promptOf(fetchMock)
+    expect(prompt).toContain('Age band 7-10')
+    expect(prompt).toContain('not a toddler')
+    expect(prompt).toContain('Only ages 0-3 use toddler proportions')
+  })
+})

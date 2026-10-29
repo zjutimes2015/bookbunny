@@ -73,9 +73,11 @@ describe('story buddy pipeline payloads', () => {
       outline: story.outline,
       bookId: 'book-1',
       character: { name: 'Mia', consistencyLine: 'same face', imageB64: 'abc' },
+      ageGroup: '5-7',
       turnstileToken: 'token',
     })
     expect(payload.bookId).toBe('book-1')
+    expect(payload.ageGroup).toBe('5-7')
     expect(payload.characterImageB64).toBe('abc')
     expect(payload.outline).toHaveLength(2)
   })

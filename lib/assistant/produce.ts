@@ -68,6 +68,7 @@ export async function produceConfirmedBook(opts: {
       bookId,
       story,
       character,
+      ageGroup: proposal.ageGroup,
       turnstileToken,
       signal,
       onProgress,
@@ -89,11 +90,12 @@ async function illustrateSavedBook(input: {
   bookId: string
   story: StoryResult
   character: CharacterDraft
+  ageGroup: string
   turnstileToken: string
   signal?: AbortSignal
   onProgress: (progress: ProduceProgress) => void
 }): Promise<void> {
-  const { bookId, story, character, turnstileToken, signal, onProgress } = input
+  const { bookId, story, character, ageGroup, turnstileToken, signal, onProgress } = input
   const batches = illustrationBatches(story.outline, 5)
   let completed = 0
   for (const batch of batches) {
@@ -108,6 +110,7 @@ async function illustrateSavedBook(input: {
       outline: batch,
       bookId,
       character,
+      ageGroup,
       turnstileToken,
       signal,
       onPage: (done, total) => {
@@ -210,6 +213,7 @@ async function illustrateBatch(input: {
   outline: PageOutline[]
   bookId: string
   character: CharacterDraft
+  ageGroup: string
   turnstileToken: string
   signal?: AbortSignal
   onPage: (completed: number, total: number) => void

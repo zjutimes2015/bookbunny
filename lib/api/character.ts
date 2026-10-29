@@ -1,6 +1,7 @@
 // 角色层（依据《AI 制作绘本的超详细攻略》第三章「角色设定」）
 // 产出：12 项角色设定卡 + 一致性固定句（注入每页生图 prompt）+ 角色参考图（供每页作 reference）
 
+import { ageArtBrief, ageArtDirection } from '@/lib/age-art'
 import { generateImage } from '@/lib/api/flux'
 import {
   contentLanguageRule,
@@ -45,21 +46,22 @@ export function buildConsistencyLine(card: CharacterCard): string {
   ].join('; ')
 }
 
-/** 确定性兜底角色卡（LLM 失败/无 key 时使用） */
-function fallbackCard(name: string, photoUsage: CharacterCard['photoUsage']): CharacterCard {
+/** 确定性兜底角色卡（LLM 失败/无 key 时使用）。比例跟年龄段走，不一律画成幼龄。 */
+function fallbackCard(name: string, photoUsage: CharacterCard['photoUsage'], ageGroup?: string): CharacterCard {
+  const art = ageArtDirection(ageGroup || '3-5')
   return {
     name,
     roleType: 'protagonist',
-    ageFeel: 'young child, cute and friendly',
-    appearance: 'round face, big friendly eyes, soft warm smile',
-    hairOrFur: 'soft fluffy fur, neat and tidy',
-    clothing: "simple bright children's outfit",
-    signatureProp: 'a small comforting prop it always carries',
-    personality: 'kind, curious, brave and warm-hearted',
-    commonExpressions: 'happy smile, curious wide eyes, gentle surprise',
-    commonActions: 'walking, hugging, exploring, waving',
-    storyProblem: 'faces a small, age-appropriate problem',
-    noChangeItems: 'face shape, eye color, fur colors, clothing colors and signature prop',
+    ageFeel: art.character,
+    appearance: art.appearance,
+    hairOrFur: art.hair,
+    clothing: art.clothing,
+    signatureProp: art.prop,
+    personality: 'kind, curious, and specific to this age',
+    commonExpressions: 'focused, pleased, thinking',
+    commonActions: 'walking, looking, deciding, carrying the signature prop',
+    storyProblem: 'faces a problem matched to this age',
+    noChangeItems: 'face shape, hair, clothing colors, body proportions and signature prop',
     photoUsage: photoUsage ?? 'illustrated',
   }
 }
@@ -122,7 +124,7 @@ export async function generateCharacterCard(params: {
   language?: BookLanguage
 }): Promise<CharacterResult> {
   const { name, photoDataUri, styleLexicon, styleName, ageGroup, theme, photoUsage, language } = params
-  const fallback = fallbackCard(name, photoUsage)
+  const fallback = fallbackCard(name, photoUsage, ageGroup)
   const lang = language ?? DEFAULT_BOOK_LANGUAGE
   const languageRule = contentLanguageRule(lang)
   let card = fallback
@@ -136,10 +138,14 @@ Inputs:
 - Book theme: ${theme || '(unspecified)'}
 - Chosen art style: ${styleName || '(unspecified)'}
 
+Age art direction (must follow):
+${ageArtBrief(ageGroup || '3-5')}
+
 Rules:
 - appearance / hairOrFur / clothing / signatureProp MUST be visually concrete (colors, shapes) so an illustrator can draw them.
+- ageFeel and body proportions MUST match the age band above. Ages 7-10 are older children, not toddlers.
 - noChangeItems MUST list the exact visual invariants to keep identical across pages.
-- Currency/compatible with young children; friendly and non-scary.
+- Friendly and non-scary.
 - NEVER imitate any specific artist, studio or franchise (e.g. Ghibli / Disney / Pixar).
 - ${languageRule}
 - Every visual descriptor field (name, roleType, ageFeel, appearance, hairOrFur, clothing, signatureProp, noChangeItems) MUST stay in English so the image model (FLUX) renders them reliably.

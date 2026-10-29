@@ -58,6 +58,7 @@ export function illustrationPayload(input: {
   bookId: string
   character: CharacterDraft
   turnstileToken: string
+  ageGroup: string
 }) {
   return {
     title: input.title,
@@ -68,6 +69,7 @@ export function illustrationPayload(input: {
     consistencyLine: input.character.consistencyLine,
     aspect: '1:1',
     language: 'en' as const,
+    ageGroup: input.ageGroup,
     turnstileToken: input.turnstileToken,
   }
 }
