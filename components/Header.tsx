@@ -23,26 +23,26 @@ export default function Header() {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-4 lg:gap-7">
-            <Link href="/buddy" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
+            <Link href="/buddy" className="rounded-md px-3 py-2 text-sm text-gray-800 transition-colors hover:bg-gray-100">
               Lila & Kai
             </Link>
-            <Link href="/create" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
+            <Link href="/create" className="rounded-md px-3 py-2 text-sm text-gray-800 transition-colors hover:bg-gray-100">
               Create Book
             </Link>
-            <Link href="/progress" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
+            <Link href="/progress" className="rounded-md px-3 py-2 text-sm text-gray-800 transition-colors hover:bg-gray-100">
               Progress
             </Link>
-            <Link href="/pricing" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
+            <Link href="/pricing" className="rounded-md px-3 py-2 text-sm text-gray-800 transition-colors hover:bg-gray-100">
               Pricing
             </Link>
-            <Link href="/affiliate" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
+            <Link href="/affiliate" className="rounded-md px-3 py-2 text-sm text-gray-800 transition-colors hover:bg-gray-100">
               Affiliates
             </Link>
-            <Link href="/about" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
+            <Link href="/about" className="rounded-md px-3 py-2 text-sm text-gray-800 transition-colors hover:bg-gray-100">
               About
             </Link>
-            <Link href="/create" className="bg-[#2D2D2D] text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:opacity-85 transition-all hover:scale-[1.02]">
-              Create Book
+            <Link href="/create" className="rounded-md bg-black px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800">
+              Get Started
             </Link>
             <UserAvatar />
           </nav>
@@ -85,9 +85,9 @@ export default function Header() {
                   onClick={() => setMenuOpen(false)}>
               About
             </Link>
-            <Link href="/create" className="block px-3 py-2 rounded-xl text-sm font-medium text-white bg-[#2D2D2D] text-center"
+            <Link href="/create" className="block rounded-md bg-black px-3 py-2 text-center text-sm font-semibold text-white"
                   onClick={() => setMenuOpen(false)}>
-              Get Started Free
+              Get Started
             </Link>
           </div>
         )}
