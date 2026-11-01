@@ -1,7 +1,15 @@
 import { NextResponse } from 'next/server'
-import { getWaffo, isWaffoConfigured, WAFFO_ENVIRONMENT } from '@/lib/payments/waffo'
+import { getWaffo, isWaffoConfigured, WAFFO_ENVIRONMENT, WAFFO_PLANS } from '@/lib/payments/waffo'
 
 export const dynamic = 'force-dynamic'
+
+interface WaffoProduct {
+  id: string
+  name?: string
+  status?: string
+  billingPeriod?: string
+  prices?: { currency: string; priceInfo?: { amount?: string } }[]
+}
 
 /**
  * GET /api/health/payments
@@ -40,9 +48,9 @@ export async function GET() {
       query: `query ($id: String!) {
         store(id: $id) {
           status
-          subscriptionProducts { id status }
-          onetimeProducts { id status }
-          storeWebhooks { id url testMode channel }
+          subscriptionProducts { id name status billingPeriod prices { currency priceInfo { amount } } }
+          onetimeProducts { id name status prices { currency priceInfo { amount } } }
+          storeWebhooks { id url testMode channel events }
         }
       }`,
       variables: { id: process.env.WAFFO_STORE_ID },
@@ -58,9 +66,9 @@ export async function GET() {
     const store = res.data?.store as
       | {
           status?: string
-          subscriptionProducts?: { id: string; status?: string }[]
-          onetimeProducts?: { id: string; status?: string }[]
-          storeWebhooks?: { id: string; url: string; testMode: boolean; channel: string }[]
+          subscriptionProducts?: WaffoProduct[]
+          onetimeProducts?: WaffoProduct[]
+          storeWebhooks?: { id: string; url: string; testMode: boolean; channel: string; events?: string[] }[]
         }
       | undefined
 
@@ -77,6 +85,17 @@ export async function GET() {
     const prodWebhook = webhooks.find((w) => w.testMode === false)
     const webhookOnSite = prodWebhook ? prodWebhook.url.startsWith(siteUrl) : false
 
+    // 每个套餐的商品是否真的存在于生产店铺。
+    // 只回传套餐 key 和「在/不在」，不回传 product id。
+    const productIds = new Set(products.map((p) => p.id))
+    const planCoverage = Object.entries(WAFFO_PLANS).map(([key, plan]) => ({
+      key,
+      productIdSet: !!plan.productId,
+      inStore: productIds.has(plan.productId),
+    }))
+
+    const missingProducts = planCoverage.filter((p) => p.productIdSet && !p.inStore)
+
     return NextResponse.json({
       ...report,
       ok: true,
@@ -84,6 +103,8 @@ export async function GET() {
       storeStatus: store.status ?? null,
       productCount: products.length,
       activeProductCount: products.filter((p) => (p.status ?? 'active') === 'active').length,
+      planCoverage,
+      missingProductCount: missingProducts.length,
       webhookCount: webhooks.length,
       prodWebhookConfigured: !!prodWebhook,
       prodWebhookOnSite: webhookOnSite,
