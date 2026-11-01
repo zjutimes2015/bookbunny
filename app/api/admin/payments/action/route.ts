@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic'
  * 把 Waffo 从测试版切到生产版需要两个动作，这里都能做：
  *   action=publish  把测试环境的商品版本发布到生产
  *   action=webhook  注册生产 webhook（testMode=false），指向本站
+ *   action=webhooks 只读：列出两个环境里注册的所有 webhook
  *   action=inspect  逐个套餐回读商品在 test / prod 的状态（只读）
  *   action=create   后台缺商品时按定价补建并发布到生产
  *
@@ -20,7 +21,7 @@ export const dynamic = 'force-dynamic'
  *   3. webhook URL 用 SITE_URL 拼出来，不接受外部传入的 URL。
  */
 
-const PUBLISH_ACTIONS = new Set(['publish', 'webhook', 'inspect', 'create'])
+const PUBLISH_ACTIONS = new Set(['publish', 'webhook', 'webhooks', 'inspect', 'create'])
 
 /** 数字商品的税务分类 */
 const TAX_CATEGORY = TaxCategory.DigitalGoods
@@ -266,6 +267,44 @@ export async function POST(req: NextRequest) {
       }
 
       return NextResponse.json({ ok: failed.length === 0, created, skipped, failed })
+    }
+
+    if (action === 'webhooks') {
+      // 只读：列出两个环境里注册的所有 webhook。
+      // storeWebhooks 读不到时要能区分「真没有」和「查询方式不对」。
+      const prod = getWaffo()
+      const test = new WaffoPancake({
+        merchantId: process.env.WAFFO_MERCHANT_ID!,
+        privateKey: process.env.WAFFO_PRIVATE_KEY!,
+        environment: 'test',
+      })
+
+      const q = `query ($id: String!) {
+        store(id: $id) {
+          id
+          name
+          storeWebhooks { id url testMode channel events }
+        }
+      }`
+
+      const [t, p] = await Promise.all([
+        test.graphql.query({ query: q, variables: { id: storeId } }),
+        prod.graphql.query({ query: q, variables: { id: storeId } }),
+      ])
+
+      const read = (r: typeof t) => {
+        if (r.errors) return { errors: r.errors }
+        const s = r.data?.store as
+          | { id?: string; name?: string; storeWebhooks?: unknown[] }
+          | undefined
+        return {
+          storeId: s?.id ?? null,
+          storeName: s?.name ?? null,
+          webhooks: s?.storeWebhooks ?? null,
+        }
+      }
+
+      return NextResponse.json({ test: read(t), prod: read(p) })
     }
 
     if (action === 'webhook') {
