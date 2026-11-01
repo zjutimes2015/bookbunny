@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminSession } from '@/lib/admin'
 import { getWaffo, isWaffoConfigured, WAFFO_PLANS } from '@/lib/payments/waffo'
-import { WaffoPancake, WebhookEventType } from '@waffo/pancake-ts'
+import { WaffoPancake, WebhookEventType, TaxCategory, BillingPeriod } from '@waffo/pancake-ts'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic'
  *   action=publish  把测试环境的商品版本发布到生产
  *   action=webhook  注册生产 webhook（testMode=false），指向本站
  *   action=inspect  逐个套餐回读商品在 test / prod 的状态（只读）
+ *   action=create   后台缺商品时按定价补建并发布到生产
  *
  * 安全边界：
  *   1. 必须管理员登录态，或带上一次性运维令牌 PAYMENT_REPAIR_TOKEN；
@@ -19,7 +20,10 @@ export const dynamic = 'force-dynamic'
  *   3. webhook URL 用 SITE_URL 拼出来，不接受外部传入的 URL。
  */
 
-const PUBLISH_ACTIONS = new Set(['publish', 'webhook', 'inspect'])
+const PUBLISH_ACTIONS = new Set(['publish', 'webhook', 'inspect', 'create'])
+
+/** 数字商品的税务分类 */
+const TAX_CATEGORY = TaxCategory.DigitalGoods
 
 /**
  * 一次性运维令牌。
@@ -178,6 +182,90 @@ export async function POST(req: NextRequest) {
         out[key] = { test: pick(t), prod: pick(p) }
       }
       return NextResponse.json(out)
+    }
+
+    if (action === 'create') {
+      // 后台缺商品时按 WAFFO_PLANS 的定价补建，并直接 publish 到生产。
+      // 只在 test 环境创建（test 与 prod 是同一份商品的两个版本），
+      // 创建完再 publish，生产环境就有了。
+      const test = new WaffoPancake({
+        merchantId: process.env.WAFFO_MERCHANT_ID!,
+        privateKey: process.env.WAFFO_PRIVATE_KEY!,
+        environment: 'test',
+      })
+
+      const prod = getWaffo()
+      const created: { key: string; productId: string; published: boolean }[] = []
+      const skipped: string[] = []
+      const failed: { key: string; error: string }[] = []
+
+      for (const [key, plan] of Object.entries(WAFFO_PLANS)) {
+        // 商品已存在就不重复建
+        const q =
+          plan.cycle === 'once'
+            ? `query ($id: String!) { onetimeProduct(id: $id) { id } }`
+            : `query ($id: String!) { subscriptionProduct(id: $id) { id } }`
+        const [t, p] = await Promise.all([
+          test.graphql.query({ query: q, variables: { id: plan.productId } }),
+          prod.graphql.query({ query: q, variables: { id: plan.productId } }),
+        ])
+        const found = (r: typeof t) => {
+          if (r.errors) return false
+          const d = r.data as Record<string, unknown> | undefined
+          return !!(d?.subscriptionProduct ?? d?.onetimeProduct)
+        }
+        if (found(t) || found(p)) {
+          skipped.push(key)
+          continue
+        }
+
+        try {
+          const prices = { USD: { amount: plan.price.toFixed(2), taxCategory: TAX_CATEGORY } }
+          const params = {
+            storeId,
+            // 订阅的两个周期同名，后台要靠名字区分 —— 与已有商品保持一致
+            name:
+              plan.cycle === 'once'
+                ? plan.name
+                : `${plan.name} ${plan.cycle === 'year' ? 'Annual' : 'Monthly'}`,
+            prices,
+            description: plan.description,
+          }
+
+          const res =
+            plan.cycle === 'once'
+              ? await test.onetimeProducts.create(params)
+              : await test.subscriptionProducts.create({
+                  ...params,
+                  billingPeriod: plan.cycle === 'year' ? BillingPeriod.Yearly : BillingPeriod.Monthly,
+                })
+
+          const productId = res?.product?.id
+          if (!productId) throw new Error(`create returned no product id: ${JSON.stringify(res)}`)
+
+          // 建好立刻发布到生产，生产环境才能收这个商品的钱
+          let published = false
+          try {
+            if (plan.cycle === 'once') {
+              await test.onetimeProducts.publish({ id: productId })
+            } else {
+              await test.subscriptionProducts.publish({ id: productId })
+            }
+            published = true
+          } catch (err) {
+            failed.push({
+              key,
+              error: `created ${productId} but publish failed: ${err instanceof Error ? err.message : 'unknown'}`,
+            })
+          }
+
+          created.push({ key, productId, published })
+        } catch (err) {
+          failed.push({ key, error: err instanceof Error ? err.message : 'Unknown error' })
+        }
+      }
+
+      return NextResponse.json({ ok: failed.length === 0, created, skipped, failed })
     }
 
     if (action === 'webhook') {
