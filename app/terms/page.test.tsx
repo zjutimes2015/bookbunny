@@ -29,12 +29,26 @@ describe('TermsPage prohibited content', () => {
     expect(ncii).toBeTruthy()
     expect(deepfake).toBeTruthy()
     expect(ncii).not.toBe(deepfake)
-    expect(ncii?.textContent).toMatch(/private intimate images/i)
-    expect(ncii?.textContent).toMatch(/synthetic or AI-generated intimate images/i)
+    expect(ncii?.textContent).toMatch(/private intimate image/i)
+    expect(ncii?.textContent).toMatch(/synthetic or AI-generated intimate image/i)
     expect(ncii?.textContent).toMatch(/without that person's consent/i)
-    expect(ncii?.textContent).not.toMatch(/deepfake/i)
-    expect(deepfake?.textContent).not.toMatch(/non-consensual intimate imagery/i)
     expect(deepfake?.textContent).toMatch(/deceive others/i)
+  })
+
+  it('names all three prohibited NCII acts and cross-references the deepfake clause', () => {
+    render(<TermsPage />)
+
+    const items = screen.getAllByRole('listitem')
+    const ncii = items.find((el) => /non-consensual intimate imagery \(NCII\)/i.test(el.textContent || ''))
+    const text = ncii?.textContent || ''
+
+    // generate / upload / distribute-or-share — all three acts Waffo asked us to cover
+    expect(text).toMatch(/generate/i)
+    expect(text).toMatch(/upload/i)
+    expect(text).toMatch(/distribute or share/i)
+    // explicitly separate from, and additional to, the deepfake clause
+    expect(text).toMatch(/separately from/i)
+    expect(text).toMatch(/deepfake/i)
   })
 })
 

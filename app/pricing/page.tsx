@@ -1,7 +1,9 @@
 'use client'
 
 import { Fragment, useEffect, useState } from 'react'
+import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
+import { REFUND_WINDOW_DAYS, SITE_NAME } from '@/lib/site'
 
 type MatrixValue = string | boolean
 
@@ -215,6 +217,10 @@ const PRICING_FAQS: { q: string; a: string }[] = [
   {
     q: 'Is there an unlimited plan?',
     a: 'No. Every plan has a hard monthly book allowance and there is no unlimited tier, because each illustrated page has a real generation cost. Pro Animation Packs give extra volume without a subscription.',
+  },
+  {
+    q: 'What is your refund policy?',
+    a: `You can request a refund within ${REFUND_WINDOW_DAYS} days of the charge date, as long as you have not used the purchase — a subscription is refundable only when you have used none of that period's book allowance and generated no book during it, and a credit pack is refundable only when none of its credits have been used. Used credits and books that have already been generated are not refundable, and we do not give partial cash refunds for a partly used period or pack. If a charge never reached your account, we refund it even after ${REFUND_WINDOW_DAYS} days. Email privacy@sprouttales.com with the subject line "Refund request" and we acknowledge within two business days. Full details: the Refund Policy.`,
   },
 ]
 
@@ -500,10 +506,52 @@ export default function PricingPage() {
         </div>
       </div>
 
-      <div className="text-center mt-10">
-        <p className="text-xs text-[#8E8E93]">
-          Cancel anytime. Pro Animation Packs never expire and are never resold as &quot;unlimited&quot;.
-        </p>
+      {/* Refund summary — the review asked for the refund policy to be visible at the
+          point of purchase, not only inside the Terms. */}
+      <div className="mx-auto mt-10 max-w-3xl">
+        <div className="apple-card p-6">
+          <h2 className="text-base font-bold text-[#2D2D2D]">Refunds</h2>
+          <ul className="mt-3 space-y-2 text-sm text-[#8E8E93] leading-relaxed">
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-[#FF6B8A]">•</span>
+              <span>
+                Request a refund within {REFUND_WINDOW_DAYS} days of the charge date. We acknowledge
+                every request within two business days.
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-[#FF6B8A]">•</span>
+              <span>
+                A subscription is refundable only if you have used none of that billing
+                period&apos;s allowance and generated no book during it. A credit pack is refundable
+                only if none of its credits have been used.
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-[#FF6B8A]">•</span>
+              <span>
+                Credits already used and books already generated are not refundable, and we do not
+                issue partial cash refunds for a partly used period or pack.
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-[#FF6B8A]">•</span>
+              <span>
+                If a charge never reached your account, we refund it even after{' '}
+                {REFUND_WINDOW_DAYS} days.
+              </span>
+            </li>
+          </ul>
+          <p className="mt-3 text-sm text-[#8E8E93] leading-relaxed">
+            Cancel anytime — cancelling stops the next renewal and you keep access until the end of
+            the period you already paid for. Pro Animation Packs never expire and are never resold
+            as &quot;unlimited&quot;.{' '}
+            <Link href="/refunds" className="font-medium text-[#FF6B8A]">
+              Read the full Refund Policy
+            </Link>
+            .
+          </p>
+        </div>
       </div>
 
       {/* FAQ — visible text so the answers are quotable by AI answer engines */}

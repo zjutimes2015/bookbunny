@@ -230,11 +230,13 @@ const SECTIONS: Section[] = [
           <li className={ITEM}>
             <span className={DOT}>•</span>
             <span>
-              <span className={STRONG}>Non-consensual intimate imagery (NCII).</span> Private
-              intimate images of a person without that person&apos;s consent, or synthetic or
-              AI-generated intimate images of a person without that person&apos;s consent. A parent
-              or guardian may not upload, request, or generate intimate images of a child or of
-              anyone else.
+              <span className={STRONG}>Non-consensual intimate imagery (NCII).</span> You may not
+              generate, upload, request, store, distribute or share any private intimate image of a
+              person without that person&apos;s consent, and you may not generate, upload, request,
+              store, distribute or share any synthetic or AI-generated intimate image of a person
+              without that person&apos;s consent. A parent or guardian may not upload, request, or
+              generate intimate images of a child or of anyone else. This prohibition applies in
+              addition to, and separately from, the deepfake and impersonation rules below.
             </span>
           </li>
           <li className={ITEM}>
@@ -242,7 +244,8 @@ const SECTIONS: Section[] = [
             <span>
               <span className={STRONG}>Deepfakes and impersonation.</span> Content that depicts a
               real, identifiable person without their consent, or that is intended to deceive others
-              about a person&apos;s identity, statements, or actions.
+              about a person&apos;s identity, statements, or actions. This prohibition applies in
+              addition to, and separately from, the non-consensual intimate imagery rules above.
             </span>
           </li>
           <li className={ITEM}>
