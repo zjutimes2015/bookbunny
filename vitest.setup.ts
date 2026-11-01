@@ -26,6 +26,11 @@ Object.defineProperty(window, 'speechSynthesis', {
   constructor(public text: string) {}
 }
 
+// jsdom 不实现 Element.scrollTo；组件里的平滑滚动会抛未捕获异常
+if (!Element.prototype.scrollTo) {
+  Element.prototype.scrollTo = function scrollTo() {}
+}
+
 beforeEach(() => {
   ;(window.speechSynthesis.speak as any).mockClear?.()
   ;(window.speechSynthesis.cancel as any).mockClear?.()
