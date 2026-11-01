@@ -73,6 +73,57 @@ node scripts/migrate-allowance-rollover.cjs # allowance_rollover（50% 额度滚
 - **Resend**：验证发件域名，`EMAIL_FROM` 必须是已验证域下的地址。
 - **定时任务**：用 cron-job.org 或 Vercel Cron 每天调用 `${SITE_URL}/api/cron/daily-digest?token=${CRON_SECRET}`。
 
+### 3.1 Waffo 从测试版切到生产版
+
+测试环境（test）和生产环境（prod）是两套独立的商品与 Webhook，切换要分三步，**顺序不能反**。
+
+**第 1 步：后台把每个商品的测试版本发布到生产。**
+
+测试环境建的商品必须 `publish` 一次才会出现在生产环境。8 个商品各发布一次：
+
+```powershell
+node scripts/waffo-provision.cjs      # 幂等：已存在的跳过创建，已发布的不动
+```
+
+脚本对每个商品走 `subscriptionProducts.publish` / `onetimeProducts.publish`。
+仓库里的脚本默认在 `test` 环境操作 —— test 与 prod 是两套商品，
+所以**要在 Waffo 后台把每个商品从 test 视图发布一次**，或用
+`node scripts/waffo-update-products.cjs --env=test --apply` 先同步描述再发布。
+
+**第 2 步：生产环境变量。**
+
+| 变量 | 生产取值 |
+|---|---|
+| `WAFFO_TEST_MODE` | `false`（**必须显式设为 false**，缺失时默认走测试环境收款） |
+| `WAFFO_MERCHANT_ID` / `WAFFO_PRIVATE_KEY` | 生产商户凭据，不是测试商户的 |
+| `WAFFO_STORE_ID` | SproutTales 店铺 ID |
+| `WAFFO_*_PRODUCT_ID` | 8 个商品的生产环境 Product ID |
+
+改完环境变量必须重新部署才生效（Vercel 不会热更新已注入的变量）。
+
+**第 3 步：生产 Webhook。**
+
+生产 Webhook 的 `testMode` 是 `false`，地址必须是：
+
+```
+${SITE_URL}/api/payments/waffo-webhook
+```
+
+Test 和 Prod 的 Webhook 可以并存 —— `verifyWebhook()` 会自动依次尝试
+prod 和 test 两把内置公钥，所以两种事件都能验签通过。但只留生产那条
+更干净，避免重复发放（发放本身按 `payments.id` 幂等，重复投递不会双发）。
+
+**验证清单：**
+
+1. `GET /api/plans` → 8 个套餐 `purchasable` 全为 `true`（`productId` 已注入）。
+2. 管理员登录后 `GET /api/admin/payments` → `environment` 必须是 `prod`，
+   `store.status` 正常，8 个商品的 `status` 已是生产状态，
+   `webhooks` 里有一条 `testMode: false` 且 URL 指向本站。
+3. 真实下一单（不是测试卡）：`bookbunny_users.subscription_tier` 变成对应档位，
+   `monthly_allowance_remaining` 按月付/年付正确落地。
+4. `payments` 表出现该订单且 `status = 'completed'`。
+
+
 ---
 
 ## 4. 部署后冒烟（10 分钟）
