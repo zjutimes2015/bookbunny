@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminSession } from '@/lib/admin'
-import { getWaffo, isWaffoConfigured } from '@/lib/payments/waffo'
+import { getWaffo, isWaffoConfigured, WAFFO_PLANS } from '@/lib/payments/waffo'
 import { WaffoPancake, WebhookEventType } from '@waffo/pancake-ts'
 
 export const dynamic = 'force-dynamic'
@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic'
  * 把 Waffo 从测试版切到生产版需要两个动作，这里都能做：
  *   action=publish  把测试环境的商品版本发布到生产
  *   action=webhook  注册生产 webhook（testMode=false），指向本站
+ *   action=inspect  逐个套餐回读商品在 test / prod 的状态（只读）
  *
  * 安全边界：
  *   1. 必须管理员登录态，或带上一次性运维令牌 PAYMENT_REPAIR_TOKEN；
@@ -18,7 +19,7 @@ export const dynamic = 'force-dynamic'
  *   3. webhook URL 用 SITE_URL 拼出来，不接受外部传入的 URL。
  */
 
-const PUBLISH_ACTIONS = new Set(['publish', 'webhook'])
+const PUBLISH_ACTIONS = new Set(['publish', 'webhook', 'inspect'])
 
 /**
  * 一次性运维令牌。
@@ -138,6 +139,45 @@ export async function POST(req: NextRequest) {
       }
 
       return NextResponse.json({ ok: failed.length === 0, published, skipped, failed })
+    }
+
+    if (action === 'inspect') {
+      // 单个商品在 test / prod 两个环境里分别是什么状态。
+      // publish 之前需要确认商品到底是「没发布」还是「压根没建」。
+      const prod = getWaffo()
+      const test = new WaffoPancake({
+        merchantId: process.env.WAFFO_MERCHANT_ID!,
+        privateKey: process.env.WAFFO_PRIVATE_KEY!,
+        environment: 'test',
+      })
+
+      const one = `query ($id: String!) {
+        subscriptionProduct(id: $id) { id name status billingPeriod }
+      }`
+      const two = `query ($id: String!) {
+        onetimeProduct(id: $id) { id name status }
+      }`
+
+      const out: Record<string, unknown> = {}
+      for (const [key, plan] of Object.entries(WAFFO_PLANS)) {
+        if (!plan.productId) {
+          out[key] = { error: 'productId not configured' }
+          continue
+        }
+        const q = plan.cycle === 'once' ? two : one
+        const [t, p] = await Promise.all([
+          test.graphql.query({ query: q, variables: { id: plan.productId } }),
+          prod.graphql.query({ query: q, variables: { id: plan.productId } }),
+        ])
+        const pick = (r: typeof t) => {
+          if (r.errors) return { error: 'not found' }
+          const d = r.data as Record<string, { id: string; name: string; status?: string } | undefined>
+          const node = d?.subscriptionProduct ?? d?.onetimeProduct
+          return node ? { id: node.id, name: node.name, status: node.status ?? null } : { error: 'not found' }
+        }
+        out[key] = { test: pick(t), prod: pick(p) }
+      }
+      return NextResponse.json(out)
     }
 
     if (action === 'webhook') {
