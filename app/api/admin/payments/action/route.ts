@@ -11,10 +11,7 @@ export const dynamic = 'force-dynamic'
  * 把 Waffo 从测试版切到生产版需要两个动作，这里都能做：
  *   action=publish  把测试环境的商品版本发布到生产
  *   action=webhook  注册生产 webhook（testMode=false），指向本站
- *   action=webhooks 只读：列出两个环境里注册的所有 webhook
- *   action=schema   只读：introspect Store 类型，找出 webhook 字段
  *   action=inspect  逐个套餐回读商品在 test / prod 的状态（只读）
- *   action=create   后台缺商品时按定价补建并发布到生产
  *
  * 安全边界：
  *   1. 必须管理员登录态，或带上一次性运维令牌 PAYMENT_REPAIR_TOKEN；
@@ -25,10 +22,11 @@ export const dynamic = 'force-dynamic'
 const PUBLISH_ACTIONS = new Set([
   'publish',
   'webhook',
-  'webhooks',
-  'schema',
   'inspect',
   'create',
+  'webhooks',
+  'schema',
+  'probe',
 ])
 
 /** 数字商品的税务分类 */
@@ -75,7 +73,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const body = (await req.json().catch(() => ({}))) as { action?: string }
+  const body = (await req.json().catch(() => ({}))) as { action?: string; id?: string }
   const action = body.action || ''
   if (!PUBLISH_ACTIONS.has(action)) {
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
@@ -335,6 +333,83 @@ export async function POST(req: NextRequest) {
       }
 
       return NextResponse.json({ test: read(t), prod: read(p) })
+    }
+
+    if (action === 'probe') {
+      // 只读诊断：webhooks.add 返回了 id，但 storeWebhooks 读不到。
+      // 这里用三条互不相干的线索判断它到底是「没落库」还是「列表查询方式不对」：
+      //   1. store.webhookDeliveriesCount —— 计数能反映后台是否真的存在投递记录
+      //   2. Merchant 类型里的 webhook 字段 —— 排除 webhook 挂在商户层而不是店铺层
+      //   3. 用 add 返回的 id 调一次 update —— 能改就说明这条记录真实存在
+      const prod = getWaffo()
+      const test = new WaffoPancake({
+        merchantId: process.env.WAFFO_MERCHANT_ID!,
+        privateKey: process.env.WAFFO_PRIVATE_KEY!,
+        environment: 'test',
+      })
+
+      const listQuery = `query ($id: String!) {
+        store(id: $id) {
+          id
+          name
+          storeWebhooks { id url testMode channel events }
+          webhookDeliveriesCount
+        }
+      }`
+
+      const read = (r: Awaited<ReturnType<typeof prod.graphql.query>>) => {
+        if (r.errors) return { errors: r.errors }
+        const s = (r.data as Record<string, unknown> | null | undefined)?.store as
+          | { id?: string; name?: string; storeWebhooks?: unknown[]; webhookDeliveriesCount?: number }
+          | undefined
+        return {
+          storeId: s?.id ?? null,
+          storeName: s?.name ?? null,
+          webhookCount: (s?.storeWebhooks ?? []).length,
+          webhooks: s?.storeWebhooks ?? [],
+          deliveriesCount: s?.webhookDeliveriesCount ?? null,
+        }
+      }
+
+      const [t, p] = await Promise.all([
+        test.graphql.query({ query: listQuery, variables: { id: storeId } }),
+        prod.graphql.query({ query: listQuery, variables: { id: storeId } }),
+      ])
+
+      const merchantFields = await prod.graphql.query({
+        query: `{ __type(name: "Merchant") { fields { name } } }`,
+      })
+
+      // 用 webhooks.update 反过来验证记录是否存在（update 只改 url/events，不改其他）
+      const url = `${siteUrl}/api/payments/waffo-webhook`
+      const events = PROD_EVENTS as unknown as `${WebhookEventType}`[]
+      const updateById = async (
+        client: WaffoPancake,
+        id: string,
+      ): Promise<{ ok: boolean; detail: unknown }> => {
+        try {
+          const r = await client.webhooks.update({ id, url, events })
+          return { ok: true, detail: r.webhook }
+        } catch (err) {
+          return { ok: false, detail: err instanceof Error ? err.message : 'unknown' }
+        }
+      }
+
+      const probe: Record<string, unknown> = {
+        test: read(t),
+        prod: read(p),
+        merchantWebhookFields:
+          (merchantFields.data?.__type as { fields?: { name: string }[] } | undefined)?.fields
+            ?.map((f) => f.name)
+            .filter((n) => /webhook/i.test(n)) ?? null,
+      }
+
+      if (body.id) {
+        probe[`update_test_${body.id}`] = await updateById(test, body.id)
+        probe[`update_prod_${body.id}`] = await updateById(prod, body.id)
+      }
+
+      return NextResponse.json(probe)
     }
 
     if (action === 'webhook') {
