@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic'
  *   action=publish  把测试环境的商品版本发布到生产
  *   action=webhook  注册生产 webhook（testMode=false），指向本站
  *   action=webhooks 只读：列出两个环境里注册的所有 webhook
+ *   action=schema   只读：introspect Store 类型，找出 webhook 字段
  *   action=inspect  逐个套餐回读商品在 test / prod 的状态（只读）
  *   action=create   后台缺商品时按定价补建并发布到生产
  *
@@ -21,7 +22,14 @@ export const dynamic = 'force-dynamic'
  *   3. webhook URL 用 SITE_URL 拼出来，不接受外部传入的 URL。
  */
 
-const PUBLISH_ACTIONS = new Set(['publish', 'webhook', 'webhooks', 'inspect', 'create'])
+const PUBLISH_ACTIONS = new Set([
+  'publish',
+  'webhook',
+  'webhooks',
+  'schema',
+  'inspect',
+  'create',
+])
 
 /** 数字商品的税务分类 */
 const TAX_CATEGORY = TaxCategory.DigitalGoods
@@ -267,6 +275,28 @@ export async function POST(req: NextRequest) {
       }
 
       return NextResponse.json({ ok: failed.length === 0, created, skipped, failed })
+    }
+
+    if (action === 'schema') {
+      // 只读：introspect Store 类型，看 webhook 到底挂在哪个字段上。
+      const prod = getWaffo()
+      const res = await prod.graphql.query({
+        query: `{
+          __type(name: "Store") {
+            fields { name type { name kind ofType { name kind } } }
+          }
+        }`,
+      })
+      const fields =
+        (res.data?.__type as { fields?: { name: string; type: { name?: string; kind?: string; ofType?: { name?: string; kind?: string } } }[] } | undefined)
+          ?.fields ?? []
+      return NextResponse.json({
+        errors: res.errors ?? null,
+        webhookish: fields
+          .filter((f) => /webhook/i.test(f.name))
+          .map((f) => ({ name: f.name, type: f.type })),
+        fieldCount: fields.length,
+      })
     }
 
     if (action === 'webhooks') {
