@@ -109,6 +109,19 @@ node scripts/waffo-provision.cjs      # 幂等：已存在的跳过创建，已�
 ${SITE_URL}/api/payments/waffo-webhook
 ```
 
+**必须去后台建，不能用代码建。** `POST /v1/actions/store/add-webhook` 要求
+**owner/admin 角色的 API Key**；用商户签名凭据（`WAFFO_MERCHANT_ID` +
+`WAFFO_PRIVATE_KEY`）调用时接口会返回一个 `webhook.id`，但**不会落库**——
+随后 `Store.storeWebhooks` 查不到，拿这个 id 调 `update` 会报 `Webhook not found`，
+每次调用还会返回不同的 id。所以看到 `created: true` 不能当作成功。
+
+后台路径：Dashboard → 选中店铺 → **Settings → Webhooks** → 格式选 **Raw JSON** →
+Production URL 填上面的地址（Test URL 可填同一地址）→ 事件全选 → Save。
+后台默认勾选全部事件，我们只处理 8 个：`order.completed`、
+`subscription.activated`、`subscription.payment_succeeded`、`subscription.renewed`、
+`subscription.canceled`、`subscription.canceling`、`subscription.past_due`、
+`refund.succeeded`。
+
 Test 和 Prod 的 Webhook 可以并存 —— `verifyWebhook()` 会自动依次尝试
 prod 和 test 两把内置公钥，所以两种事件都能验签通过。但只留生产那条
 更干净，避免重复发放（发放本身按 `payments.id` 幂等，重复投递不会双发）。
@@ -116,12 +129,19 @@ prod 和 test 两把内置公钥，所以两种事件都能验签通过。但只
 **验证清单：**
 
 1. `GET /api/plans` → 8 个套餐 `purchasable` 全为 `true`（`productId` 已注入）。
-2. 管理员登录后 `GET /api/admin/payments` → `environment` 必须是 `prod`，
-   `store.status` 正常，8 个商品的 `status` 已是生产状态，
-   `webhooks` 里有一条 `testMode: false` 且 URL 指向本站。
-3. 真实下一单（不是测试卡）：`bookbunny_users.subscription_tier` 变成对应档位，
+2. `GET /api/health/payments` → `environment` 是 `prod`、`missingProductCount` 为 0、
+   `prodWebhookConfigured` 与 `prodWebhookOnSite` 都是 `true`。
+3. 管理员登录后 `GET /api/admin/payments` → `store.status` 正常，8 个商品的
+   `status` 已是生产状态，`webhooks` 里有一条 `testMode: false` 且 URL 指向本站。
+4. 真实下一单（不是测试卡）：`bookbunny_users.subscription_tier` 变成对应档位，
    `monthly_allowance_remaining` 按月付/年付正确落地。
-4. `payments` 表出现该订单且 `status = 'completed'`。
+5. `payments` 表出现该订单且 `status = 'completed'`。
+
+> 运维接口 `POST /api/admin/payments/action` 支持
+> `inspect` / `create` / `publish` / `webhooks` / `schema` / `probe`，
+> 用于补建商品、把测试商品发布到生产、以及排查 webhook。
+> 它只接受管理员登录态或一次性令牌 `PAYMENT_REPAIR_TOKEN`；
+> 上线完成后请把该令牌从 Vercel 删掉。
 
 
 ---
