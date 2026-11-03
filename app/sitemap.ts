@@ -19,6 +19,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/personalized-childrens-books', priority: 0.9, changeFrequency: 'weekly' },
     { path: '/pricing', priority: 0.9, changeFrequency: 'monthly' },
     { path: '/blog/how-to-make-a-childrens-book', priority: 0.85, changeFrequency: 'monthly' },
+    { path: '/blog/grl-reading-levels-explained', priority: 0.85, changeFrequency: 'monthly' },
+    { path: '/blog/publish-childrens-book-amazon-kdp', priority: 0.85, changeFrequency: 'monthly' },
     { path: '/vs/readkidz', priority: 0.8, changeFrequency: 'monthly' },
     { path: '/about', priority: 0.6, changeFrequency: 'monthly' },
     { path: '/affiliate', priority: 0.5, changeFrequency: 'monthly' },
