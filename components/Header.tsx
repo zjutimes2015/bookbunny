@@ -23,22 +23,22 @@ export default function Header() {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-4 lg:gap-7">
-            <Link href="/buddy" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
+            <Link href="/buddy" className="text-sm font-medium text-[#545558] hover:text-[#2D2D2D] transition-colors">
               Lila & Kai
             </Link>
-            <Link href="/create" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
+            <Link href="/create" className="text-sm font-medium text-[#545558] hover:text-[#2D2D2D] transition-colors">
               Create Book
             </Link>
-            <Link href="/progress" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
+            <Link href="/progress" className="text-sm font-medium text-[#545558] hover:text-[#2D2D2D] transition-colors">
               Progress
             </Link>
-            <Link href="/pricing" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
+            <Link href="/pricing" className="text-sm font-medium text-[#545558] hover:text-[#2D2D2D] transition-colors">
               Pricing
             </Link>
-            <Link href="/affiliate" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
+            <Link href="/affiliate" className="text-sm font-medium text-[#545558] hover:text-[#2D2D2D] transition-colors">
               Affiliates
             </Link>
-            <Link href="/about" className="text-sm font-medium text-[#8E8E93] hover:text-[#2D2D2D] transition-colors">
+            <Link href="/about" className="text-sm font-medium text-[#545558] hover:text-[#2D2D2D] transition-colors">
               About
             </Link>
             <Link href="/create" className="bg-[#2D2D2D] text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:opacity-85 transition-all hover:scale-[1.02]">
@@ -61,27 +61,27 @@ export default function Header() {
         {/* Mobile Nav */}
         {menuOpen && (
           <div className="md:hidden pb-4 space-y-3">
-            <Link href="/buddy" className="block px-3 py-2 rounded-xl text-sm text-[#8E8E93] hover:bg-[#F2F2F7]"
+            <Link href="/buddy" className="block px-3 py-2 rounded-xl text-sm text-[#545558] hover:bg-[#F2F2F7]"
                   onClick={() => setMenuOpen(false)}>
               Lila & Kai
             </Link>
-            <Link href="/create" className="block px-3 py-2 rounded-xl text-sm text-[#8E8E93] hover:bg-[#F2F2F7]"
+            <Link href="/create" className="block px-3 py-2 rounded-xl text-sm text-[#545558] hover:bg-[#F2F2F7]"
                   onClick={() => setMenuOpen(false)}>
               Create Book
             </Link>
-            <Link href="/progress" className="block px-3 py-2 rounded-xl text-sm text-[#8E8E93] hover:bg-[#F2F2F7]"
+            <Link href="/progress" className="block px-3 py-2 rounded-xl text-sm text-[#545558] hover:bg-[#F2F2F7]"
                   onClick={() => setMenuOpen(false)}>
               Progress
             </Link>
-            <Link href="/pricing" className="block px-3 py-2 rounded-xl text-sm text-[#8E8E93] hover:bg-[#F2F2F7]"
+            <Link href="/pricing" className="block px-3 py-2 rounded-xl text-sm text-[#545558] hover:bg-[#F2F2F7]"
                   onClick={() => setMenuOpen(false)}>
               Pricing
             </Link>
-            <Link href="/affiliate" className="block px-3 py-2 rounded-xl text-sm text-[#8E8E93] hover:bg-[#F2F2F7]"
+            <Link href="/affiliate" className="block px-3 py-2 rounded-xl text-sm text-[#545558] hover:bg-[#F2F2F7]"
                   onClick={() => setMenuOpen(false)}>
               Affiliates
             </Link>
-            <Link href="/about" className="block px-3 py-2 rounded-xl text-sm text-[#8E8E93] hover:bg-[#F2F2F7]"
+            <Link href="/about" className="block px-3 py-2 rounded-xl text-sm text-[#545558] hover:bg-[#F2F2F7]"
                   onClick={() => setMenuOpen(false)}>
               About
             </Link>
