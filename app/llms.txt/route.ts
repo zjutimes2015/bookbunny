@@ -75,6 +75,10 @@ cycle. Books never expire and stay in the library.
 - [Pricing](${SITE_URL}/pricing): plans and the full feature comparison matrix.
 - [How to make a children's book with AI](${SITE_URL}/blog/how-to-make-a-childrens-book):
   step-by-step tutorial.
+- [GRL reading levels A-E explained](${SITE_URL}/blog/grl-reading-levels-explained):
+  what each Guided Reading Level means for parents and teachers.
+- [How to publish a children's book on Amazon KDP](${SITE_URL}/blog/publish-childrens-book-amazon-kdp):
+  2026 checklist for manuscript, cover, ISBN, and royalties.
 - [${SITE_NAME} vs ReadKidz](${SITE_URL}/vs/readkidz): head-to-head comparison of
   pricing, credits, reading levels and KDP export.
 - [About](${SITE_URL}/about): the team and the mission.
