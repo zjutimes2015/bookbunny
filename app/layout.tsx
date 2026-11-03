@@ -104,14 +104,21 @@ const softwareAppJsonLd = {
       name: 'Creator',
       price: '29',
       priceCurrency: 'USD',
-      description: '8 books per month, up to 12 pages, KDP interior + cover PDFs, commercial licence.',
+      description: '8 books per month, up to 16 pages, KDP interior + cover PDFs, commercial licence.',
     },
     {
       '@type': 'Offer',
       name: 'Studio',
       price: '79',
       priceCurrency: 'USD',
-      description: '22 books per month, up to 12 pages, batched generation, priority support.',
+      description: '22 books per month, up to 24 pages, batched generation, priority support.',
+    },
+    {
+      '@type': 'Offer',
+      name: 'Teacher',
+      price: '99',
+      priceCurrency: 'USD',
+      description: '40 books per month, up to 24 pages, GRL vocabulary lists, score reports, classroom sheets.',
     },
   ],
   featureList: [
