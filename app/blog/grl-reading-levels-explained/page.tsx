@@ -4,7 +4,7 @@ import { SITE_URL, SITE_NAME } from '@/lib/site'
 
 const TITLE = 'GRL Reading Levels A–E Explained: Pick the Right Level for Your Child'
 const DESCRIPTION =
-  'What are GRL reading levels A through E? A parent and teacher guide to Guided Reading Levels — what each level means, how to spot your child\u2019s level, and how SproutTales matches every book to it.'
+  'What are GRL reading levels A through E? A parent and teacher guide to Guided Reading Levels — what each level means, how to spot your child’s level, and how SproutTales matches every book to it.'
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -64,7 +64,7 @@ const LEVELS = [
     level: 'C',
     title: 'Simple stories',
     desc: 'Short stories of 3–6 lines per page with familiar vocabulary and clear dialogue. Children begin reading more independently and self-correcting.',
-    example: '“\u201cCome here,\u201d said the cat. \u201cI have a red ball.\u201d”',
+    example: '““Come here,” said the cat. “I have a red ball.””',
   },
   {
     level: 'D',
@@ -83,11 +83,11 @@ const LEVELS = [
 const FAQS = [
   {
     q: 'What does GRL mean in reading?',
-    a: 'GRL stands for Guided Reading Level, a scale from A to Z developed by Fountas & Pinnell that matches books to a child\u2019s reading ability. Levels A–E cover the earliest readers, from first sight words (A) to early chapter books (E).',
+    a: 'GRL stands for Guided Reading Level, a scale from A to Z developed by Fountas & Pinnell that matches books to a child’s reading ability. Levels A–E cover the earliest readers, from first sight words (A) to early chapter books (E).',
   },
   {
-    q: 'How do I know my child\u2019s GRL level?',
-    a: 'Teachers usually assess it at school — ask your child\u2019s teacher. At home, a rough signal: if your child reads a book fluently with 95%+ word accuracy and understands the story, that level fits. If they struggle on every line, drop a level.',
+    q: 'How do I know my child’s GRL level?',
+    a: 'Teachers usually assess it at school — ask your child’s teacher. At home, a rough signal: if your child reads a book fluently with 95%+ word accuracy and understands the story, that level fits. If they struggle on every line, drop a level.',
   },
   {
     q: 'What is the difference between GRL C and GRL D?',
@@ -152,7 +152,7 @@ export default function GrlReadingLevelsPage() {
           GRL Reading Levels <span className="bunny-text-gradient">A–E</span> Explained
         </h1>
         <p className="mt-5 text-lg text-[#8E8E93] max-w-2xl mx-auto leading-relaxed">
-          What each Guided Reading Level actually means, how to spot your child\u2019s level,
+          What each Guided Reading Level actually means, how to spot your child’s level,
           and why the right level turns reading practice into reading joy.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 mt-8 justify-center">
@@ -236,7 +236,7 @@ export default function GrlReadingLevelsPage() {
             Every SproutTales book is leveled A–E
           </h2>
           <p className="text-[#8E8E93] mb-8 max-w-md mx-auto">
-            Pick your child\u2019s level before generating. The AI matches vocabulary,
+            Pick your child’s level before generating. The AI matches vocabulary,
             sentence length, and lines per page — and the Teacher plan exports
             GRL vocabulary lists and score reports per book.
           </p>
