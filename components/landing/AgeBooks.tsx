@@ -47,7 +47,7 @@ export default function AgeBooks() {
                 className="absolute inset-0 h-full w-full object-cover"
                 loading="lazy"
               />
-              <span className="absolute left-3 top-3 rounded-full bg-[#2D2D2D]/70 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur">
+              <span className="absolute left-3 top-3 rounded-full bg-[#2D2D2D]/70 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
                 {b.age}
               </span>
             </div>
@@ -55,9 +55,9 @@ export default function AgeBooks() {
 
           <div className="mt-3 flex items-baseline justify-between gap-3">
             <strong className="text-sm font-semibold text-[#2D2D2D]">{b.title}</strong>
-            <span className="shrink-0 text-[11px] text-[#8E8E93]">{b.meta}</span>
+            <span className="shrink-0 text-[13px] text-[#545558]">{b.meta}</span>
           </div>
-          <p className="mt-1 text-[11px] leading-relaxed text-[#8E8E93]">{b.blurb}</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-[#545558]">{b.blurb}</p>
         </div>
       ))}
     </div>
