@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
-const TITLE = 'How to Publish a Children\u2019s Book on Amazon KDP: 2026 Checklist'
+const TITLE = 'How to Publish a Children’s Book on Amazon KDP: 2026 Checklist'
 const DESCRIPTION =
-  'Publish your children\u2019s picture book on Amazon KDP in 7 steps: manuscript and cover specs, ISBN options, pricing and royalty choices, and the mistakes that get books rejected.'
+  'Publish your children’s picture book on Amazon KDP in 7 steps: manuscript and cover specs, ISBN options, pricing and royalty choices, and the mistakes that get books rejected.'
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -61,22 +61,22 @@ const STEPS = [
   {
     step: '3',
     title: 'Pick a trim size',
-    desc: 'The classic picture-book trim is 8.5\u2033 × 8.5\u2033. Whatever you choose, interior and cover must use the same size, and the page count must be even. Decide before generating final files.',
+    desc: 'The classic picture-book trim is 8.5″ × 8.5″. Whatever you choose, interior and cover must use the same size, and the page count must be even. Decide before generating final files.',
   },
   {
     step: '4',
     title: 'Decide on an ISBN',
-    desc: 'KDP offers a free ISBN, or you can bring your own from Bowker (US). A free KDP ISBN lists \u201cIndependently published\u201d as the imprint; your own ISBN lets you use your own publisher name. Either works for selling on Amazon.',
+    desc: 'KDP offers a free ISBN, or you can bring your own from Bowker (US). A free KDP ISBN lists “Independently published” as the imprint; your own ISBN lets you use your own publisher name. Either works for selling on Amazon.',
   },
   {
     step: '5',
     title: 'Upload to KDP and preview',
-    desc: 'Create a KDP paperback project, upload your interior and cover PDFs, then use KDP\u2019s online previewer to check every page. Fix bleed warnings and gutter issues before approving — most rejections come from cover sizing.',
+    desc: 'Create a KDP paperback project, upload your interior and cover PDFs, then use KDP’s online previewer to check every page. Fix bleed warnings and gutter issues before approving — most rejections come from cover sizing.',
   },
   {
     step: '6',
     title: 'Set pricing and royalty',
-    desc: 'KDP paperback royalties are 60% of list price minus printing costs (color picture books cost more to print — check KDP\u2019s printing cost table first). Price so the math works: a $14.99 color picture book typically nets a few dollars per sale.',
+    desc: 'KDP paperback royalties are 60% of list price minus printing costs (color picture books cost more to print — check KDP’s printing cost table first). Price so the math works: a $14.99 color picture book typically nets a few dollars per sale.',
   },
   {
     step: '7',
@@ -87,7 +87,7 @@ const STEPS = [
 
 const FAQS = [
   {
-    q: 'How much does it cost to publish a children\u2019s book on Amazon KDP?',
+    q: 'How much does it cost to publish a children’s book on Amazon KDP?',
     a: 'Publishing itself is free — KDP charges no setup fees. Your costs are production (illustrations, formatting) and optional items like your own ISBN ($125 from Bowker in the US) or proof copies. Printing costs are deducted from royalties per sale, not paid upfront.',
   },
   {
@@ -95,20 +95,20 @@ const FAQS = [
     a: 'Two PDFs: a print-ready interior (embedded fonts, 300 DPI images, even page count of at least 24 pages) and a full-wrap cover PDF (back + spine + front) sized with bleed for your trim size and page count. SproutTales Creator and Studio plans export both.',
   },
   {
-    q: 'Can I publish an AI-generated children\u2019s book on KDP?',
-    a: 'Yes, but you must disclose AI-generated content when KDP asks during setup, and you are responsible for the content\u2019s originality. Always review every page and illustration before publishing.',
+    q: 'Can I publish an AI-generated children’s book on KDP?',
+    a: 'Yes, but you must disclose AI-generated content when KDP asks during setup, and you are responsible for the content’s originality. Always review every page and illustration before publishing.',
   },
   {
-    q: 'What trim size is best for a children\u2019s picture book on KDP?',
-    a: '8.5\u2033 × 8.5\u2033 is the most popular square format for picture books. KDP supports several sizes; pick one before finalizing files, because interior and cover must match exactly.',
+    q: 'What trim size is best for a children’s picture book on KDP?',
+    a: '8.5″ × 8.5″ is the most popular square format for picture books. KDP supports several sizes; pick one before finalizing files, because interior and cover must match exactly.',
   },
   {
     q: 'Do I need my own ISBN for KDP?',
-    a: 'No. KDP provides a free ISBN for paperbacks. Bring your own only if you want your own imprint name instead of \u201cIndependently published,\u201d or plan to distribute beyond Amazon.',
+    a: 'No. KDP provides a free ISBN for paperbacks. Bring your own only if you want your own imprint name instead of “Independently published,” or plan to distribute beyond Amazon.',
   },
   {
     q: 'How long does KDP review take?',
-    a: 'Usually 24–72 hours for paperbacks. Books get rejected most often for cover sizing errors, missing bleed, or low-resolution images — run KDP\u2019s previewer carefully before submitting.',
+    a: 'Usually 24–72 hours for paperbacks. Books get rejected most often for cover sizing errors, missing bleed, or low-resolution images — run KDP’s previewer carefully before submitting.',
   },
 ]
 
@@ -154,7 +154,7 @@ export default function PublishKdpPage() {
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-10 md:pt-16 text-center">
         <p className="text-sm text-[#8E8E93] font-medium uppercase tracking-widest mb-3">Publishing Guide · Updated November 2026</p>
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[#2D2D2D] max-w-3xl mx-auto leading-[1.1]">
-          Publish a Children\u2019s Book on <span className="bunny-text-gradient">Amazon KDP</span>
+          Publish a Children’s Book on <span className="bunny-text-gradient">Amazon KDP</span>
         </h1>
         <p className="mt-5 text-lg text-[#8E8E93] max-w-2xl mx-auto leading-relaxed">
           The 7-step 2026 checklist: manuscript and cover specs, ISBN options,
@@ -196,7 +196,7 @@ export default function PublishKdpPage() {
               </tr>
               <tr className="border-b border-[#F2F2F7]">
                 <td className="py-3 font-semibold text-[#2D2D2D]">Popular trim size</td>
-                <td className="py-3 text-[#8E8E93]">8.5\u2033 × 8.5\u2033 (square picture book)</td>
+                <td className="py-3 text-[#8E8E93]">8.5″ × 8.5″ (square picture book)</td>
               </tr>
               <tr>
                 <td className="py-3 font-semibold text-[#2D2D2D]">Royalty</td>
