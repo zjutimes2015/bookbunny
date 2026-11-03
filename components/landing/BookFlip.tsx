@@ -11,12 +11,12 @@ export default function BookFlip() {
           alt="The Moon Bunny sailing a paper boat under a full moon — a generated interior spread"
           className="aspect-[16/10] w-full object-cover"
         />
-        <span className="absolute bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#2D2D2D]/70 px-2.5 py-1 text-[10px] font-medium text-white backdrop-blur">
+        <span className="absolute bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#2D2D2D]/70 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
           The Moon Bunny · GRL B · 16 pages
         </span>
       </div>
 
-      <p className="mt-3 text-center text-[11px] font-medium uppercase tracking-[0.14em] text-[#8E8E93]">
+      <p className="mt-3 text-center text-[13px] font-medium uppercase tracking-[0.14em] text-[#545558]">
         Same bunny, every page — character locked
       </p>
     </div>
