@@ -2,9 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
-import { BookCover, BunnyFace, COVERS, SPREADS, Scene } from '@/components/landing/book-art'
 import BookFlip from '@/components/landing/BookFlip'
-import SampleReader from '@/components/landing/SampleReader'
+import AgeBooks from '@/components/landing/AgeBooks'
 import Testimonials from '@/components/landing/Testimonials'
 import CreatorsSection from '@/components/landing/CreatorsSection'
 
@@ -78,7 +77,7 @@ const FAQS = [
   },
   {
     q: 'Will the character really look the same on every page?',
-    a: 'Yes — that\u2019s the whole point of SproutTales. Your hero is created once and locked as a visual reference, so the same face, outfit and art style carry through from page 1 to the last spread. Flip through the sample books above to see it in action.',
+    a: 'Yes — that\u2019s the whole point of SproutTales. Your hero is created once and locked as a visual reference, so the same face, outfit and art style carry through from page 1 to the last spread. Browse the sample books above to see it in action.',
   },
   {
     q: 'Can I sell the books I make on Amazon KDP?',
@@ -158,7 +157,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <span className="shrink-0 text-lg text-[#C7C7CC]" aria-hidden="true">→</span>
-              <BunnyFace className="h-16 w-16 shrink-0 rounded-full border border-[#E5E5EA]" />
+              <img src="/samples/cover-moon-bunny.webp" alt="Generated storybook hero" className="h-16 w-16 shrink-0 rounded-full border border-[#E5E5EA] object-cover" />
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-[#2D2D2D]">Photo → character</div>
                 <div className="mt-0.5 text-[12px] leading-snug text-[#8E8E93]">
@@ -239,9 +238,13 @@ export default function HomePage() {
             <div>
               <div className="aspect-[4/3] rounded-2xl border border-[#E5E5EA] bg-white p-3">
                 <div className="grid h-full grid-cols-3 grid-rows-2 gap-2">
-                  {SPREADS.map((s) => (
-                    <div key={s.variant} className="overflow-hidden rounded-lg bg-[#FFF5EE]">
-                      <Scene variant={s.variant} className="h-full w-full" />
+                  {[
+                    { src: '/samples/cover-moon-bunny.webp', alt: 'Generated cover \u2014 The Moon Bunny' },
+                    { src: '/samples/cover-paper-boat.webp', alt: 'Generated cover \u2014 Lila and the Paper Boat' },
+                    { src: '/samples/cover-quiet-garden.webp', alt: 'Generated cover \u2014 Kai\u2019s Quiet Garden' },
+                  ].map((c) => (
+                    <div key={c.src} className="overflow-hidden rounded-lg bg-[#FFF5EE]">
+                      <img src={c.src} alt={c.alt} className="h-full w-full object-cover" loading="lazy" />
                     </div>
                   ))}
                   <div className="flex items-center justify-center rounded-lg border border-dashed border-[#E5E5EA] text-[10px] font-medium text-[#C7C7CC]">
@@ -298,15 +301,19 @@ export default function HomePage() {
             <p className="mt-1 text-sm leading-relaxed text-[#8E8E93]">
               Character consistency is locked across the whole book.
             </p>
-            <div className="mt-3 grid min-h-[180px] flex-1 grid-cols-3 gap-2 lg:min-h-0">
-              {SPREADS.map((s, i) => (
-                <div key={s.variant} className="relative overflow-hidden rounded-xl bg-white">
-                  <Scene variant={s.variant} className="absolute inset-0 h-full w-full" />
-                  <span className="absolute left-2 top-2 rounded bg-white/85 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-[#2D2D2D]">
-                    PAGE {String(i === 0 ? 1 : i === 1 ? 7 : 14).padStart(2, '0')}
-                  </span>
-                </div>
-              ))}
+            <div className="mt-3 grid min-h-[180px] flex-1 grid-cols-2 gap-2 lg:min-h-0">
+              <div className="relative overflow-hidden rounded-xl bg-white">
+                <img src="/samples/cover-moon-bunny.webp" alt="The Moon Bunny cover \u2014 page 1" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+                <span className="absolute left-2 top-2 rounded bg-white/85 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-[#2D2D2D]">
+                  PAGE 01
+                </span>
+              </div>
+              <div className="relative overflow-hidden rounded-xl bg-white">
+                <img src="/samples/hero-spread.webp" alt="The Moon Bunny interior spread \u2014 page 14" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+                <span className="absolute left-2 top-2 rounded bg-white/85 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-[#2D2D2D]">
+                  PAGE 14
+                </span>
+              </div>
             </div>
           </div>
 
@@ -324,15 +331,12 @@ export default function HomePage() {
               </span>
             </div>
             <div className="mt-3 grid min-h-[96px] flex-1 grid-cols-2 gap-2 lg:min-h-0">
-              {[COVERS[1], COVERS[2]].map((c) => (
-                <div key={c.variant} className="relative overflow-hidden rounded-xl">
-                  <BookCover
-                    variant={c.variant}
-                    title={c.title}
-                    ink={c.ink}
-                    showTitle={false}
-                    className="h-full w-full"
-                  />
+              {[
+                { src: '/samples/cover-paper-boat.webp', alt: 'Lila and the Paper Boat cover', style: 'Storybook glow' },
+                { src: '/samples/cover-quiet-garden.webp', alt: 'Kai\u2019s Quiet Garden cover', style: 'Lantern-lit dusk' },
+              ].map((c) => (
+                <div key={c.src} className="relative overflow-hidden rounded-xl">
+                  <img src={c.src} alt={c.alt} className="h-full w-full object-cover" loading="lazy" />
                   <span className="absolute bottom-1.5 left-1.5 rounded bg-white/90 px-1.5 py-0.5 text-[9px] font-medium text-[#2D2D2D]">
                     {c.style}
                   </span>
@@ -410,18 +414,17 @@ export default function HomePage() {
           <div className="mb-10 text-center">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8E8E93]">Sample books</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#2D2D2D] sm:text-3xl">
-              Flip through a finished book
+              Made for your reader&apos;s age
             </h2>
             <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#8E8E93]">
-              Covers and interior art show the styles, grade labels and page counts you can produce.
+              Every book is generated for your child&apos;s age and reading level — same hero, same art style, cover to last page.
             </p>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-3 sm:gap-6">
-            {COVERS.map((book) => (
-              <SampleReader key={book.title} book={book} />
-            ))}
-          </div>
+          <AgeBooks />
+          <p className="mt-8 text-center text-[11px] text-[#8E8E93]">
+            Illustrative examples of the art styles SproutTales can produce.
+          </p>
         </div>
       </section>
 
