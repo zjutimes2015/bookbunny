@@ -98,13 +98,13 @@ const FAQS = [
 ]
 
 const Chip = ({ children }: { children: React.ReactNode }) => (
-  <span className="rounded-md border border-[#E5E5EA] px-2 py-0.5 text-[10px] font-medium tracking-wide text-[#8E8E93]">
+  <span className="rounded-md border border-[#E5E5EA] px-2 py-0.5 text-xs font-medium tracking-wide text-[#545558]">
     {children}
   </span>
 )
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="mb-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8E8E93]">{children}</p>
+  <p className="mb-8 text-[13px] font-semibold uppercase tracking-[0.18em] text-[#545558]">{children}</p>
 )
 
 const FAQ_SCHEMA = {
@@ -128,7 +128,7 @@ export default function HomePage() {
       <section className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 lg:px-8 lg:pb-24 lg:pt-16">
         <div className="grid items-center gap-12 lg:grid-cols-[1.02fr_1fr] lg:gap-14">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#E5E5EA] px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.12em] text-[#8E8E93]">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#E5E5EA] px-3 py-1.5 text-[13px] font-medium uppercase tracking-[0.12em] text-[#545558]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#FF6B8A]" />
               Personalized AI picture books · GRL A–E leveled readers
             </span>
@@ -138,7 +138,7 @@ export default function HomePage() {
               <span className="bunny-text-gradient whitespace-nowrap">their own storybook.</span>
             </h1>
 
-            <p className="mt-5 max-w-md text-[17px] leading-relaxed text-[#8E8E93]">
+            <p className="mt-5 max-w-md text-lg leading-relaxed text-[#545558]">
               Upload a photo — with your recorded consent — and watch your child become
               the hero. The same character on every page, GRL A–E leveled text, and
               print-ready KDP PDFs. In minutes.
@@ -146,7 +146,7 @@ export default function HomePage() {
 
             {/* Photo → character, front and center */}
             <div className="mt-7 flex items-center gap-4 rounded-2xl border border-[#E5E5EA] bg-[#FFFBF7] p-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-dashed border-[#C7C7CC] bg-white text-[#C7C7CC]">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-dashed border-[#C7C7CC] bg-white text-[#545558]">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path
                     d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.2l.8-1.4A1.5 1.5 0 0 1 9.8 4h4.4c.5 0 1 .3 1.3.6L16.3 6h1.2A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-8Z"
@@ -156,11 +156,11 @@ export default function HomePage() {
                   <circle cx="12" cy="12.2" r="3.1" stroke="currentColor" strokeWidth="1.4" />
                 </svg>
               </div>
-              <span className="shrink-0 text-lg text-[#C7C7CC]" aria-hidden="true">→</span>
+              <span className="shrink-0 text-lg text-[#545558]" aria-hidden="true">→</span>
               <img src="/samples/cover-moon-bunny.webp" alt="Generated storybook hero" className="h-16 w-16 shrink-0 rounded-full border border-[#E5E5EA] object-cover" />
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-[#2D2D2D]">Photo → character</div>
-                <div className="mt-0.5 text-[12px] leading-snug text-[#8E8E93]">
+                <div className="mt-0.5 text-sm leading-snug text-[#545558]">
                   Consent-first, never required. Your child&apos;s photo becomes their
                   storybook hero.
                 </div>
@@ -185,7 +185,7 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] leading-relaxed text-[#8E8E93]">
+            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] leading-relaxed text-[#545558]">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E5EA] bg-[#EAF7F1] px-2.5 py-1 font-medium text-[#3E9C7A]">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
@@ -213,10 +213,10 @@ export default function HomePage() {
             <div>
               <div className="flex aspect-[4/3] items-center justify-center rounded-2xl border border-[#E5E5EA] bg-white p-4">
                 <div className="w-full rounded-xl border border-[#E5E5EA] bg-white p-3 shadow-sm">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8E8E93]">
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#545558]">
                     Describe your story
                   </div>
-                  <div className="mt-2 rounded-lg bg-[#F2F2F7] px-3 py-2.5 text-[12px] leading-snug text-[#8E8E93]">
+                  <div className="mt-2 rounded-lg bg-[#F2F2F7] px-3 py-2.5 text-sm leading-snug text-[#545558]">
                     A bunny who carries the moon home…
                   </div>
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -227,9 +227,9 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-              <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8E8E93]">Step 01</p>
+              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-[#545558]">Step 01</p>
               <h3 className="mt-1.5 text-base font-semibold text-[#2D2D2D]">Describe your story</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-[#8E8E93]">
+              <p className="mt-1.5 text-sm leading-relaxed text-[#545558]">
                 One sentence is enough. Pick an age band, reading level and art style.
               </p>
             </div>
@@ -247,17 +247,17 @@ export default function HomePage() {
                       <img src={c.src} alt={c.alt} className="h-full w-full object-cover" loading="lazy" />
                     </div>
                   ))}
-                  <div className="flex items-center justify-center rounded-lg border border-dashed border-[#E5E5EA] text-[10px] font-medium text-[#C7C7CC]">
+                  <div className="flex items-center justify-center rounded-lg border border-dashed border-[#E5E5EA] text-xs font-medium text-[#545558]">
                     Generating…
                   </div>
-                  <div className="flex items-center justify-center rounded-lg border border-[#EAF7F1] bg-[#EAF7F1] text-[10px] font-semibold text-[#3E9C7A]">
+                  <div className="flex items-center justify-center rounded-lg border border-[#EAF7F1] bg-[#EAF7F1] text-xs font-semibold text-[#3E9C7A]">
                     ✓ All pages
                   </div>
                 </div>
               </div>
-              <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8E8E93]">Step 02</p>
+              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-[#545558]">Step 02</p>
               <h3 className="mt-1.5 text-base font-semibold text-[#2D2D2D]">AI illustrates every page</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-[#8E8E93]">
+              <p className="mt-1.5 text-sm leading-relaxed text-[#545558]">
                 Your character stays visually consistent from page 1 to the last spread.
               </p>
             </div>
@@ -270,19 +270,19 @@ export default function HomePage() {
                   { file: 'cover.pdf', spec: 'Full wrap · spine width calculated' },
                 ].map((f) => (
                   <div key={f.file} className="flex items-center gap-3 rounded-xl border border-[#E5E5EA] bg-[#FAFAFB] px-3 py-2.5">
-                    <span className="rounded-md bg-[#FF6B8A]/10 px-2 py-1 text-[9px] font-bold tracking-wide text-[#FF6B8A]">
+                    <span className="rounded-md bg-[#FF6B8A]/10 px-2 py-1 text-[13px] font-bold tracking-wide text-[#FF6B8A]">
                       PDF
                     </span>
                     <div className="min-w-0">
-                      <div className="truncate text-[12px] font-medium text-[#2D2D2D]">{f.file}</div>
-                      <div className="truncate text-[10px] text-[#8E8E93]">{f.spec}</div>
+                      <div className="truncate text-sm font-medium text-[#2D2D2D]">{f.file}</div>
+                      <div className="truncate text-xs text-[#545558]">{f.spec}</div>
                     </div>
                   </div>
                 ))}
               </div>
-              <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8E8E93]">Step 03</p>
+              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-[#545558]">Step 03</p>
               <h3 className="mt-1.5 text-base font-semibold text-[#2D2D2D]">Export print-ready files</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-[#8E8E93]">
+              <p className="mt-1.5 text-sm leading-relaxed text-[#545558]">
                 Reader PDF, or KDP interior and full cover with bleed, gutter and spine handled.
               </p>
             </div>
@@ -298,19 +298,19 @@ export default function HomePage() {
           {/* Same character */}
           <div className="flex flex-col rounded-2xl border border-[#E5E5EA] bg-[#FFFBF7] p-5 sm:col-span-2 lg:col-span-2 lg:row-span-2">
             <h3 className="text-base font-semibold text-[#2D2D2D]">Same character, every page</h3>
-            <p className="mt-1 text-sm leading-relaxed text-[#8E8E93]">
+            <p className="mt-1 text-sm leading-relaxed text-[#545558]">
               Character consistency is locked across the whole book.
             </p>
             <div className="mt-3 grid min-h-[180px] flex-1 grid-cols-2 gap-2 lg:min-h-0">
               <div className="relative overflow-hidden rounded-xl bg-white">
                 <img src="/samples/cover-moon-bunny.webp" alt="The Moon Bunny cover \u2014 page 1" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
-                <span className="absolute left-2 top-2 rounded bg-white/85 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-[#2D2D2D]">
+                <span className="absolute left-2 top-2 rounded bg-white/85 px-1.5 py-0.5 text-[13px] font-semibold tracking-wide text-[#2D2D2D]">
                   PAGE 01
                 </span>
               </div>
               <div className="relative overflow-hidden rounded-xl bg-white">
                 <img src="/samples/hero-spread.webp" alt="The Moon Bunny interior spread \u2014 page 14" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
-                <span className="absolute left-2 top-2 rounded bg-white/85 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-[#2D2D2D]">
+                <span className="absolute left-2 top-2 rounded bg-white/85 px-1.5 py-0.5 text-[13px] font-semibold tracking-wide text-[#2D2D2D]">
                   PAGE 14
                 </span>
               </div>
@@ -322,11 +322,11 @@ export default function HomePage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-base font-semibold text-[#2D2D2D]">15 illustration styles</h3>
-                <p className="mt-1 text-sm leading-relaxed text-[#8E8E93]">
+                <p className="mt-1 text-sm leading-relaxed text-[#545558]">
                   Watercolor, cut-paper, pencil, gouache and more.
                 </p>
               </div>
-              <span className="shrink-0 rounded-full bg-[#FFF5EE] px-2.5 py-1 text-[10px] font-semibold text-[#FF6B8A]">
+              <span className="shrink-0 rounded-full bg-[#FFF5EE] px-2.5 py-1 text-xs font-semibold text-[#FF6B8A]">
                 15
               </span>
             </div>
@@ -337,7 +337,7 @@ export default function HomePage() {
               ].map((c) => (
                 <div key={c.src} className="relative overflow-hidden rounded-xl">
                   <img src={c.src} alt={c.alt} className="h-full w-full object-cover" loading="lazy" />
-                  <span className="absolute bottom-1.5 left-1.5 rounded bg-white/90 px-1.5 py-0.5 text-[9px] font-medium text-[#2D2D2D]">
+                  <span className="absolute bottom-1.5 left-1.5 rounded bg-white/90 px-1.5 py-0.5 text-[13px] font-medium text-[#2D2D2D]">
                     {c.style}
                   </span>
                 </div>
@@ -348,7 +348,7 @@ export default function HomePage() {
           {/* Languages */}
           <div className="flex flex-col rounded-2xl border border-[#E5E5EA] bg-white p-5">
             <h3 className="text-base font-semibold text-[#2D2D2D]">10 book languages</h3>
-            <p className="mt-1 text-sm leading-relaxed text-[#8E8E93]">One story, many editions.</p>
+            <p className="mt-1 text-sm leading-relaxed text-[#545558]">One story, many editions.</p>
             <div className="mt-3 flex flex-1 flex-wrap content-start gap-1.5">
               {LANGUAGES.map((l) => (
                 <Chip key={l}>{l}</Chip>
@@ -359,7 +359,7 @@ export default function HomePage() {
           {/* GRL leveled text */}
           <div className="flex flex-col rounded-2xl border border-[#E5E5EA] bg-white p-5">
             <h3 className="text-base font-semibold text-[#2D2D2D]">GRL A–E leveled text</h3>
-            <p className="mt-1 text-sm leading-relaxed text-[#8E8E93]">
+            <p className="mt-1 text-sm leading-relaxed text-[#545558]">
               The right words for the right age.
             </p>
             <div className="mt-3 flex flex-1 flex-wrap content-start gap-1.5">
@@ -367,7 +367,7 @@ export default function HomePage() {
                 <Chip key={g}>{g}</Chip>
               ))}
             </div>
-            <p className="mt-2 text-[11px] leading-relaxed text-[#8E8E93]">
+            <p className="mt-2 text-[13px] leading-relaxed text-[#545558]">
               Every book is leveled for ages 3–8.
             </p>
           </div>
@@ -375,9 +375,9 @@ export default function HomePage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-base font-semibold text-[#2D2D2D]">Narration &amp; music</h3>
-                <p className="mt-1 text-sm leading-relaxed text-[#8E8E93]">Creator plans and above.</p>
+                <p className="mt-1 text-sm leading-relaxed text-[#545558]">Creator plans and above.</p>
               </div>
-              <span className="shrink-0 rounded-full border border-[#E5E5EA] px-2.5 py-1 text-[10px] font-medium text-[#8E8E93]">
+              <span className="shrink-0 rounded-full border border-[#E5E5EA] px-2.5 py-1 text-xs font-medium text-[#545558]">
                 Read-aloud
               </span>
             </div>
@@ -412,17 +412,17 @@ export default function HomePage() {
       <section id="samples" className="scroll-mt-20 border-y border-[#E5E5EA] bg-[#FAF0E6]/30">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
           <div className="mb-10 text-center">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8E8E93]">Sample books</p>
+            <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#545558]">Sample books</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#2D2D2D] sm:text-3xl">
               Made for your reader&apos;s age
             </h2>
-            <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#8E8E93]">
+            <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#545558]">
               Every book is generated for your child&apos;s age and reading level — same hero, same art style, cover to last page.
             </p>
           </div>
 
           <AgeBooks />
-          <p className="mt-8 text-center text-[11px] text-[#8E8E93]">
+          <p className="mt-8 text-center text-[13px] text-[#545558]">
             Illustrative examples of the art styles SproutTales can produce.
           </p>
         </div>
@@ -453,7 +453,7 @@ export default function HomePage() {
           ].map((item) => (
             <div key={item.title} className="border-t-2 border-[#2D2D2D] pt-4">
               <strong className="block text-sm font-semibold text-[#2D2D2D]">{item.title}</strong>
-              <p className="mt-1.5 text-sm leading-relaxed text-[#8E8E93]">{item.body}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-[#545558]">{item.body}</p>
             </div>
           ))}
         </div>
@@ -462,7 +462,7 @@ export default function HomePage() {
       {/* 06 · Pricing teaser */}
       <section className="border-y border-[#E5E5EA] bg-[#FAF0E6]/30">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-          <p className="mb-8 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8E8E93]">
+          <p className="mb-8 text-center text-[13px] font-semibold uppercase tracking-[0.18em] text-[#545558]">
             Simple pricing · annual saves up to 25%
           </p>
 
@@ -475,20 +475,20 @@ export default function HomePage() {
                 }`}
               >
                 {tier.featured && (
-                  <span className="mb-2 inline-block rounded-full bg-[#FFF5EE] px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-[#FF6B8A]">
+                  <span className="mb-2 inline-block rounded-full bg-[#FFF5EE] px-2.5 py-0.5 text-[13px] font-semibold uppercase tracking-[0.1em] text-[#FF6B8A]">
                     Most popular
                   </span>
                 )}
-                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8E8E93]">
+                <div className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#545558]">
                   {tier.name}
                 </div>
                 <div className="mt-1.5 text-[28px] font-bold leading-none text-[#2D2D2D]">{tier.amount}</div>
-                <div className="mt-2 text-[11px] leading-relaxed text-[#8E8E93]">{tier.note}</div>
+                <div className="mt-2 text-[13px] leading-relaxed text-[#545558]">{tier.note}</div>
               </div>
             ))}
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[12px] text-[#8E8E93]">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-[#545558]">
             <Link
               href="/pricing"
               className="font-medium text-[#2D2D2D] underline decoration-[#C7C7CC] underline-offset-4 hover:decoration-[#2D2D2D]"
@@ -503,17 +503,17 @@ export default function HomePage() {
       {/* 07 · Final CTA + FAQ */}
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
         <div className="rounded-3xl border border-[#FFDAB9] bg-[#FFF5EE] px-6 py-12 text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8E8E93]">Start now</p>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#545558]">Start now</p>
           <h2 className="mt-3 text-2xl font-bold tracking-tight text-[#2D2D2D] sm:text-3xl">
             Start your first book — free
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#8E8E93]">
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#545558]">
             One complete book, no credit card. Upgrade only when you need more.
           </p>
           <Link href="/create" className="apple-button mt-7 inline-block px-8 py-3.5 text-base">
             Create your first book — free
           </Link>
-          <p className="mt-4 text-[11px] text-[#8E8E93]">
+          <p className="mt-4 text-[13px] text-[#545558]">
             Free plan · 1 book · No credit card · Parental consent required for photos
           </p>
         </div>
@@ -524,10 +524,10 @@ export default function HomePage() {
             <details key={item.q} open={item.open} className="group border-b border-[#E5E5EA] py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-[#2D2D2D] [&::-webkit-details-marker]:hidden">
                 {item.q}
-                <span className="shrink-0 text-[#8E8E93] group-open:hidden">+</span>
-                <span className="hidden shrink-0 text-[#8E8E93] group-open:block">–</span>
+                <span className="shrink-0 text-[#545558] group-open:hidden">+</span>
+                <span className="hidden shrink-0 text-[#545558] group-open:block">–</span>
               </summary>
-              <p className="mt-2.5 text-sm leading-relaxed text-[#8E8E93]">{item.a}</p>
+              <p className="mt-2.5 text-sm leading-relaxed text-[#545558]">{item.a}</p>
             </details>
           ))}
         </div>
