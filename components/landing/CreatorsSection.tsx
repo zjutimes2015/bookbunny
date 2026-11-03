@@ -10,7 +10,7 @@ export default function CreatorsSection() {
   return (
     <section className="border-y border-[#E5E5EA] bg-[#2D2D2D] text-white">
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-        <p className="mb-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/50">
+        <p className="mb-8 text-[13px] font-semibold uppercase tracking-[0.18em] text-white/50">
           For creators &amp; KDP sellers
         </p>
 
@@ -38,7 +38,7 @@ export default function CreatorsSection() {
               {SPECS.map((s) => (
                 <span
                   key={s}
-                  className="rounded-md border border-white/15 px-2 py-0.5 text-[10px] font-medium tracking-wide text-white/60"
+                  className="rounded-md border border-white/15 px-2 py-0.5 text-xs font-medium tracking-wide text-white/60"
                 >
                   {s}
                 </span>
@@ -48,14 +48,14 @@ export default function CreatorsSection() {
               {['Interior PDF', 'Full cover PDF'].map((label) => (
                 <div
                   key={label}
-                  className="flex flex-col items-center justify-center rounded-lg border border-white/10 bg-white/5 px-3 py-6 text-[10px] font-medium uppercase tracking-[0.1em] text-white/60"
+                  className="flex flex-col items-center justify-center rounded-lg border border-white/10 bg-white/5 px-3 py-6 text-xs font-medium uppercase tracking-[0.1em] text-white/60"
                 >
-                  <span className="mb-1 text-[9px] font-bold text-[#FF8FAB]">PDF</span>
+                  <span className="mb-1 text-[13px] font-bold text-[#FF8FAB]">PDF</span>
                   {label}
                 </div>
               ))}
             </div>
-            <p className="mt-3 text-[11px] leading-relaxed text-white/40">
+            <p className="mt-3 text-[13px] leading-relaxed text-white/40">
               KDP geometry, handled — checked before every export.
             </p>
           </div>
