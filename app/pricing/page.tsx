@@ -88,7 +88,6 @@ const PLANS: PlanCard[] = [
     annualBooks: 1,
     desc: 'Try the whole flow',
     features: [
-      '1 book per month',
       '8-page book, 3 art styles',
       'Read books in the app',
       '1 character, 1 language',

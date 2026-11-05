@@ -42,7 +42,7 @@ export default function MultiCharacterManager({
         <h3 className="font-semibold text-[#2D2D2D]">
           Characters ({characters.length}/{maxCharacters})
         </h3>
-        <span className="text-xs text-[#8E8E93]">Add up to {maxCharacters} characters</span>
+        <span className="text-xs text-[#8E8E93]">Add up to {maxCharacters} {maxCharacters === 1 ? 'character' : 'characters'}</span>
       </div>
 
       {/* Character list */}

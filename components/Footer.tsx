@@ -37,6 +37,9 @@ export default function Footer() {
             </div>
             <div className="space-y-3">
               <p className="font-semibold text-[#2D2D2D]">Learn</p>
+              <Link href="/blog" className="block text-[#545558] hover:text-[#FF6B8A]">
+                Blog
+              </Link>
               <Link href="/blog/how-to-make-a-childrens-book" className="block text-[#545558] hover:text-[#FF6B8A]">
                 How-to guide
               </Link>

@@ -18,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/english-reading-for-beginners', priority: 0.9, changeFrequency: 'weekly' },
     { path: '/personalized-childrens-books', priority: 0.9, changeFrequency: 'weekly' },
     { path: '/pricing', priority: 0.9, changeFrequency: 'monthly' },
+    { path: '/blog', priority: 0.85, changeFrequency: 'weekly' },
     { path: '/blog/how-to-make-a-childrens-book', priority: 0.85, changeFrequency: 'monthly' },
     { path: '/blog/grl-reading-levels-explained', priority: 0.85, changeFrequency: 'monthly' },
     { path: '/blog/publish-childrens-book-amazon-kdp', priority: 0.85, changeFrequency: 'monthly' },

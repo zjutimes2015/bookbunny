@@ -119,6 +119,8 @@ export default function CreatePage() {
   const [loading, setLoading] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [turnstileError, setTurnstileError] = useState(false)
+  // 递增即让 TurnstileWidget 重新发起一次验证（失败/过期后的"重新验证"按钮）
+  const [turnstileRetryKey, setTurnstileRetryKey] = useState(0)
 
   // 家长同意：无生效同意时不得上传儿童照片
   const [photoConsent, setPhotoConsent] = useState(false)
@@ -712,16 +714,34 @@ export default function CreatePage() {
             onVerify={(token) => {
               turnstileTokenRef.current = token
               setTurnstileToken(token)
+              setTurnstileError(false)
             }}
             onExpire={() => {
               turnstileTokenRef.current = null
               setTurnstileToken(null)
             }}
             onError={() => setTurnstileError(true)}
+            resetKey={turnstileRetryKey}
             className="my-3"
           />
           {turnstileError && (
-            <p className="text-xs text-red-400 text-center mb-3">Please complete the verification</p>
+            <div className="text-center mb-3">
+              <p className="text-xs text-red-400 mb-2">
+                验证未完成，请点“重新验证”再试一次（若一直失败，请检查网络后重试）
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setTurnstileError(false)
+                  setTurnstileToken(null)
+                  turnstileTokenRef.current = null
+                  setTurnstileRetryKey((k) => k + 1)
+                }}
+                className="text-xs font-medium text-[#FF6B8A] underline underline-offset-2 hover:opacity-80"
+              >
+                重新验证
+              </button>
+            </div>
           )}
           <div className="space-y-6">
             <MultiCharacterManager
