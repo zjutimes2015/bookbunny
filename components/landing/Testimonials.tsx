@@ -1,79 +1,81 @@
+import Link from 'next/link'
+
 /**
- * Social proof section.
+ * Sample-books showcase (replaces the "Loved by families" placeholder).
  *
- * PLACEHOLDER CONTENT — every quote and every number below is a stand-in.
- * Replace with verified customer quotes / real product stats before launch.
- * Nothing here may be presented as a real review.
+ * No reviews exist yet, so this section shows real sample books instead of
+ * invented quotes. Covers below are the generated sample covers shipped in
+ * public/samples/ — the same three books shown in the "Made for your
+ * reader's age" gallery above. When real parent/creator quotes arrive,
+ * this section can become (or sit beside) a testimonials block.
+ * No numbers here are invented: no books-created / happy-families counts
+ * are shown because no verified counts are available.
  */
-const PLACEHOLDER_QUOTES = [
+const SAMPLE_BOOKS = [
   {
-    quote: '[Your first review — replace this with a real parent quote.]',
-    name: '[Parent name]',
-    detail: '[e.g. Mom of a 4-year-old]',
+    cover: '/samples/cover-moon-bunny.webp',
+    title: 'The Moon Bunny',
+    meta: 'Ages 3–5 · GRL A–B · 16 pages',
   },
   {
-    quote: '[Your second review — replace this with a real parent quote.]',
-    name: '[Parent name]',
-    detail: '[e.g. Dad of a 6-year-old]',
+    cover: '/samples/cover-paper-boat.webp',
+    title: 'Lila and the Paper Boat',
+    meta: 'Ages 6–8 · GRL C–D · 12 pages',
   },
   {
-    quote: '[Your third review — replace this with a real creator quote.]',
-    name: '[Creator name]',
-    detail: '[e.g. KDP publisher]',
+    cover: '/samples/cover-quiet-garden.webp',
+    title: 'Kai’s Quiet Garden',
+    meta: 'Ages 9–12 · GRL E · 20 pages',
   },
 ]
 
-const PLACEHOLDER_STATS = [
-  { value: '[—]', label: 'books created' },
-  { value: '[—]', label: 'happy families' },
-  { value: '10', label: 'book languages' },
-]
-
-export default function Testimonials() {
+export default function SampleBooks() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
       <div className="mb-10 text-center">
         <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#545558]">
-          Early readers
+          Sample books
         </p>
         <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#2D2D2D] sm:text-3xl">
-          Loved by families
+          Made with SproutTales
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#545558]">
-          Real quotes from real parents and creators will live here — this section is
-          waiting on its first reviews.
+          Three finished books, generated with SproutTales — same hero, same art
+          style, cover to last page.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {PLACEHOLDER_QUOTES.map((t) => (
-          <figure
-            key={t.name + t.detail}
-            className="rounded-2xl border border-dashed border-[#C7C7CC] bg-[#FAFAFB] p-6"
-          >
-            <blockquote className="text-sm italic leading-relaxed text-[#545558]">
-              {t.quote}
-            </blockquote>
-            <figcaption className="mt-4 text-sm font-medium text-[#545558]">
-              {t.name}
-              <span className="block font-normal">{t.detail}</span>
-            </figcaption>
-          </figure>
+      <div className="grid gap-8 sm:grid-cols-3 sm:gap-6">
+        {SAMPLE_BOOKS.map((book) => (
+          <div key={book.title}>
+            <div className="relative overflow-hidden rounded-2xl border border-[#E5E5EA] bg-white shadow-sm">
+              <div className="relative aspect-[3/4] w-full">
+                <img
+                  src={book.cover}
+                  alt={`${book.title} — sample book cover`}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+            <div className="mt-3">
+              <strong className="text-sm font-semibold text-[#2D2D2D]">{book.title}</strong>
+              <p className="mt-1 text-[13px] text-[#545558]">{book.meta}</p>
+            </div>
+          </div>
         ))}
       </div>
 
-      <dl className="mx-auto mt-10 grid max-w-2xl grid-cols-3 gap-4 text-center">
-        {PLACEHOLDER_STATS.map((s) => (
-          <div key={s.label} className="flex flex-col">
-            <dt className="order-2 mt-1 text-[13px] uppercase tracking-[0.12em] text-[#545558]">
-              {s.label}
-            </dt>
-            <dd className="order-1 text-3xl font-bold text-[#2D2D2D]">{s.value}</dd>
-          </div>
-        ))}
-      </dl>
-      <p className="mt-4 text-center text-[13px] text-[#545558]">
-        * Bracketed numbers are placeholders — real stats will appear here once published.
+      <p className="mt-8 text-center text-[13px] text-[#545558]">
+        Covers are generated samples of the art styles SproutTales can produce.
+      </p>
+      <p className="mt-4 text-center">
+        <Link
+          href="/create"
+          className="text-sm font-medium text-[#2D2D2D] underline underline-offset-4"
+        >
+          Create your own book →
+        </Link>
       </p>
     </section>
   )
