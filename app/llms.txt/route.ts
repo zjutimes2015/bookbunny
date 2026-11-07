@@ -72,6 +72,14 @@ cycle. Books never expire and stay in the library.
   graded English readers for children learning English as an additional language.
 - [Personalized children's books](${SITE_URL}/personalized-childrens-books): gift
   scenarios — birthdays, holidays, baby showers.
+- [Bedtime story starring your child](${SITE_URL}/bedtime-story-starring-my-child):
+  a bedtime story where your child is the hero of their own picture book.
+- [Personalized Christmas book](${SITE_URL}/personalized-christmas-book): a
+  Christmas book starring your child — a personal gift; leave time for printing.
+- [Personalized birthday book](${SITE_URL}/personalized-birthday-book): a
+  birthday book starring your child; make it one to two weeks ahead.
+- [Dinosaur bedtime story](${SITE_URL}/dinosaur-bedtime-story): a gentle
+  dinosaur bedtime story starring your child, for ages 3 to 6.
 - [Pricing](${SITE_URL}/pricing): plans and the full feature comparison matrix.
 - [How to make a children's book with AI](${SITE_URL}/blog/how-to-make-a-childrens-book):
   step-by-step tutorial.
@@ -81,6 +89,9 @@ cycle. Books never expire and stay in the library.
   2026 checklist for manuscript, cover, ISBN, and royalties.
 - [${SITE_NAME} vs ReadKidz](${SITE_URL}/vs/readkidz): head-to-head comparison of
   pricing, credits, reading levels and KDP export.
+- [${SITE_NAME} vs Wonderbly](${SITE_URL}/vs/wonderbly): how AI-generated
+  whole-book personalization differs from Wonderbly's fixed books with
+  name and photo insertion.
 - [About](${SITE_URL}/about): the team and the mission.
 - [Child safety](${SITE_URL}/safety): parental consent and data minimization.
 - [Privacy policy](${SITE_URL}/privacy) and [Terms of service](${SITE_URL}/terms).
