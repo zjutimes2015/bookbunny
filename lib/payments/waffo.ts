@@ -25,7 +25,7 @@ export function isWaffoConfigured(): boolean {
   return !!merchantId && !!privateKey
 }
 
-export type SubscriptionTier = 'free' | 'creator' | 'studio' | 'teacher' | 'credits' | 'pro-anim'
+export type SubscriptionTier = 'free' | 'creator' | 'studio' | 'teacher' | 'credits' | 'pro-anim' | 'vpc'
 
 export interface WaffoPlan {
   /** Waffo 后台创建的 Product ID */
@@ -46,6 +46,8 @@ export interface WaffoPlan {
  *
  * 订阅：Creator $29/月 · $261/年；Studio $79/月 · $711/年；Teacher $99/月 · $891/年
  * 一次性：Pro Animation Pack $55 / 5 本 · $100 / 10 本
+ * 家长同意验证（VPC）：一次性 $1.00——Waffo 每笔固定收 $0.50，$0.50 的验证费会倒贴，
+ * 所以验证定价 $1.00（实得 $0.46）；不发任何订阅权益，webhook 里改记同意记录。
  *
  * 定价按「满额使用仍有 80% 毛利」反推，改动前先核对成本：
  * 普通书 ≈ 页数 × $0.06（FLUX.2 flex）；Pro 动画 ≈ 页数 × $0.25（Wan 3 480p 5s）。
@@ -128,6 +130,15 @@ export const WAFFO_PLANS = {
     description: '10 Pro animated books (video + voice + music), never expire',
     grant: 10,
   },
+  vpc_verification: {
+    get productId() { return process.env.WAFFO_VPC_PRODUCT_ID || '' },
+    name: 'Parental Consent Verification',
+    tier: 'vpc',
+    price: 1,
+    currency: 'USD',
+    cycle: 'once',
+    description: 'One-time $1.00 card verification for verifiable parental consent (COPPA). Grants no plan or book credits.',
+  },
 } as const satisfies Record<string, WaffoPlan>
 
 export type WaffoPlanKey = keyof typeof WAFFO_PLANS
@@ -136,6 +147,12 @@ export type WaffoPlanKey = keyof typeof WAFFO_PLANS
  * 用户看到的是「本数」，数据库里存的是 credits（1 本 = 3 credits）。
  */
 export const PRO_CREDITS_PER_BOOK = 3
+
+/**
+ * 家长同意验证（VPC）一次收费，单位美分。
+ * Waffo 每笔固定收 $0.50，所以 $1.00 是能保住正收益的最低档。
+ */
+export const VPC_PRICE_CENTS = 100
 
 /**
  * Pro 动画视频交付是否已上线。

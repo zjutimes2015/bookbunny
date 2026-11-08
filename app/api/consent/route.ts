@@ -6,7 +6,7 @@ import {
   revokeConsent,
 } from '@/lib/compliance/consent'
 import { deleteFiles, keyFromAssetUrl } from '@/lib/r2'
-import { isCreemConfigured } from '@/lib/payments/creem'
+import { isWaffoConfigured } from '@/lib/payments/waffo'
 import { sql } from '@/lib/neon'
 import { POLICY_VERSION } from '@/lib/site'
 
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     photoAllowed:
       current && !!consent?.purposes.includes('photo-processing'),
     /** True when a new verification can actually be started in this environment. */
-    vpcAvailable: isCreemConfigured() || process.env.NODE_ENV !== 'production',
+    vpcAvailable: isWaffoConfigured() || process.env.NODE_ENV !== 'production',
   })
 }
 

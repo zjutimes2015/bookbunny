@@ -6,8 +6,9 @@ import {
   type WebhookEvent,
   type WebhookEventData,
 } from '@waffo/pancake-ts'
-import { planTier, planGrant, planCycle, PRO_CREDITS_PER_BOOK } from '@/lib/payments/waffo'
+import { planTier, planGrant, planCycle, PRO_CREDITS_PER_BOOK, VPC_PRICE_CENTS } from '@/lib/payments/waffo'
 import { recordCommissionForPayment } from '@/lib/affiliate'
+import { recordConsent, VPC_METHODS, type VpcMethodId } from '@/lib/compliance/consent'
 import { allowanceFor } from '@/lib/allocation'
 
 /** 下一次 allowance 重置时间（下个月 1 号 00:00 UTC） */
@@ -48,16 +49,19 @@ export async function POST(request: Request) {
           ON CONFLICT (id) DO NOTHING
           RETURNING id
         `
-        // Affiliate commission (idempotent per payment_id; never blocks payment handling)
-        try {
-          await recordCommissionForPayment(sql, {
-            userId: userId || null,
-            email: d.buyerEmail,
-            paymentId: d.orderId,
-            grossCents: amount,
-          })
-        } catch (commissionErr) {
-          console.error('Affiliate commission error:', commissionErr)
+        // Affiliate commission (idempotent per payment_id; never blocks payment handling).
+        // VPC 验证费不产生佣金：它不是商品购买。
+        if (tier !== 'vpc') {
+          try {
+            await recordCommissionForPayment(sql, {
+              userId: userId || null,
+              email: d.buyerEmail,
+              paymentId: d.orderId,
+              grossCents: amount,
+            })
+          } catch (commissionErr) {
+            console.error('Affiliate commission error:', commissionErr)
+          }
         }
 
         // 已处理过的订单直接返回，不再重复发额度
@@ -72,7 +76,22 @@ export async function POST(request: Request) {
           break
         }
 
-        if (tier === 'pro-anim') {
+        if (tier === 'vpc') {
+          // 家长同意验证：不发任何订阅权益，改记同意记录。
+          // recordConsent 先撤旧记录再写入，重复投递也不会产生两条有效同意。
+          const rawMethod = d.orderMetadata?.method as string | undefined
+          const vpcMethod: VpcMethodId = VPC_METHODS.some((m) => m.id === rawMethod)
+            ? (rawMethod as VpcMethodId)
+            : 'card-charge'
+          await recordConsent({
+            userId,
+            vpcMethod,
+            vpcReference: d.orderId || null,
+            vpcAmountCents: amount || VPC_PRICE_CENTS,
+            consentUserAgent: 'waffo-webhook',
+          })
+          console.log(`✅ Parental consent verified for ${userId} via Waffo (${d.orderId})`)
+        } else if (tier === 'pro-anim') {
           // Pro 动画面包：独立额度池（1 本 = 3 credits）
           const credits = planGrant(plan) * PRO_CREDITS_PER_BOOK
           await sql`

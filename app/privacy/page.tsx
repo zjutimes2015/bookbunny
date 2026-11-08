@@ -339,14 +339,9 @@ const SECTIONS: Section[] = [
           <li className={ITEM}>
             <span className={DOT}>•</span>
             <span>
-              <span className={STRONG}>Waffo</span> — subscription and credit-pack billing.
-            </span>
-          </li>
-          <li className={ITEM}>
-            <span className={DOT}>•</span>
-            <span>
-              <span className={STRONG}>Creem</span> — the one-time charge that verifies a
-              parent&apos;s identity before a photograph is accepted.
+              <span className={STRONG}>Waffo</span> — subscription and credit-pack billing, and
+              the one-time $1.00 charge that verifies a parent&apos;s identity before a
+              photograph is accepted.
             </span>
           </li>
           <li className={ITEM}>

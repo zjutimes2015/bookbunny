@@ -29,11 +29,19 @@ describe('WAFFO_PLANS', () => {
     expect(tiers).toContain('studio')
     expect(tiers).toContain('teacher')
     expect(tiers).toContain('pro-anim')
+    expect(tiers).toContain('vpc')
   })
 
   it('prices the teacher tier at 99/month and 891/year', () => {
     expect(WAFFO_PLANS.teacher_monthly.price).toBe(99)
     expect(WAFFO_PLANS.teacher_annual.price).toBe(891)
+  })
+
+  it('prices the VPC verification at $1.00 once, with no grant', () => {
+    expect(WAFFO_PLANS.vpc_verification.price).toBe(1)
+    expect(WAFFO_PLANS.vpc_verification.tier).toBe('vpc')
+    expect(WAFFO_PLANS.vpc_verification.cycle).toBe('once')
+    expect(planGrant('vpc_verification')).toBe(0)
   })
 
   it('gives every paid tier a positive price', () => {
