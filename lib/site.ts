@@ -8,7 +8,7 @@ export const SITE_NAME = 'SproutTales'
 
 /** Primary meta description used across landing pages */
 export const SITE_DESCRIPTION =
-  'AI picture book generator with the same character on every page, GRL A–E leveled text, and print-ready Amazon KDP PDFs. Free plan: 1 book a month, no credit card.'
+  'Personalized bedtime stories starring your child. AI picture book generator with the same character on every page, GRL A–E text, KDP-ready PDFs. Free plan.'
 
 /** Legal entity that operates the service; shown in the privacy policy and terms. */
 export const LEGAL_ENTITY = process.env.LEGAL_ENTITY || 'SproutTales'

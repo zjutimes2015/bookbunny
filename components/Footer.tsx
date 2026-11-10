@@ -34,6 +34,9 @@ export default function Footer() {
               <Link href="/personalized-childrens-books" className="block text-[#545558] hover:text-[#FF6B8A]">
                 Personalized gifts
               </Link>
+              <Link href="/bedtime-story-starring-my-child" className="block text-[#545558] hover:text-[#FF6B8A]">
+                Bedtime stories
+              </Link>
             </div>
             <div className="space-y-3">
               <p className="font-semibold text-[#2D2D2D]">Learn</p>

@@ -108,8 +108,13 @@
 
 ### ⚠️ 3.4 待处理
 - [ ] `/worlds` 与 `/worlds/[id]` 目前 `noindex`（20 个世界全是 draft 状态），发布后需改为可索引 —— 这是长尾词金矿
-- [ ] 对比表用 HTML `<table>`（/pricing 已用，需检查 /vs/readkidz）
-- [ ] 加入 `BreadcrumbList` schema
+- [ ] 对比表用 HTML `<table>`（/pricing 已用，/vs/readkidz 已核实为真 `<table>`，2026-11-10）
+- [x] 加入 `BreadcrumbList` schema（2026-11-10 落地：共享组件 `components/BreadcrumbJsonLd.tsx`，已接首页睡前故事三页：/bedtime-story-starring-my-child、/personalized-childrens-books、/blog/personalized-bedtime-stories-for-kids）
+
+### 2026-11-10 GSC 诊断（3 个月：0 点击，唯一量是 `sprouts` 255 展示）
+- **问题**：品牌名含 sprout，Google 把站当成豆芽菜站；`sprouts`/`sprouts near me`/`sprout jar` 全是买豆芽的查询，与产品无关。目标词（personalized bedtime stories 等）0 展示——相关页 11-07 才上线，还没排名。
+- **本轮应对（已落地，未买流量、未编造评价）**：全站 meta 描述改以 "Personalized bedtime stories starring your child" 开头；首页 FAQ 加 2 条睡前故事问答（同步进 FAQPage schema）；首页加 "Bedtime stories" 内链带（4 卡指向睡前故事页）；页脚加 Bedtime stories 链接；llms-full.txt 加睡前故事 Quick answer；BreadcrumbList 上线。
+- **复查（用户在 GSC 操作）**：对 `/`、`/bedtime-story-starring-my-child`、`/blog/personalized-bedtime-stories-for-kids` 各点一次"请求编入索引"。两周后看两数：目标词是否开始有展示、sprouts 展示占比是否下降。
 
 ---
 
@@ -176,7 +181,7 @@ Semrush 的 Site Audit 与 GSC 是双向的：
 
 ### 5.6 收录检查清单
 - [ ] `https://sprouttales.com/robots.txt` 返回 200
-- [ ] `https://sprouttales.com/sitemap.xml` 返回 200，URL 数量 = 11
+- [ ] `https://sprouttales.com/sitemap.xml` 返回 200，URL 数量 = 27（2026-11-10 实测）
 - [ ] `https://sprouttales.com/llms.txt` 返回 200
 - [ ] `https://sprouttales.com/llms-full.txt` 返回 200
 - [ ] `https://sprouttales.com/og-image.png` 返回 200（否则社交分享无缩略图）
@@ -214,8 +219,8 @@ Semrush 的 Site Audit 与 GSC 是双向的：
 - [x] `/llms.txt` + `/llms-full.txt` 双版本
 - [x] FAQPage schema 覆盖首页/定价/AI 落地页/博客/对比页
 - [x] 对比表用 HTML `<table>`（/pricing）
-- [ ] 对比表用 HTML `<table>`（/vs/readkidz 需检查）
-- [ ] 加 `BreadcrumbList` schema
+- [x] 对比表用 HTML `<table>`（/pricing、/vs/readkidz 均已核实，2026-11-10）
+- [x] 加 `BreadcrumbList` schema（2026-11-10 落地，见 §3.4）
 - [ ] 加 Trustpilot / 真实用户评价 widget
 - [ ] 发布「7 个 AI 儿童图书工具角色一致性评分」原创数据
 

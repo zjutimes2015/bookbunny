@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
 const TITLE = "Personalized Bedtime Stories for Kids: Why Your Child's Name in the Story Works"
@@ -134,6 +135,13 @@ export default function PersonalizedBedtimeStoriesPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQSchema) }}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: SITE_URL },
+          { name: 'Blog', url: `${SITE_URL}/blog` },
+          { name: 'Personalized Bedtime Stories for Kids', url: `${SITE_URL}/blog/personalized-bedtime-stories-for-kids` },
+        ]}
       />
 
       {/* Hero */}

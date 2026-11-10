@@ -95,6 +95,14 @@ const FAQS = [
     q: 'Do I need design or writing skills?',
     a: 'No. Describe an idea in one sentence; the editor handles structure, illustration prompts and text layout.',
   },
+  {
+    q: 'What is a personalized bedtime story?',
+    a: 'A bedtime story written around your child — their name, age and favorite things woven into the plot, with the same hero illustrated on every page. Read it on screen tonight, or save it as a PDF to keep.',
+  },
+  {
+    q: 'Can I read the story tonight?',
+    a: 'Yes. A book takes minutes to generate — describe your child, pick an adventure, and read it on screen the same evening. The free plan includes one complete book a month.',
+  },
 ]
 
 const Chip = ({ children }: { children: React.ReactNode }) => (
@@ -428,7 +436,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 04b · Social proof (placeholder content — replace with real reviews) */}
+      {/* 04b · Sample books showcase (real covers, no invented reviews) */}
       <Testimonials />
 
       {/* 04c · For creators & KDP sellers */}
@@ -497,6 +505,60 @@ export default function HomePage() {
             </Link>
             <span>Pro Animation Pack · 5 books for $55 · never expires</span>
           </div>
+        </div>
+      </section>
+
+      {/* 06b · Bedtime stories — internal links to the bedtime-intent pages.
+          The homepage is the site's strongest page; linking the bedtime
+          landing pages from here tells Google the site is about personalized
+          bedtime stories, not the food queries the brand name attracts. */}
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <SectionLabel>Bedtime stories</SectionLabel>
+        <h2 className="text-2xl font-bold tracking-tight text-[#2D2D2D] sm:text-3xl">
+          Tonight&apos;s story stars your child
+        </h2>
+        <p className="mt-3 max-w-lg text-sm leading-relaxed text-[#545558]">
+          A personalized bedtime story is written around your child — their name,
+          age and favorite things woven into the plot, with the same hero on
+          every page.
+        </p>
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              href: '/bedtime-story-starring-my-child',
+              title: 'Bedtime story starring your child',
+              desc: 'Your child is the hero of their own picture book.',
+              cta: 'Start the story →',
+            },
+            {
+              href: '/blog/personalized-bedtime-stories-for-kids',
+              title: 'Why your child\u2019s name works',
+              desc: 'What makes a personalized bedtime story stick at lights-out.',
+              cta: 'Read the guide →',
+            },
+            {
+              href: '/dinosaur-bedtime-story',
+              title: 'Dinosaur bedtime story',
+              desc: 'A gentle dinosaur adventure for ages 3 to 6.',
+              cta: 'Start the adventure →',
+            },
+            {
+              href: '/personalized-childrens-books',
+              title: 'Personalized children\u2019s books',
+              desc: 'Birthday, Christmas and baby shower gifts.',
+              cta: 'Explore gift ideas →',
+            },
+          ].map((card) => (
+            <Link
+              key={card.href}
+              href={card.href}
+              className="rounded-2xl border border-[#E5E5EA] bg-white p-5 transition-colors hover:border-[#2D2D2D]"
+            >
+              <h3 className="text-base font-semibold text-[#2D2D2D]">{card.title}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-[#545558]">{card.desc}</p>
+              <span className="mt-3 block text-sm font-medium text-[#2D2D2D]">{card.cta}</span>
+            </Link>
+          ))}
         </div>
       </section>
 

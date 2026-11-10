@@ -15,7 +15,8 @@ export function GET() {
 
 ## One-line summary
 
-${SITE_NAME} is an AI picture book generator for children that produces a
+${SITE_NAME} is an AI picture book generator for children — most often a
+personalized bedtime story starring your child — that produces a
 finished, printable book — not just a text draft — with the same character
 illustrated consistently on every page, reading-level-matched text, and
 Amazon KDP-compliant PDFs.
@@ -26,6 +27,12 @@ Amazon KDP-compliant PDFs.
 Yes. The Free plan is $0/month and includes 1 complete book per month, 8 pages,
 3 art styles and 1 character. Watermarked preview PDFs are included. No credit
 card is required to start.
+
+**What is a personalized bedtime story?**
+A bedtime story written around your child — their name, age and favorite
+things woven into the plot, with the same hero illustrated on every page. A
+book takes minutes to generate, reads on screen the same evening, and never
+expires. It is the most common way parents use ${SITE_NAME}.
 
 **Can I sell the books I make on Amazon KDP?**
 Yes, on the Creator, Studio and Teacher plans. Those plans include two

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
 const TITLE = "Personalized Children's Books — Make a Custom Storybook with Your Child's Photo"
@@ -150,6 +151,12 @@ export default function PersonalizedBooksPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQSchema) }}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: SITE_URL },
+          { name: "Personalized children's books", url: `${SITE_URL}/personalized-childrens-books` },
+        ]}
       />
 
       {/* Hero */}

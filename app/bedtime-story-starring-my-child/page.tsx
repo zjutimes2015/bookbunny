@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
 const TITLE = 'Bedtime Story Starring Your Child — Personalized AI Picture Book'
@@ -141,6 +142,12 @@ export default function BedtimeStoryStarringMyChildPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: SITE_URL },
+          { name: 'Bedtime story starring your child', url: `${SITE_URL}/bedtime-story-starring-my-child` },
+        ]}
       />
 
       {/* Hero */}
