@@ -4,7 +4,6 @@ import { SITE_URL, SITE_NAME } from '@/lib/site'
 
 import BookFlip from '@/components/landing/BookFlip'
 import AgeBooks from '@/components/landing/AgeBooks'
-import Testimonials from '@/components/landing/Testimonials'
 import CreatorsSection from '@/components/landing/CreatorsSection'
 
 
@@ -433,11 +432,16 @@ export default function HomePage() {
           <p className="mt-8 text-center text-[13px] text-[#545558]">
             Illustrative examples of the art styles SproutTales can produce.
           </p>
+          <p className="mt-4 text-center">
+            <Link
+              href="/create"
+              className="text-sm font-medium text-[#2D2D2D] underline underline-offset-4"
+            >
+              Create your own book →
+            </Link>
+          </p>
         </div>
       </section>
-
-      {/* 04b · Sample books showcase (real covers, no invented reviews) */}
-      <Testimonials />
 
       {/* 04c · For creators & KDP sellers */}
       <CreatorsSection />
