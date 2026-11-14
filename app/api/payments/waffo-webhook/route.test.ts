@@ -2,17 +2,24 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 type QueryResult = Record<string, unknown>[]
 
-const { mockSql, responseQueue, callLog, verifyWebhookMock } = vi.hoisted(() => {
+const { mockSql, responseQueue, callLog, verifyWebhookMock, rejectPatterns } = vi.hoisted(() => {
   const responseQueue: QueryResult[] = []
   const callLog: string[] = []
+  // Substrings that make mockSql reject, simulating a database failure (e.g.
+  // the vpc_credits table does not exist yet). Tests push patterns here to
+  // prove the webhook isolates credit-ledger failures from payment handling.
+  const rejectPatterns: string[] = []
   const mockSql = vi.fn((strings: TemplateStringsArray, ..._values: unknown[]) => {
     const query = strings.join('?')
     callLog.push(query)
+    if (rejectPatterns.some((p) => query.includes(p))) {
+      return Promise.reject(new Error(`mock sql failure: ${query}`))
+    }
     const next = responseQueue.shift()
     return Promise.resolve(next ?? [])
   })
   const verifyWebhookMock = vi.fn()
-  return { mockSql, responseQueue, callLog, verifyWebhookMock }
+  return { mockSql, responseQueue, callLog, verifyWebhookMock, rejectPatterns }
 })
 
 vi.mock('@neondatabase/serverless', () => ({
@@ -47,6 +54,7 @@ describe('POST /api/payments/waffo-webhook', () => {
   beforeEach(() => {
     responseQueue.length = 0
     callLog.length = 0
+    rejectPatterns.length = 0
     mockEvent = null
     verifyShouldThrow = false
     verifyWebhookMock.mockImplementation((_rawBody: string, _sig: string | null) => {
@@ -300,6 +308,151 @@ describe('POST /api/payments/waffo-webhook', () => {
       expect(res.status).toBe(200)
       const json = await res.json()
       expect(json.received).toBe(true)
+    })
+  })
+
+  describe('VPC credit ledger', () => {
+    const consentRow = {
+      id: 'c1',
+      user_id: 'u1',
+      policy_version: 'test-policy',
+      purposes: ['photo-processing'],
+      vpc_method: 'card-charge',
+      vpc_reference: 'o-vpc-1',
+      vpc_amount_cents: 100,
+      vpc_verified_at: '2026-11-13T00:00:00.000Z',
+      granted_at: '2026-11-13T00:00:00.000Z',
+      revoked_at: null,
+    }
+
+    it('grants a $1.00 credit when the VPC charge settles', async () => {
+      mockEvent = {
+        eventType: 'order.completed',
+        data: {
+          orderId: 'o-vpc-1',
+          orderMetadata: { plan: 'vpc_verification', userId: 'u1', method: 'card-charge' },
+          chargedAmount: '1.00',
+          currency: 'USD',
+          buyerEmail: 'parent@test.com',
+        },
+      }
+      // payments INSERT, consent revoke UPDATE, consent INSERT, consent SELECT,
+      // pending-credit SELECT, vpc_credits INSERT
+      responseQueue.push([{ id: 'o-vpc-1' }], [], [], [consentRow], [], [{ id: 'vc1' }])
+      const res = await POST(makeRequest('{}'))
+      expect(res.status).toBe(200)
+
+      expect(callLog.some(q => q.includes('INSERT INTO parental_consents'))).toBe(true)
+      expect(callLog.some(q => q.includes('INSERT INTO vpc_credits'))).toBe(true)
+      // No subscription tier is granted for a verification charge.
+      expect(callLog.some(q => q.includes('subscription_tier = ?'))).toBe(false)
+    })
+
+    it('grants nothing on a duplicate delivery of the same VPC order', async () => {
+      mockEvent = {
+        eventType: 'order.completed',
+        data: {
+          orderId: 'o-vpc-dup',
+          orderMetadata: { plan: 'vpc_verification', userId: 'u1', method: 'card-charge' },
+          chargedAmount: '1.00',
+          buyerEmail: 'parent@test.com',
+        },
+      }
+      // INSERT ... ON CONFLICT DO NOTHING RETURNING id → empty means duplicate
+      responseQueue.push([])
+      const res = await POST(makeRequest('{}'))
+      expect(res.status).toBe(200)
+      expect(await res.json()).toMatchObject({ duplicate: true })
+      expect(callLog.some(q => q.includes('vpc_credits'))).toBe(false)
+      expect(callLog.some(q => q.includes('parental_consents'))).toBe(false)
+    })
+
+    it('stamps the first paid order onto a pending credit', async () => {
+      mockEvent = {
+        eventType: 'order.completed',
+        data: {
+          orderId: 'o-first',
+          orderMetadata: { plan: 'creator_monthly', userId: 'u1' },
+          chargedAmount: '29.00',
+          currency: 'USD',
+          buyerEmail: 'buyer@test.com',
+        },
+      }
+      responseQueue.push([{ id: 'o-first' }], [])
+      const res = await POST(makeRequest('{}'))
+      expect(res.status).toBe(200)
+
+      const stamp = callLog.find(q => q.includes('UPDATE vpc_credits'))
+      expect(stamp).toBeDefined()
+      expect(stamp).toContain('first_order_id')
+    })
+
+    it('grants no credit for a canceled subscription event (no settled charge)', async () => {
+      mockEvent = {
+        eventType: 'subscription.canceled',
+        data: {
+          orderId: 'o-vpc-cancel',
+          orderMetadata: { plan: 'vpc_verification', userId: 'u1' },
+          buyerEmail: 'parent@test.com',
+        },
+      }
+      responseQueue.push([])
+      const res = await POST(makeRequest('{}'))
+      expect(res.status).toBe(200)
+      expect(callLog.some(q => q.includes('vpc_credits'))).toBe(false)
+    })
+
+    it('still returns 200 and records consent when the credit grant fails (e.g. vpc_credits table missing)', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      try {
+        mockEvent = {
+          eventType: 'order.completed',
+          data: {
+            orderId: 'o-vpc-fail',
+            orderMetadata: { plan: 'vpc_verification', userId: 'u1', method: 'card-charge' },
+            chargedAmount: '1.00',
+            currency: 'USD',
+            buyerEmail: 'parent@test.com',
+          },
+        }
+        // payments INSERT, consent revoke UPDATE, consent INSERT, consent SELECT;
+        // the pending-credit SELECT then rejects, simulating a missing table.
+        responseQueue.push([{ id: 'o-vpc-fail' }], [], [], [consentRow])
+        rejectPatterns.push('FROM vpc_credits')
+        const res = await POST(makeRequest('{}'))
+        expect(res.status).toBe(200)
+        expect(await res.json()).toMatchObject({ received: true })
+        // The legal fact survives: the consent record was written before the
+        // grant was attempted, and the failed grant is backfillable.
+        expect(callLog.some(q => q.includes('INSERT INTO parental_consents'))).toBe(true)
+        expect(callLog.some(q => q.includes('SELECT * FROM vpc_credits'))).toBe(true)
+      } finally {
+        errorSpy.mockRestore()
+      }
+    })
+
+    it('still returns 200 and grants the subscription when the first-order stamp fails', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      try {
+        mockEvent = {
+          eventType: 'order.completed',
+          data: {
+            orderId: 'o-stamp-fail',
+            orderMetadata: { plan: 'creator_monthly', userId: 'u1' },
+            chargedAmount: '29.00',
+            currency: 'USD',
+            buyerEmail: 'buyer@test.com',
+          },
+        }
+        responseQueue.push([{ id: 'o-stamp-fail' }], [])
+        rejectPatterns.push('UPDATE vpc_credits')
+        const res = await POST(makeRequest('{}'))
+        expect(res.status).toBe(200)
+        expect(callLog.some(q => q.includes('subscription_tier = ?'))).toBe(true)
+        expect(callLog.some(q => q.includes('UPDATE vpc_credits'))).toBe(true)
+      } finally {
+        errorSpy.mockRestore()
+      }
     })
   })
 })

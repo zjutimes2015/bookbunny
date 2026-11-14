@@ -37,6 +37,10 @@ declare namespace NodeJS {
     WAFFO_PRO_ANIM_5_PRODUCT_ID?: string
     WAFFO_PRO_ANIM_10_PRODUCT_ID?: string
 
+    // 定价门控（默认 OFF；仅 'true' 开启）
+    NEXT_PUBLIC_ANNUAL_BILLING_ENABLED?: string
+    NEXT_PUBLIC_BOOK_PACKS_ENABLED?: string
+
     // 支付：Creem（旧通道）
     CREEM_API_KEY?: string
     CREEM_TEST_MODE?: string

@@ -126,6 +126,12 @@ export default function CreatePage() {
   const [photoConsent, setPhotoConsent] = useState(false)
   const [consentBlocked, setConsentBlocked] = useState(false)
 
+  // 角色路径：免费的文字描述路径在先、默认选中；照片路径在后，且家长同意门
+  // 只在用户选中照片路径时才渲染（未选照片前绝不出现）。photoConsent 只由门
+  // 组件据服务端状态汇报，切回描述路径后保留旧值是安全的——服务端仍会独立
+  // 校验同意（无同意时照片请求返回 403）。
+  const [characterPath, setCharacterPath] = useState<'describe' | 'photo'>('describe')
+
   // 阶段5：生图流程状态（试生成 → 5 页一批续跑）
   const [genProgress, setGenProgress] = useState<{
     total: number; completed: number; pages: { index: number; status: string; imageB64?: string }[]
@@ -702,11 +708,50 @@ export default function CreatePage() {
               Add up to {maxCharacters} {maxCharacters === 1 ? 'character' : 'characters'}
             </p>
           </div>
-          <ParentalConsentGate onConsentChange={setPhotoConsent} />
+          {/* 角色路径选择：文字描述在先（默认）、照片在后；同意门只在照片路径下渲染 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4" role="radiogroup" aria-label="How to create your character">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={characterPath === 'describe'}
+              onClick={() => setCharacterPath('describe')}
+              className={`rounded-xl border px-4 py-3 text-left transition-all ${
+                characterPath === 'describe'
+                  ? 'border-[#FF6B8A] bg-[#FFF5EE] ring-1 ring-[#FF6B8A]'
+                  : 'border-[#E5E5EA] bg-white hover:border-[#C8A2E8]'
+              }`}
+            >
+              <span className="block text-sm font-semibold text-[#2D2D2D]">Describe your character</span>
+              <span className="block text-xs text-[#8E8E93] mt-0.5">
+                Free · No photo needed — add your character by name and start here.
+              </span>
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={characterPath === 'photo'}
+              onClick={() => setCharacterPath('photo')}
+              className={`rounded-xl border px-4 py-3 text-left transition-all ${
+                characterPath === 'photo'
+                  ? 'border-[#FF6B8A] bg-[#FFF5EE] ring-1 ring-[#FF6B8A]'
+                  : 'border-[#E5E5EA] bg-white hover:border-[#C8A2E8]'
+              }`}
+            >
+              <span className="block text-sm font-semibold text-[#2D2D2D]">Use a photo</span>
+              <span className="block text-xs text-[#8E8E93] mt-0.5">
+                Upload a photograph of your child. Parental consent verification is required first.
+              </span>
+            </button>
+          </div>
+          {characterPath === 'photo' && (
+            <ParentalConsentGate onConsentChange={setPhotoConsent} />
+          )}
           {consentBlocked && (
             <p className="text-xs text-red-500 text-center mb-4">
-              Parental consent is required before a photograph of your child can be used. Complete the
-              step above, or add the character without a photo.
+              Parental consent is required before a photograph of your child can be used.{' '}
+              {characterPath === 'photo'
+                ? 'Complete the verification step above, or add the character without a photo.'
+                : 'Choose “Use a photo” above to complete verification, or add the character without a photo.'}
             </p>
           )}
           {/* 人机校验组件必须常驻：第一个角色的创建请求也要带通行证 */}

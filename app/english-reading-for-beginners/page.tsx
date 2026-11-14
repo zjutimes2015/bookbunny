@@ -121,6 +121,14 @@ const FAQS: { q: string; a: string }[] = [
   },
 ]
 
+/**
+ * Theme prefill contract: the "Start this story" links below carry
+ * `?theme=<slug>` so /create can pre-fill this page's theme. /create does
+ * not read the param yet (known gap — see W3 report); until it does, the
+ * links land on the normal blank /create form.
+ */
+const CREATE_HREF = '/create?theme=english-reading-for-beginners'
+
 export default function EnglishReadingForBeginnersPage() {
   const faqJsonLd = {
     '@context': 'https://schema.org',
@@ -153,13 +161,18 @@ export default function EnglishReadingForBeginnersPage() {
           sheet a teacher actually needs.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 mt-8 justify-center">
-          <Link href="/create" className="apple-button text-base px-8 py-3.5 text-center">
-            Make an ELL Storybook →
+          <Link href={CREATE_HREF} className="apple-button text-base px-8 py-3.5 text-center">
+            Start this story →
           </Link>
           <Link href="/pricing" className="apple-button-secondary text-base px-8 py-3.5 text-center">
             See Plans
           </Link>
         </div>
+        <p className="mt-4 text-sm">
+          <Link href="/#samples" className="text-[#FF6B8A] underline underline-offset-4">
+            See sample books →
+          </Link>
+        </p>
       </section>
 
       {/* Translation vs ELL */}
@@ -251,7 +264,7 @@ export default function EnglishReadingForBeginnersPage() {
           One idea in, a leveled English storybook plus its teaching pack out.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href="/create" className="apple-button text-base px-8 py-3.5 text-center">
+          <Link href={CREATE_HREF} className="apple-button text-base px-8 py-3.5 text-center">
             Start Creating Free
           </Link>
           <Link href="/vs/readkidz" className="apple-button-secondary text-base px-8 py-3.5 text-center">

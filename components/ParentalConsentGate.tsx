@@ -170,8 +170,11 @@ export default function ParentalConsentGate({ onConsentChange }: ParentalConsent
             <div className="mt-5 rounded-2xl bg-[#F2F2F7] p-4">
               <p className="text-xs font-semibold text-[#2D2D2D]">Payment-card verification</p>
               <p className="text-xs text-[#8E8E93] mt-1">
-                We place a one-time $1.00 charge on your own card through our payment provider. A card
-                held in your name is one of the recognised ways to verify that you are the parent.
+                We place a one-time $1.00 charge on your own card through our payment provider.
+                This is a verification fee, not a purchase. After your first paid order, email
+                support@sprouttales.com and we will refund the $1.00 to your card — refunds are
+                handled manually by our team. A card held in your name is one of the recognised
+                ways to verify that you are the parent.
               </p>
             </div>
 

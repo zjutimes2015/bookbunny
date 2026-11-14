@@ -124,6 +124,14 @@ const FAQS: { q: string; a: string }[] = [
   },
 ]
 
+/**
+ * Theme prefill contract: the "Start this story" links below carry
+ * `?theme=<slug>` so /create can pre-fill this page's theme. /create does
+ * not read the param yet (known gap — see W3 report); until it does, the
+ * links land on the normal blank /create form.
+ */
+const CREATE_HREF = '/create?theme=personalized-birthday-book'
+
 export default function PersonalizedBirthdayBookPage() {
   const faqJsonLd = {
     '@context': 'https://schema.org',
@@ -155,13 +163,18 @@ export default function PersonalizedBirthdayBookPage() {
           text, and a print-ready book for a gift they will keep.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 mt-8 justify-center">
-          <Link href="/create" className="apple-button text-base px-8 py-3.5 text-center">
-            Make a Birthday Book →
+          <Link href={CREATE_HREF} className="apple-button text-base px-8 py-3.5 text-center">
+            Start this story →
           </Link>
           <Link href="/pricing" className="apple-button-secondary text-base px-8 py-3.5 text-center">
             See Pricing
           </Link>
         </div>
+        <p className="mt-4 text-sm">
+          <Link href="/#samples" className="text-[#FF6B8A] underline underline-offset-4">
+            See sample books →
+          </Link>
+        </p>
       </section>
 
       {/* How it works */}
@@ -245,7 +258,7 @@ export default function PersonalizedBirthdayBookPage() {
           Start free, then pick the plan that fits — your books stay yours and Pro Animation Packs never expire.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href="/create" className="apple-button text-base px-8 py-3.5 text-center">
+          <Link href={CREATE_HREF} className="apple-button text-base px-8 py-3.5 text-center">
             Start Creating Free
           </Link>
           <Link href="/pricing" className="apple-button-secondary text-base px-8 py-3.5 text-center">

@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SITE_URL, SITE_NAME } from '@/lib/site'
 
-import BookFlip from '@/components/landing/BookFlip'
 import AgeBooks from '@/components/landing/AgeBooks'
 import CreatorsSection from '@/components/landing/CreatorsSection'
+import DemoSection from '@/components/DemoSection'
 
 
 export const metadata: Metadata = {
@@ -75,6 +75,10 @@ const FAQS = [
     open: true,
   },
   {
+    q: 'Can I try it without signing up?',
+    a: 'Yes. Pick a story starter at the top of this page and generate a free 8-page sample book starring Pip, our demo character — no account, no photo, no names. One free sample a day, with a watermarked preview.',
+  },
+  {
     q: 'Will the character really look the same on every page?',
     a: 'Yes — that\u2019s the whole point of SproutTales. Your hero is created once and locked as a visual reference, so the same face, outfit and art style carry through from page 1 to the last spread. Browse the sample books above to see it in action.',
   },
@@ -131,83 +135,45 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }}
       />
-      {/* 01 · Hero — parents first: your child is the hero */}
+      {/* 01 · Hero — the tool first: a free sample book, no sign-up */}
       <section className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 lg:px-8 lg:pb-24 lg:pt-16">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.02fr_1fr] lg:gap-14">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#E5E5EA] px-3 py-1.5 text-[13px] font-medium uppercase tracking-[0.12em] text-[#545558]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#FF6B8A]" />
-              Personalized AI picture books · GRL A–E leveled readers
+        <div className="mx-auto max-w-2xl text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#E5E5EA] px-3 py-1.5 text-[13px] font-medium uppercase tracking-[0.12em] text-[#545558]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#FF6B8A]" />
+            Personalized AI picture books · GRL A–E leveled readers
+          </span>
+
+          <h1 className="mt-6 text-4xl font-bold leading-[1.05] tracking-[-0.02em] text-[#2D2D2D] sm:text-5xl lg:text-[52px]">
+            Your child, as the hero of{' '}
+            <span className="whitespace-nowrap text-[#FF6B8A]">their own storybook.</span>
+          </h1>
+
+          <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-[#545558]">
+            Try it first: pick a story starter below and generate a complete
+            8-page sample book starring Pip, our demo character. No sign-up,
+            no photo, no names — the same character on every page, GRL A–E
+            leveled text, in minutes.
+          </p>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[13px] leading-relaxed text-[#545558]">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E5EA] bg-[#EAF7F1] px-2.5 py-1 font-medium text-[#3E9C7A]">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              COPPA-first
             </span>
-
-            <h1 className="mt-6 text-4xl font-bold leading-[1.05] tracking-[-0.02em] text-[#2D2D2D] sm:text-5xl lg:text-[52px]">
-              Your child, as the hero of{' '}
-              <span className="bunny-text-gradient whitespace-nowrap">their own storybook.</span>
-            </h1>
-
-            <p className="mt-5 max-w-md text-lg leading-relaxed text-[#545558]">
-              Upload a photo — with your recorded consent — and watch your child become
-              the hero. The same character on every page, GRL A–E leveled text, and
-              print-ready KDP PDFs. In minutes.
-            </p>
-
-            {/* Photo → character, front and center */}
-            <div className="mt-7 flex items-center gap-4 rounded-2xl border border-[#E5E5EA] bg-[#FFFBF7] p-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-dashed border-[#C7C7CC] bg-white text-[#545558]">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path
-                    d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.2l.8-1.4A1.5 1.5 0 0 1 9.8 4h4.4c.5 0 1 .3 1.3.6L16.3 6h1.2A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-8Z"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                  />
-                  <circle cx="12" cy="12.2" r="3.1" stroke="currentColor" strokeWidth="1.4" />
-                </svg>
-              </div>
-              <span className="shrink-0 text-lg text-[#545558]" aria-hidden="true">→</span>
-              <img src="/samples/cover-moon-bunny.webp" alt="Generated storybook hero" className="h-16 w-16 shrink-0 rounded-full border border-[#E5E5EA] object-cover" />
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-[#2D2D2D]">Photo → character</div>
-                <div className="mt-0.5 text-sm leading-snug text-[#545558]">
-                  Consent-first, never required. Your child&apos;s photo becomes their
-                  storybook hero.
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
-              <Link href="/create" className="apple-button px-7 py-3.5 text-base">
-                Create your first book — free
-              </Link>
-              <a
-                href="#samples"
-                className="text-sm font-medium text-[#2D2D2D] underline decoration-[#C7C7CC] underline-offset-4 transition-colors hover:decoration-[#2D2D2D]"
-              >
-                See sample books ↓
-              </a>
-              <Link
-                href="/buddy"
-                className="text-sm font-medium text-[#2D2D2D] underline decoration-[#C7C7CC] underline-offset-4 transition-colors hover:decoration-[#2D2D2D]"
-              >
-                Or talk to Lila & Kai
-              </Link>
-            </div>
-
-            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] leading-relaxed text-[#545558]">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E5EA] bg-[#EAF7F1] px-2.5 py-1 font-medium text-[#3E9C7A]">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                  <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                COPPA-first
-              </span>
-              <span>Free plan · 1 book · No credit card</span>
-              <span>Child photos never processed without recorded parental consent</span>
-            </div>
+            <span>Free sample · 1 a day · No credit card</span>
+            <a
+              href="#samples"
+              className="font-medium text-[#2D2D2D] underline decoration-[#C7C7CC] underline-offset-4 transition-colors hover:decoration-[#2D2D2D]"
+            >
+              See sample books ↓
+            </a>
           </div>
-
-          {/* Flippable hero book */}
-          <BookFlip />
         </div>
+
+        <DemoSection />
       </section>
 
       {/* 02 · Three-step strip */}
@@ -392,7 +358,7 @@ export default function HomePage() {
               {WAVE.map((h, i) => (
                 <span
                   key={i}
-                  className="flex-1 rounded-sm bg-[#C8A2E8]/45"
+                  className="flex-1 rounded-sm bg-[#FF6B8A]/30"
                   style={{ height: `${h}%` }}
                 />
               ))}

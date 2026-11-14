@@ -7,6 +7,7 @@ import {
   type WebhookEventData,
 } from '@waffo/pancake-ts'
 import { planTier, planGrant, planCycle, PRO_CREDITS_PER_BOOK, VPC_PRICE_CENTS } from '@/lib/payments/waffo'
+import { grantVpcCredit, stampFirstOrder } from '@/lib/payments/vpc-credit'
 import { recordCommissionForPayment } from '@/lib/affiliate'
 import { recordConsent, VPC_METHODS, type VpcMethodId } from '@/lib/compliance/consent'
 import { allowanceFor } from '@/lib/allocation'
@@ -91,6 +92,30 @@ export async function POST(request: Request) {
             consentUserAgent: 'waffo-webhook',
           })
           console.log(`✅ Parental consent verified for ${userId} via Waffo (${d.orderId})`)
+
+          // The $1.00 verification fee is recorded as a pending credit in the
+          // vpc_credits ledger (see lib/payments/vpc-credit.ts) so it can be
+          // refunded manually after the user's first paid order. Checkout
+          // charges full price; there is no automatic discount. Granting must
+          // never break consent handling: the consent record above is the
+          // legal fact, and a failed grant can be backfilled from the payments
+          // + parental_consents rows, which both carry this order id
+          // (scripts/backfill-vpc-credits.cjs).
+          try {
+            const grant = await grantVpcCredit(sql, {
+              userId,
+              sourceOrderId: d.orderId,
+              amountCents: amount || VPC_PRICE_CENTS,
+              currency: d.currency || 'USD',
+            })
+            if (grant.granted) {
+              console.log(`✅ VPC credit granted for ${userId} (${d.orderId})`)
+            } else if (grant.reason === 'unsupported-currency') {
+              console.warn('VPC credit skipped: non-USD verification charge, needs manual review', { userId, orderId: d.orderId, currency: d.currency })
+            }
+          } catch (creditErr) {
+            console.error('VPC credit grant error (consent recorded; backfill from payments/parental_consents):', { userId, orderId: d.orderId, error: creditErr })
+          }
         } else if (tier === 'pro-anim') {
           // Pro 动画面包：独立额度池（1 本 = 3 credits）
           const credits = planGrant(plan) * PRO_CREDITS_PER_BOOK
@@ -124,6 +149,24 @@ export async function POST(request: Request) {
                 updated_at = NOW()
             WHERE id = ${userId}
           `
+        }
+
+        // First paid order after a VPC grant: stamp it onto the pending $1.00
+        // credit so the ledger records which order the credit belongs to.
+        // Stamping is NOT consumption — checkout charges full price and the
+        // credit is honored by a manual refund (see
+        // lib/payments/vpc-credit.ts and docs/vpc-credit-manual-redemption.md).
+        // Like the affiliate commission above, a stamp failure must never
+        // block payment handling.
+        if (tier !== 'vpc') {
+          try {
+            const stamped = await stampFirstOrder(sql, { userId, orderId: d.orderId })
+            if (stamped) {
+              console.log(`ℹ️ First paid order ${d.orderId} for ${userId} completed with a pending VPC credit — credit recorded for manual refund, not applied at checkout`)
+            }
+          } catch (stampErr) {
+            console.error('VPC credit first-order stamp error:', { userId, orderId: d.orderId, error: stampErr })
+          }
         }
         console.log(`✅ Waffo payment: ${d.buyerEmail} -> ${plan} (${d.orderId})`)
         break

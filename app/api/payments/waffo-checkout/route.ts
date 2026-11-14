@@ -63,6 +63,16 @@ export async function POST(req: NextRequest) {
     }
 
     // 正式：创建 Waffo 托管结账会话（authenticated 模式，订单绑定我们自己的 userId）
+    //
+    // Waffo-side wiring gap: checkout does not apply the credit; do not claim
+    // otherwise. The $1.00 VPC verification fee is recorded as a pending credit
+    // in the vpc_credits ledger (lib/payments/vpc-credit.ts) when the VPC charge
+    // settles, but this checkout still charges the product's full price: the
+    // SDK's priceSnapshot override needs a verified taxCategory and proof that a
+    // subscription override touches the first period only, neither of which is
+    // established. Do not add a price override here until both are verified
+    // against Waffo docs and a test-mode checkout. Pending credits are honored
+    // by a manual refund instead — see docs/vpc-credit-manual-redemption.md.
     const result = await getWaffo().checkout.authenticated.create({
       productId: selected.productId,
       currency: selected.currency,

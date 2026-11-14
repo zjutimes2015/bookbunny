@@ -4,6 +4,7 @@ import { Fragment, useEffect, useState } from 'react'
 import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 import { REFUND_WINDOW_DAYS, SITE_NAME } from '@/lib/site'
+import { readPricingGates } from './gates'
 
 type MatrixValue = string | boolean
 
@@ -168,12 +169,23 @@ const PRO_PACKS: PackCard[] = [
   { key: 'pro_anim_10', name: 'Pro Animation Pack ×2', price: 100, books: 10, badge: 'Best value', available: true },
 ]
 
-function priceLabel(plan: PlanCard, annual: boolean) {
+/**
+ * 年付总额：现有 25% 价用 plan.annualTotal；5 折开关开启时用月付 × 12 × 0.5
+ *（由现有月付价算出，不新编价格）。Free 档返回 null。
+ */
+function annualTotalFor(plan: PlanCard, annual50: boolean): number | null {
+  if (plan.monthly === 0) return null
+  if (annual50) return plan.monthly * 12 * 0.5
+  return plan.annualTotal
+}
+
+function priceLabel(plan: PlanCard, annual: boolean, annual50 = false) {
   if (plan.monthly === 0) return { amount: '$0', suffix: 'forever' }
-  if (annual && plan.annualTotal) {
-    const perMonth = plan.annualTotal / 12
+  const annualTotal = annualTotalFor(plan, annual50)
+  if (annual && annualTotal) {
+    const perMonth = annualTotal / 12
     const amount = Number.isInteger(perMonth) ? `$${perMonth}` : `$${perMonth.toFixed(2)}`
-    return { amount, suffix: `/mo · $${plan.annualTotal}/year` }
+    return { amount, suffix: `/mo · $${annualTotal}/year` }
   }
   return { amount: `$${plan.monthly}`, suffix: '/month' }
 }
@@ -223,21 +235,62 @@ const PRICING_FAQS: { q: string; a: string }[] = [
   },
 ]
 
-const PRICING_FAQ_SCHEMA = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: PRICING_FAQS.map(({ q, a }) => ({
-    '@type': 'Question',
-    name: q,
-    acceptedAnswer: { '@type': 'Answer', text: a },
-  })),
+/**
+ * 「How much does an AI children's book cost?」的答案：年付总额随 5 折开关变化，
+ * 其余数字（月付价、本数、每本价、Pro 包价）与现有文案一致，全部由 PLANS 算出。
+ */
+function costFaqAnswer(annual50: boolean): string {
+  const byKey = Object.fromEntries(PLANS.map((p) => [p.key, p]))
+  const creator = byKey.creator
+  const studio = byKey.studio
+  const teacher = byKey.teacher
+  const perBook = (plan: PlanCard) => `$${(plan.monthly / plan.books).toFixed(2)}`
+  return (
+    `Creator is $${creator.monthly}/month for ${creator.books} books (${perBook(creator)} per book), ` +
+    `or $${annualTotalFor(creator, annual50)}/year. ` +
+    `Studio is $${studio.monthly}/month for ${studio.books} books (${perBook(studio)} per book), ` +
+    `or $${annualTotalFor(studio, annual50)}/year. ` +
+    `Teacher is $${teacher.monthly}/month for ${teacher.books} books, ` +
+    `or $${annualTotalFor(teacher, annual50)}/year. ` +
+    'Pro Animation Packs are one-off: $55 for 5 animated books, $100 for 10.'
+  )
+}
+
+/** 开关关闭时返回 PRICING_FAQS 本身（零文案变化）；开启时只替换 cost 答案。 */
+function faqsFor(annual50: boolean): { q: string; a: string }[] {
+  if (!annual50) return PRICING_FAQS
+  return PRICING_FAQS.map((item) =>
+    item.q === "How much does an AI children's book cost?"
+      ? { ...item, a: costFaqAnswer(true) }
+      : item,
+  )
+}
+
+function faqSchemaFor(faqs: { q: string; a: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map(({ q, a }) => ({
+      '@type': 'Question',
+      name: q,
+      acceptedAnswer: { '@type': 'Answer', text: a },
+    })),
+  }
 }
 
 export default function PricingPage() {
-  const [annual, setAnnual] = useState(false)
+  // 功能开关在渲染时读取（便于测试切换；Next 会在构建时内联 NEXT_PUBLIC_ 变量）。
+  const gates = readPricingGates({
+    annualBillingEnabled: process.env.NEXT_PUBLIC_ANNUAL_BILLING_ENABLED,
+    bookPacksEnabled: process.env.NEXT_PUBLIC_BOOK_PACKS_ENABLED,
+  })
+  // 5 折年付开启时默认选中 Yearly；关闭时与今天一样默认 Monthly。
+  const [annual, setAnnual] = useState(gates.annualBilling50)
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
   // 哪些套餐已开售（后端建好商品才为 true）；null = 还没拉到
   const [purchasable, setPurchasable] = useState<Record<string, boolean> | null>(null)
+  const faqs = faqsFor(gates.annualBilling50)
+  const faqSchema = faqSchemaFor(faqs)
 
   useEffect(() => {
     fetch('/api/plans')
@@ -292,7 +345,7 @@ export default function PricingPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(PRICING_FAQ_SCHEMA) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
       <div className="text-center mb-10">
         <BunnyMascot size={60} />
@@ -319,15 +372,21 @@ export default function PricingPage() {
           }`}
         >
           Annual
-          <span className="ml-1.5 text-[11px] font-semibold text-[#FF6B8A]">Save up to 25%</span>
+          <span className="ml-1.5 text-[11px] font-semibold text-[#FF6B8A]">
+            {gates.annualBilling50 ? 'Save 50%' : 'Save up to 25%'}
+          </span>
         </button>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {PLANS.map((plan) => {
-          const price = priceLabel(plan, annual)
+          const price = priceLabel(plan, annual, gates.annualBilling50)
           const planKey = annual ? `${plan.key}_annual` : `${plan.key}_monthly`
-          const available = isAvailable(planKey)
+          // 5 折年付商品尚未创建：开关开启且选中 Yearly 时，年付按钮不可下单，
+          // 避免用户按旧商品价（$261/$711/$891）被收费；月付不受影响。
+          const annualComingSoon = gates.annualBilling50 && annual && plan.checkout
+          const available = isAvailable(planKey) && !annualComingSoon
+          const effectiveAnnualTotal = annualTotalFor(plan, gates.annualBilling50)
           return (
             <div
               key={plan.name}
@@ -343,9 +402,9 @@ export default function PricingPage() {
                 <span className="text-3xl font-bold text-[#2D2D2D]">{price.amount}</span>
                 <span className="text-[#8E8E93] text-xs">{price.suffix}</span>
               </div>
-              {annual && plan.annualTotal && (
+              {annual && effectiveAnnualTotal && (
                 <p className="text-[11px] text-[#4A9E8E] mt-1">
-                  ${plan.monthly * 12 - plan.annualTotal} saved per year
+                  ${plan.monthly * 12 - effectiveAnnualTotal} saved per year
                 </p>
               )}
               <p className="text-sm text-[#8E8E93] mt-1">{plan.desc}</p>
@@ -379,13 +438,93 @@ export default function PricingPage() {
               </button>
               {!available && (
                 <p className="mt-2 text-[11px] text-[#8E8E93] text-center">
-                  This plan is being prepared. Free and Creator are available now.
+                  {annualComingSoon
+                    ? 'New 50%-off annual billing is coming soon. Monthly billing is available now.'
+                    : 'This plan is being prepared. Free and Creator are available now.'}
                 </p>
               )}
             </div>
           )
         })}
       </div>
+
+      {/* Rights ladder — what each tier can do with a finished book.
+          Always visible (not gated): every claim mirrors the export gating in
+          app/create (exportWatermark / canKdp). Free exports carry the
+          'SproutTales Preview' watermark; Creator and above export without
+          it, including the KDP full cover PDF and commercial license. */}
+      <div className="apple-card mt-6 p-6">
+        <h2 className="text-base font-bold text-[#2D2D2D]">What you can do with your books</h2>
+        <div className="mt-4 grid gap-6 sm:grid-cols-2">
+          <div>
+            <h3 className="text-sm font-semibold text-[#2D2D2D]">Free</h3>
+            <ul className="mt-2 space-y-2 text-sm text-[#8E8E93] leading-relaxed">
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 text-[#FF6B8A]">•</span>
+                <span>Read your books in the app.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 text-[#FF6B8A]">•</span>
+                <span>Export a watermarked preview PDF.</span>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-[#2D2D2D]">Creator, Studio &amp; Teacher</h3>
+            <ul className="mt-2 space-y-2 text-sm text-[#8E8E93] leading-relaxed">
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 text-[#FF6B8A]">•</span>
+                <span>PDF export with no watermark.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 text-[#FF6B8A]">•</span>
+                <span>KDP interior + full cover PDFs, ready for Amazon KDP.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 text-[#FF6B8A]">•</span>
+                <span>Commercial license included.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Book packs — gated by NEXT_PUBLIC_BOOK_PACKS_ENABLED. No Waffo products
+          or prices exist for book packs yet, so the cards are coming-soon
+          placeholders: no prices, no checkout. Do not wire checkout until
+          products and plan keys exist. */}
+      {gates.bookPacks && (
+        <div id="book-packs" className="apple-card mt-6 p-6 scroll-mt-24">
+          <h3 className="text-base font-semibold text-[#2D2D2D]">Book packs</h3>
+          <p className="text-sm text-[#8E8E93] mt-1">
+            Buy books one at a time, without a subscription. Book packs are coming soon —
+            pricing is not final and nothing is on sale yet.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4 mt-5">
+            {[
+              { name: 'Single book', desc: 'One complete book, yours to keep.' },
+              { name: '3-book pack', desc: 'Three books — a series, or one for each reader.' },
+            ].map((pack) => (
+              <div
+                key={pack.name}
+                className="rounded-2xl border border-[#E5E5EA] p-5 flex items-center justify-between gap-4"
+              >
+                <div>
+                  <span className="text-sm font-semibold text-[#2D2D2D]">{pack.name}</span>
+                  <p className="text-xs text-[#8E8E93] mt-1">{pack.desc}</p>
+                </div>
+                <button
+                  type="button"
+                  disabled
+                  className="text-sm font-medium px-4 py-2.5 rounded-xl shrink-0 bg-[#F2F2F7] text-[#8E8E93] disabled:opacity-70"
+                >
+                  Coming soon
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Pro Animation Packs */}
       <div id="pro-animation" className="apple-card mt-6 p-6 scroll-mt-24 ring-1 ring-[#C8A2E8]/30">
@@ -560,7 +699,7 @@ export default function PricingPage() {
           What you actually get on each plan.
         </p>
         <div className="mt-6">
-          {PRICING_FAQS.map((item) => (
+          {faqs.map((item) => (
             <details key={item.q} className="group border-b border-[#E5E5EA] py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-[#2D2D2D] [&::-webkit-details-marker]:hidden">
                 {item.q}

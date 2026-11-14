@@ -141,6 +141,14 @@ const FAQSchema = {
   })),
 }
 
+/**
+ * Theme prefill contract: the "Start this story" links below carry
+ * `?theme=<slug>` so /create can pre-fill this page's theme. /create does
+ * not read the param yet (known gap — see W3 report); until it does, the
+ * links land on the normal blank /create form.
+ */
+const CREATE_HREF = '/create?theme=personalized-childrens-books'
+
 export default function PersonalizedBooksPage() {
   return (
     <div className="min-h-screen">
@@ -172,13 +180,18 @@ export default function PersonalizedBooksPage() {
           Create a one-of-a-kind storybook where your child is the hero. AI-written, consistently illustrated, and ready to print — perfect for birthdays, Christmas, and every special moment.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 mt-8 justify-center">
-          <Link href="/create" className="apple-button text-base px-8 py-3.5 text-center">
-            Make a Personalized Book →
+          <Link href={CREATE_HREF} className="apple-button text-base px-8 py-3.5 text-center">
+            Start this story →
           </Link>
           <Link href="/pricing" className="apple-button-secondary text-base px-8 py-3.5 text-center">
             View Plans
           </Link>
         </div>
+        <p className="mt-4 text-sm">
+          <Link href="/#samples" className="text-[#FF6B8A] underline underline-offset-4">
+            See sample books →
+          </Link>
+        </p>
       </section>
 
       {/* Occasions */}
@@ -228,7 +241,7 @@ export default function PersonalizedBooksPage() {
           <p className="text-[#8E8E93] mb-8 max-w-md mx-auto">
             Start free with one book. Upgrade anytime for KDP export and unlimited styles.
           </p>
-          <Link href="/create" className="apple-button text-base px-8 py-3.5 inline-block bg-white text-[#2D2D2D] hover:bg-[#F5F5F7]">
+          <Link href={CREATE_HREF} className="apple-button text-base px-8 py-3.5 inline-block bg-white text-[#2D2D2D] hover:bg-[#F5F5F7]">
             Start Creating Free →
           </Link>
         </div>

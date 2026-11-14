@@ -8,7 +8,7 @@ vi.mock('@/lib/auth-context', () => ({
 
 // --- Mock heavy child components ---
 vi.mock('@/components/BunnyMascot', () => ({ default: () => null }))
-vi.mock('@/components/ParentalConsentGate', () => ({ default: () => null }))
+vi.mock('@/components/ParentalConsentGate', () => ({ default: () => <div data-testid="consent-gate" /> }))
 
 // AIPromptBox: render an input that forwards value/onChange
 vi.mock('@/components/AIPromptBox', () => ({
@@ -246,4 +246,50 @@ describe('CreatePage — English learner (ELL) mode', () => {
       expect(body.ell).toBeUndefined()
     })
   }, 20000)
+})
+
+describe('CreatePage — character path order & consent gate timing', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFetch.mockReset()
+    mockFetch.mockImplementation(async (url: string) => {
+      if (url === '/api/verify-turnstile') {
+        return { ok: true, json: async () => ({ success: true }) }
+      }
+      if (url === '/api/create-character') {
+        return { ok: true, json: async () => ({ card: { name: 'Luna' }, consistencyLine: '', imageB64: '', refSeed: 1 }) }
+      }
+      return { ok: true, json: async () => ({}) }
+    })
+  })
+
+  it('offers the free describe path first and selected by default', () => {
+    render(<CreatePage />)
+    const radios = screen.getAllByRole('radio')
+    expect(radios).toHaveLength(2)
+    expect(radios[0]).toHaveTextContent(/Describe your character/i)
+    expect(radios[1]).toHaveTextContent(/Use a photo/i)
+    expect(radios[0]).toHaveAttribute('aria-checked', 'true')
+    expect(radios[1]).toHaveAttribute('aria-checked', 'false')
+  })
+
+  it('does not render the consent gate before the user opts into photos', () => {
+    render(<CreatePage />)
+    expect(screen.queryByTestId('consent-gate')).not.toBeInTheDocument()
+  })
+
+  it('renders the consent gate only after the photo path is chosen, and hides it again on switching back', async () => {
+    render(<CreatePage />)
+
+    fireEvent.click(screen.getByRole('radio', { name: /Use a photo/i }))
+    await waitFor(() => {
+      expect(screen.getByTestId('consent-gate')).toBeInTheDocument()
+    })
+    expect(screen.getByRole('radio', { name: /Use a photo/i })).toHaveAttribute('aria-checked', 'true')
+
+    fireEvent.click(screen.getByRole('radio', { name: /Describe your character/i }))
+    await waitFor(() => {
+      expect(screen.queryByTestId('consent-gate')).not.toBeInTheDocument()
+    })
+  })
 })
