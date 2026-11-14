@@ -197,6 +197,57 @@ export interface CharacterCard {
   noChangeItems: string
   /** 照片使用方案（文档 3.x）：illustrated=方案A 不用真照 / photo-family=方案B 仅家庭用 / photo-public=方案B 可公开 */
   photoUsage?: 'illustrated' | 'photo-family' | 'photo-public'
+  /**
+   * 角色物种：child=孩子（默认，缺省即儿童行为）/ pet=宠物。
+   * 可选字段——存量角色卡没有它，一律按 child 处理，现有流程原样不动。
+   */
+  kind?: CharacterKind
+  /**
+   * 宠物物种（如 dog / cat），仅 kind='pet' 时有意义。
+   * 由用户填写或由模型从照片识别；缺省时角色 prompt 默认为 dog（见 lib/api/character）。
+   */
+  species?: string
+}
+
+/** 角色物种：孩子 / 宠物 */
+export type CharacterKind = 'child' | 'pet'
+
+/**
+ * 图书类型：child=纯儿童 / child-pet=孩子+宠物合体 / pet=纯宠物（成人礼物口径）。
+ * 默认永远是 child——现有纯儿童流程的行为必须原样不动。
+ */
+export type BookType = 'child' | 'child-pet' | 'pet'
+
+/**
+ * 纯宠物款发给故事/存书接口的 ageGroup 占位值。
+ * 宠物书没有年龄组；用 'adult' 占位，避免存量 '3-5' 误导（分级链路在无分级模式下本就跳过）。
+ */
+export const PET_BOOK_AGE_GROUP = 'adult'
+
+/** 图书类型选项（前端选择器用，label/desc 为英文，读者可见） */
+export const BOOK_TYPE_OPTIONS: { id: BookType; label: string; desc: string }[] = [
+  { id: 'child', label: 'Child story', desc: 'Your child is the hero' },
+  { id: 'child-pet', label: 'Child + pet', desc: 'Your child and pet together' },
+  { id: 'pet', label: 'Pet story', desc: 'Your pet is the hero · a gift for grown-ups' },
+]
+
+/**
+ * 该图书类型是否涉及孩子照片、因而需要展示家长同意门。
+ * 只有纯宠物款不需要——宠物照片不是儿童个人信息，COPPA 同意流程不适用。
+ * 合体款有孩子照片，必须过同意门。
+ */
+export function needsConsentGate(bookType: BookType): boolean {
+  return bookType !== 'pet'
+}
+
+/** 该角色的照片是否属于儿童照片、因而上传前需要生效的家长同意。 */
+export function photoNeedsConsent(kind: CharacterKind): boolean {
+  return kind === 'child'
+}
+
+/** 该图书类型是否走无分级模式（跳过 GRL 约束与词汇校验）。仅纯宠物款。 */
+export function isUngradedBookType(bookType: BookType): boolean {
+  return bookType === 'pet'
 }
 
 /** 故事生成结果（含结构化单页大纲） */

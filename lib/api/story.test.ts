@@ -167,3 +167,91 @@ describe('generateStory — ELL mode', () => {
     expect(promptOf(fetchMock)).not.toContain('English language learners')
   })
 })
+
+describe('generateStory — ungraded mode (pet keepsake)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('uses the keepsake prompt and injects no GRL constraints', async () => {
+    const fetchMock = vi.fn(async () => mockModelResponse(8))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateStory({
+      theme: 'the story of our first year together',
+      ageGroup: 'adult',
+      characterName: 'Buddy',
+      pages: 8,
+      ungraded: true,
+    })
+
+    const prompt = promptOf(fetchMock)
+    expect(prompt).toContain('keepsake storybook')
+    expect(prompt).toContain('Audience: adult pet owner')
+    expect(prompt).toContain('warm reflective tone for an adult reader')
+    expect(prompt).not.toContain('Reading Level: GRL')
+    expect(prompt).not.toContain('Page count: EXACTLY')
+    expect(prompt).not.toContain('Target Age:')
+    expect(prompt).not.toContain('sentence read to the child')
+  })
+
+  it('returns no level, no vocabulary check and no quiz, with a single model call', async () => {
+    const fetchMock = vi.fn(async () => mockModelResponse(8))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const story = await generateStory({
+      theme: 'a brave rescue dog finds home',
+      ageGroup: 'adult',
+      characterName: 'Buddy',
+      pages: 8,
+      ungraded: true,
+    })
+
+    expect(story.outline).toHaveLength(8)
+    expect(story.level).toBeUndefined()
+    expect(story.levelLabel).toBeUndefined()
+    expect(story.vocabularyPassed).toBeUndefined()
+    expect(story.vocabularyRatio).toBeUndefined()
+    expect(story.quiz).toBeUndefined()
+    // 词汇校验是本地的，Quiz 会再调一次模型——一次调用即证明两条后处理都被跳过
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the graded prompt when ungraded is absent, even for a pet theme', async () => {
+    const fetchMock = vi.fn(async () => mockModelResponse(8))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateStory({
+      theme: 'my dog and I find a hidden garden',
+      ageGroup: '3-5',
+      characterName: 'Mia, Buddy',
+      pages: 8,
+      level: 'C',
+    })
+
+    const prompt = promptOf(fetchMock)
+    expect(prompt).toContain('Reading Level: GRL C')
+    expect(prompt).toContain('Page count: EXACTLY 8 pages')
+    expect(prompt).not.toContain('keepsake storybook')
+  })
+
+  it('ignores ELL constraints when ungraded, and keeps the requested language', async () => {
+    const fetchMock = vi.fn(async () => mockModelResponse(8))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateStory({
+      theme: 'the cat who guarded the garden',
+      ageGroup: 'adult',
+      characterName: 'Mochi',
+      pages: 8,
+      language: 'zh',
+      ell: { enabled: true, homeLanguage: 'Spanish' },
+      ungraded: true,
+    })
+
+    const prompt = promptOf(fetchMock)
+    expect(prompt).not.toContain('English language learners')
+    expect(prompt).toContain('written in Simplified Chinese')
+  })
+})

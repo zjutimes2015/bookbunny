@@ -548,6 +548,18 @@ export default function HomePage() {
         </p>
       </section>
 
+      {/* 06c · Pet storybooks — a separate line for grown-ups, kept apart
+          from the children's bedtime pages above: a keepsake book starring
+          a pet, written for the adult reader. */}
+      <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8 lg:pb-20">
+        <p className="text-sm leading-relaxed text-[#545558]">
+          For grown-ups:{' '}
+          <Link href="/pets" className="underline underline-offset-4">a personalized pet storybook</Link>{' '}
+          starring your dog or cat — the same pet on every page, written as a
+          keepsake with no reading level. A child + pet book is on the same page.
+        </p>
+      </section>
+
       {/* 07 · Final CTA + FAQ */}
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
         <div className="rounded-3xl border border-[#FFDAB9] bg-[#FFF5EE] px-6 py-12 text-center">

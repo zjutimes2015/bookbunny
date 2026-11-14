@@ -7,8 +7,8 @@ import MultiCharacterManager from '@/components/MultiCharacterManager'
 import ParentalConsentGate from '@/components/ParentalConsentGate'
 import TurnstileWidget from '@/components/TurnstileWidget'
 import AIPromptBox from '@/components/AIPromptBox'
-import type { PageOutline, StyleCard, StyleLexicon, CharacterCard, AspectRatio, BookLanguage } from '@/lib/types/book'
-import { ASPECT_OPTIONS, BOOK_LANGUAGES, DEFAULT_BOOK_LANGUAGE } from '@/lib/types/book'
+import type { PageOutline, StyleCard, StyleLexicon, CharacterCard, AspectRatio, BookLanguage, BookType, CharacterKind } from '@/lib/types/book'
+import { ASPECT_OPTIONS, BOOK_LANGUAGES, DEFAULT_BOOK_LANGUAGE, BOOK_TYPE_OPTIONS, PET_BOOK_AGE_GROUP, needsConsentGate, isUngradedBookType } from '@/lib/types/book'
 import { STYLE_LIBRARY } from '@/data/style-library'
 import { runImageChecks, runThreeStepChecks } from '@/lib/page-checks'
 import { buildInteriorPdf, buildCoverPdf, type KdpPageInput } from '@/lib/kdp/export'
@@ -39,6 +39,10 @@ interface CharData {
   imageB64?: string
   /** 正在生成角色卡 */
   generating?: boolean
+  /** 角色物种（缺省 child） */
+  kind?: CharacterKind
+  /** 宠物物种（如 dog / cat），仅 kind='pet' 时有意义 */
+  species?: string
 }
 
 /** Page function labels (English — reader-facing) */
@@ -52,6 +56,22 @@ const THEME_IDEAS = [
   'A journey to the moon',
   'A shy dragon learns to share',
   'A bedtime story under the sea',
+]
+
+/** Quick-start ideas for pet keepsake books (adult gift tone, no reading level) */
+const PET_THEME_IDEAS = [
+  'The story of our first year together',
+  'A brave rescue dog finds home',
+  'The cat who guarded the garden',
+  'One perfect day at the beach',
+]
+
+/** Quick-start ideas for child + pet books (still a children’s story, GRL-graded) */
+const COMBO_THEME_IDEAS = [
+  'My dog and I find a hidden garden',
+  'A bedtime adventure with my cat',
+  'My best friend the puppy saves the day',
+  'The day my cat taught me to be brave',
 ]
 
 /** KDP 裁切尺寸选项（以 lib/kdp/spec 为唯一来源） */
@@ -111,6 +131,25 @@ export default function CreatePage() {
   const maxCharacters = isFreeTier ? 1 : 5
   const [step, setStep] = useState<Step>('setup')
   const [characters, setCharacters] = useState<CharData[]>([])
+
+  // 图书类型（默认纯儿童，现有流程原样不动）：
+  // child=纯儿童 / child-pet=孩子+宠物合体（仍走 GRL 分级 + 同意门）/ pet=纯宠物（无分级 + 无同意门）
+  const [bookType, setBookType] = useState<BookType>('child')
+  // 落地页 /pets 用 ?type=pet / ?type=child-pet 预选类型；只读一次，避免与用户手动选择打架。
+  // 直接读 window.location（客户端 effect），不引入 useSearchParams，页面无需 Suspense 边界。
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('type')
+    if (t === 'pet' || t === 'child-pet') setBookType(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // 切换图书类型即清空角色：角色归属所选类型，孩子角色不能带进纯宠物书，反之亦然。
+  const handleBookTypeChange = (next: BookType) => {
+    if (next === bookType) return
+    setBookType(next)
+    setCharacters([])
+    setConsentBlocked(false)
+  }
   const [story, setStory] = useState<{
     title: string
     outline: PageOutline[]
@@ -155,6 +194,11 @@ export default function CreatePage() {
   const [level, setLevel] = useState('C')
   const [pageCount, setPageCount] = useState(12) // 第一步：页数
   const effectivePages = Math.min(pageCount, maxPages)
+
+  // 纯宠物款没有年龄组：发给故事/风格/存书接口的 ageGroup 用 'adult' 占位（分级链路本就跳过）。
+  const effectiveAgeGroup = bookType === 'pet' ? PET_BOOK_AGE_GROUP : ageGroup
+  const ungraded = isUngradedBookType(bookType)
+  const themeIdeas = bookType === 'pet' ? PET_THEME_IDEAS : bookType === 'child-pet' ? COMBO_THEME_IDEAS : THEME_IDEAS
 
   // 绘本内容语言（出海默认英语，一本只用一种语言）
   const [language, setLanguage] = useState<BookLanguage>(DEFAULT_BOOK_LANGUAGE)
@@ -201,7 +245,7 @@ export default function CreatePage() {
       const res = await fetch('/api/style', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ styleId: id, ageGroup, theme, language }),
+        body: JSON.stringify({ styleId: id, ageGroup: effectiveAgeGroup, theme, language }),
       })
       const data = await res.json()
       if (data.card && data.lexicon) {
@@ -249,9 +293,10 @@ export default function CreatePage() {
   }
 
   // Multi-character：加入后立即生成「角色设定卡 + 一致性固定句 + 角色参考图」
-  const handleAddCharacter = async (name: string, photo?: File) => {
+  const handleAddCharacter = async (name: string, photo?: File, kind: CharacterKind = 'child', species?: string) => {
     // 儿童照片属于个人信息：没有生效的家长同意就绝不处理。
-    if (photo && !photoConsent) {
+    // 宠物照片不是儿童个人信息，不触发同意门（服务端同样按 kind 放行，见 /api/create-character）。
+    if (photo && kind === 'child' && !photoConsent) {
       setConsentBlocked(true)
       return
     }
@@ -261,7 +306,7 @@ export default function CreatePage() {
       return
     }
     const id = `char_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
-    const draft: CharData = { id, name, generating: true }
+    const draft: CharData = { id, name, generating: true, kind, species }
     if (photo) draft.photoPreview = URL.createObjectURL(photo)
     setCharacters(prev => [...prev, draft])
 
@@ -270,10 +315,12 @@ export default function CreatePage() {
       fd.append('name', name)
       if (photo) fd.append('photo', photo)
       fd.append('theme', theme)
-      fd.append('ageGroup', ageGroup)
+      fd.append('ageGroup', effectiveAgeGroup)
       fd.append('photoUsage', photoUsage)
       fd.append('language', language)
       fd.append('turnstileToken', turnstileToken || '')
+      fd.append('kind', kind)
+      if (species) fd.append('species', species)
       if (styleCard?.mainStyle) fd.append('styleName', styleCard.mainStyle)
       if (styleLexicon) fd.append('styleLexicon', JSON.stringify(styleLexicon))
 
@@ -319,9 +366,10 @@ export default function CreatePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          theme, ageGroup, characterName: charNames, pages: effectivePages, level,
+          theme, ageGroup: effectiveAgeGroup, characterName: charNames, pages: effectivePages, level,
           language: ellEnabled ? 'en' : language,
           ell: ellEnabled ? { enabled: true, support: 'full', homeLanguage: ellHomeLanguage || undefined } : undefined,
+          ungraded, // 纯宠物款跳过 GRL 分级与词汇校验；缺省 false，儿童链路不变
           styleLexicon, styleCard,
           characterCards: characters.map(c => c.card).filter(Boolean), // 阶段3：角色一致性
           turnstileToken: turnstileToken || '', // cookie 缺失时的兜底
@@ -444,7 +492,7 @@ export default function CreatePage() {
         body: JSON.stringify({
           title: story.title,
           outline: story.outline,
-          ageGroup,
+          ageGroup: effectiveAgeGroup,
           theme,
           level: story.level || null,
           quiz: story.quiz || null,
@@ -725,6 +773,27 @@ export default function CreatePage() {
               Add up to {maxCharacters} {maxCharacters === 1 ? 'character' : 'characters'}
             </p>
           </div>
+          {/* 图书类型：默认纯儿童；切换即清空角色（角色归属所选类型） */}
+          <div className="mb-6" role="group" aria-label="Book type">
+            <div className="grid grid-cols-3 gap-2">
+              {BOOK_TYPE_OPTIONS.map(opt => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => handleBookTypeChange(opt.id)}
+                  aria-pressed={bookType === opt.id}
+                  className={`rounded-xl border px-2 py-2.5 text-center transition-all ${
+                    bookType === opt.id
+                      ? 'border-[#FF6B8A] bg-[#FFF5EE] ring-1 ring-[#FF6B8A]'
+                      : 'border-[#E5E5EA] bg-white hover:border-[#C8A2E8]'
+                  }`}
+                >
+                  <span className="block text-sm font-bold text-[#2D2D2D]">{opt.label}</span>
+                  <span className="block text-[10px] text-[#8E8E93] mt-0.5 leading-tight">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
           {/* 角色路径选择：文字描述在先（默认）、照片在后；同意门只在照片路径下渲染 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4" role="radiogroup" aria-label="How to create your character">
             <button
@@ -756,11 +825,20 @@ export default function CreatePage() {
             >
               <span className="block text-sm font-semibold text-[#2D2D2D]">Use a photo</span>
               <span className="block text-xs text-[#8E8E93] mt-0.5">
-                Upload a photograph of your child. Parental consent verification is required first.
+                {bookType === 'pet'
+                  ? 'Upload a photograph of your pet. No parental-consent step — a pet photo is not a child’s personal information.'
+                  : 'Upload a photograph of your child. Parental consent verification is required first.'}
               </span>
             </button>
           </div>
-          {characterPath === 'photo' && (
+          {/* 家长同意门只在「照片路径 + 涉及孩子照片的类型」出现；纯宠物款的宠物照片不走 COPPA 流程 */}
+          {bookType === 'pet' && (
+            <p className="text-xs text-[#8E8E93] text-center mb-4">
+              Pet-only books are written for grown-ups — no reading level, and no parental-consent
+              step for your pet&apos;s photo. Books that include a child still ask for consent first.
+            </p>
+          )}
+          {characterPath === 'photo' && needsConsentGate(bookType) && (
             <ParentalConsentGate onConsentChange={setPhotoConsent} />
           )}
           {consentBlocked && (
@@ -807,11 +885,14 @@ export default function CreatePage() {
           )}
           <div className="space-y-6">
             <MultiCharacterManager
+              key={bookType}
               characters={characters}
               onAdd={handleAddCharacter}
               onRemove={handleRemoveCharacter}
               onUpdate={handleUpdateCharacter}
               maxCharacters={maxCharacters}
+              defaultKind={bookType === 'pet' ? 'pet' : 'child'}
+              showKindSelector={bookType === 'child-pet'}
             />
             {characters.length > 0 && (
               <>
@@ -821,11 +902,12 @@ export default function CreatePage() {
                     value={theme}
                     onChange={setTheme}
                     placeholder="e.g. A magical forest adventure..."
-                    suggestions={THEME_IDEAS}
+                    suggestions={themeIdeas}
                   />
                   {/* R1 theme demand score (login-only, switch-gated; hides on no data) */}
                   <DemandScore theme={theme} isLoggedIn={!!user} enabled={demandEnabled} />
                 </div>
+                {bookType !== 'pet' && (<>
                 <div>
                   <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Age Group</label>
                   <select className="apple-input" value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)}>
@@ -911,6 +993,7 @@ export default function CreatePage() {
                     <span className="text-[#FF6B8A]"> · Matched to your child's reading level</span>
                   </p>
                 </div>
+              </>)}
                 <div>
                   <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Picture-Book Style</label>
                   <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
@@ -998,7 +1081,9 @@ export default function CreatePage() {
                     <option value="photo-public">Option B · Real photo · Public sharing</option>
                   </select>
                   <p className="text-[11px] text-[#8E8E93] mt-1.5">
-                    Option A builds an illustrated character from name + theme. Option B uses your baby's photo as an AI reference image (note the privacy scope).
+                    {bookType === 'pet'
+                      ? 'Option A builds an illustrated character from name + theme. Option B uses your pet\'s photo as an AI reference image (note the privacy scope).'
+                      : 'Option A builds an illustrated character from name + theme. Option B uses your baby\'s photo as an AI reference image (note the privacy scope).'}
                   </p>
                 </div>
                 <button className="apple-button w-full disabled:opacity-50"
@@ -1019,7 +1104,7 @@ export default function CreatePage() {
             <div>
               <h2 className="text-xl font-bold text-[#2D2D2D]">{story.title}</h2>
               <p className="text-sm text-[#8E8E93]">
-                {characters.map(c => c.name).join(' & ')} • {story.outline.length} pages • {ageGroup}
+                {characters.map(c => c.name).join(' & ')} • {story.outline.length} pages • {bookType === 'pet' ? 'Pet keepsake' : ageGroup}
                 {story.levelLabel && (
                   <span className="inline-flex items-center ml-2 px-2 py-0.5 rounded-full bg-[#FFF5EE] text-[#FF6B8A] text-[11px] font-semibold">
                     GRL {story.level || level} · {story.levelLabel}
@@ -1161,7 +1246,7 @@ export default function CreatePage() {
                 <div>
                   <h2 className="text-xl font-bold text-[#2D2D2D]">{story.title}</h2>
                   <p className="text-sm text-[#8E8E93]">
-                    {characters.map(c => c.name).join(' & ')} • {story.outline.length} pages • {ageGroup}
+                    {characters.map(c => c.name).join(' & ')} • {story.outline.length} pages • {bookType === 'pet' ? 'Pet keepsake' : ageGroup}
                     {story.levelLabel && (
                       <span className="inline-flex items-center ml-2 px-2 py-0.5 rounded-full bg-[#FFF5EE] text-[#FF6B8A] text-[11px] font-semibold">
                         GRL {story.level || level} · {story.levelLabel}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import type { CharacterKind } from '@/lib/types/book'
 
 interface Character {
   id: string
@@ -9,14 +10,20 @@ interface Character {
   refSeed?: number
   /** 正在生成角色设定卡 */
   generating?: boolean
+  /** 角色物种（缺省 child；pet 时显示爪印徽标） */
+  kind?: CharacterKind
 }
 
 interface MultiCharacterManagerProps {
   characters: Character[]
-  onAdd: (name: string, photo?: File) => void
+  onAdd: (name: string, photo?: File, kind?: CharacterKind, species?: string) => void
   onRemove: (id: string) => void
   onUpdate: (id: string, data: Partial<Character>) => void
   maxCharacters?: number
+  /** 新角色的默认物种（缺省 child） */
+  defaultKind?: CharacterKind
+  /** 是否显示 Child/Pet 切换器（仅孩子+宠物合体款需要；纯儿童/纯宠物款固定物种，不显示） */
+  showKindSelector?: boolean
 }
 
 export default function MultiCharacterManager({
@@ -25,15 +32,20 @@ export default function MultiCharacterManager({
   onRemove,
   onUpdate,
   maxCharacters = 5,
+  defaultKind = 'child',
+  showKindSelector = false,
 }: MultiCharacterManagerProps) {
   const [newName, setNewName] = useState('')
   const [newPhoto, setNewPhoto] = useState<File | null>(null)
+  const [newKind, setNewKind] = useState<CharacterKind>(defaultKind)
+  const [newSpecies, setNewSpecies] = useState('')
 
   const handleAdd = () => {
     if (!newName.trim() || characters.length >= maxCharacters) return
-    onAdd(newName.trim(), newPhoto || undefined)
+    onAdd(newName.trim(), newPhoto || undefined, newKind, newKind === 'pet' ? (newSpecies.trim() || undefined) : undefined)
     setNewName('')
     setNewPhoto(null)
+    setNewSpecies('')
   }
 
   return (
@@ -44,6 +56,28 @@ export default function MultiCharacterManager({
         </h3>
         <span className="text-xs text-[#8E8E93]">Add up to {maxCharacters} {maxCharacters === 1 ? 'character' : 'characters'}</span>
       </div>
+
+      {/* 物种切换器：仅合体款显示；所选物种同时适用于照片上传与按名添加 */}
+      {showKindSelector && (
+        <div className="flex items-center gap-2" role="group" aria-label="Character type">
+          <span className="text-xs font-medium text-[#8E8E93]">New character is a:</span>
+          {(['child', 'pet'] as CharacterKind[]).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setNewKind(k)}
+              aria-pressed={newKind === k}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${
+                newKind === k
+                  ? 'border-[#FF6B8A] bg-[#FFF5EE] text-[#2D2D2D]'
+                  : 'border-[#E5E5EA] bg-white text-[#8E8E93] hover:border-[#C8A2E8]'
+              }`}
+            >
+              {k === 'child' ? '🧒 Child' : '🐾 Pet'}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Character list */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
@@ -59,10 +93,13 @@ export default function MultiCharacterManager({
                 <img src={char.photoPreview} alt={char.name}
                      className="w-12 h-12 rounded-full object-cover" />
               ) : (
-                '🐰'
+                char.kind === 'pet' ? '🐾' : '🐰'
               )}
             </div>
             <p className="text-xs font-medium text-[#2D2D2D] truncate">{char.name}</p>
+            {char.kind === 'pet' && (
+              <p className="text-[9px] text-[#8E8E93] mt-0.5">Pet</p>
+            )}
             {char.generating && (
               <p className="text-[9px] text-[#C8A2E8] mt-0.5">designing…</p>
             )}
@@ -88,7 +125,7 @@ export default function MultiCharacterManager({
                      const file = e.target.files?.[0]
                      if (file) {
                        const name = file.name.split('.')[0]
-                       onAdd(name, file)
+                       onAdd(name, file, newKind)
                      }
                    }} />
           </div>
@@ -107,6 +144,16 @@ export default function MultiCharacterManager({
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             />
+            {newKind === 'pet' && (
+              <input
+                className="apple-input text-sm py-2 max-w-[140px]"
+                placeholder="Species, e.g. dog"
+                aria-label="Pet species"
+                value={newSpecies}
+                onChange={(e) => setNewSpecies(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+              />
+            )}
             <button
               className="apple-button-secondary text-sm px-4 py-2 whitespace-nowrap"
               onClick={handleAdd}

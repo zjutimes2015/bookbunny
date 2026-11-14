@@ -29,6 +29,9 @@ export default function Header() {
             <Link href="/create" className="text-sm font-medium text-[#545558] hover:text-[#2D2D2D] transition-colors">
               Create Book
             </Link>
+            <Link href="/pets" className="text-sm font-medium text-[#545558] hover:text-[#2D2D2D] transition-colors">
+              Pets
+            </Link>
             <Link href="/progress" className="text-sm font-medium text-[#545558] hover:text-[#2D2D2D] transition-colors">
               Progress
             </Link>
@@ -68,6 +71,10 @@ export default function Header() {
             <Link href="/create" className="block px-3 py-2 rounded-xl text-sm text-[#545558] hover:bg-[#F2F2F7]"
                   onClick={() => setMenuOpen(false)}>
               Create Book
+            </Link>
+            <Link href="/pets" className="block px-3 py-2 rounded-xl text-sm text-[#545558] hover:bg-[#F2F2F7]"
+                  onClick={() => setMenuOpen(false)}>
+              Pets
             </Link>
             <Link href="/progress" className="block px-3 py-2 rounded-xl text-sm text-[#545558] hover:bg-[#F2F2F7]"
                   onClick={() => setMenuOpen(false)}>

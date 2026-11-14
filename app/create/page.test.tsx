@@ -104,10 +104,13 @@ describe('CreatePage — audio narration & comic export', () => {
 
   it('renders the setup step by default', async () => {
     render(<CreatePage />)
-    // Generate button appears once a character is added (mock auto-adds)
+    // Generate button appears once a character is added (mock auto-adds
+    // after a 150ms timer, then the human-pass exchange + re-render).
+    // That chain measures ~1s under contention on main too, so the
+    // default 1s waitFor budget flakes; wait up to 5s for the same assertion.
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /generate outline/i })).toBeInTheDocument()
-    })
+    }, { timeout: 5000 })
   })
 
   it('calls speechSynthesis.speak when Listen is clicked', async () => {

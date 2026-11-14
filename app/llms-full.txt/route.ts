@@ -128,6 +128,7 @@ Pro Animation Packs never expire.
 - [Bedtime story starring your child](${SITE_URL}/bedtime-story-starring-my-child)
 - [Personalized Christmas book](${SITE_URL}/personalized-christmas-book)
 - [Personalized birthday book](${SITE_URL}/personalized-birthday-book)
+- [Personalized pet storybook](${SITE_URL}/pets)
 - [Dinosaur bedtime story](${SITE_URL}/dinosaur-bedtime-story)
 - [Bedtime story for a child afraid of the dark](${SITE_URL}/afraid-of-the-dark-bedtime-story)
 - [Potty training book](${SITE_URL}/potty-training-book)

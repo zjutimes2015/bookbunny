@@ -78,6 +78,8 @@ cycle. Books never expire and stay in the library.
   Christmas book starring your child — a personal gift; leave time for printing.
 - [Personalized birthday book](${SITE_URL}/personalized-birthday-book): a
   birthday book starring your child; make it one to two weeks ahead.
+- [Personalized pet storybook](${SITE_URL}/pets): a keepsake storybook starring
+  your pet, written for the adult reader; a child + pet option keeps GRL levels.
 - [Dinosaur bedtime story](${SITE_URL}/dinosaur-bedtime-story): a gentle
   dinosaur bedtime story starring your child, for ages 3 to 6.
 - [Bedtime story for a child afraid of the dark](${SITE_URL}/afraid-of-the-dark-bedtime-story):

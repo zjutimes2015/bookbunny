@@ -88,3 +88,37 @@ describe('POST /api/create-story — human verification gate', () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe('POST /api/create-story — ungraded mode passthrough', () => {
+  it('passes ungraded: true through to generateStory for pet books', async () => {
+    vi.stubEnv('TURNSTILE_SECRET_KEY', 'test-secret')
+
+    const res = await POST(makeRequest(
+      { ...baseBody, ageGroup: 'adult', characterName: 'Buddy', ungraded: true },
+      `${HUMAN_COOKIE}=${issuePassValue()}`,
+    ))
+    expect(res.status).toBe(200)
+    expect(generateStory).toHaveBeenCalledWith(
+      expect.objectContaining({ ungraded: true, ageGroup: 'adult' }),
+    )
+  })
+
+  it('defaults ungraded to false when the field is absent', async () => {
+    vi.stubEnv('TURNSTILE_SECRET_KEY', 'test-secret')
+
+    const res = await POST(makeRequest(baseBody, `${HUMAN_COOKIE}=${issuePassValue()}`))
+    expect(res.status).toBe(200)
+    expect(generateStory).toHaveBeenCalledWith(expect.objectContaining({ ungraded: false }))
+  })
+
+  it('treats a non-boolean ungraded value as false (fail closed to graded)', async () => {
+    vi.stubEnv('TURNSTILE_SECRET_KEY', 'test-secret')
+
+    const res = await POST(makeRequest(
+      { ...baseBody, ungraded: 'yes' },
+      `${HUMAN_COOKIE}=${issuePassValue()}`,
+    ))
+    expect(res.status).toBe(200)
+    expect(generateStory).toHaveBeenCalledWith(expect.objectContaining({ ungraded: false }))
+  })
+})

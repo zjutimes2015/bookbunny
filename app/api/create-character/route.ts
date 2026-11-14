@@ -5,7 +5,7 @@ import { getSessionUser, getClientIp } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { isR2Configured, uploadBase64Image } from '@/lib/r2'
 import { requireHuman, attachPassCookie, humanCheckFailedResponse } from '@/lib/turnstile'
-import type { CharacterCard, StyleLexicon, BookLanguage } from '@/lib/types/book'
+import type { CharacterCard, CharacterKind, StyleLexicon, BookLanguage } from '@/lib/types/book'
 
 const PHOTO_USAGES: CharacterCard['photoUsage'][] = ['illustrated', 'photo-family', 'photo-public']
 
@@ -24,6 +24,9 @@ export async function POST(req: NextRequest) {
     const lexiconRaw = formData.get('styleLexicon') as string | null
     // 可选：内容语言（缺省英语）；非法值交由 lib 兜底为英语
     const language = ((formData.get('language') as string) || undefined) as BookLanguage | undefined
+    // 可选：角色物种（缺省 child，现有调用方行为不变）；宠物物种自由文本，上限 40 字符
+    const kind: CharacterKind = formData.get('kind') === 'pet' ? 'pet' : 'child'
+    const species = ((formData.get('species') as string) || '').trim().slice(0, 40) || undefined
 
     let styleLexicon: StyleLexicon | undefined
     if (lexiconRaw) {
@@ -52,7 +55,9 @@ export async function POST(req: NextRequest) {
     }
 
     // 儿童照片属于个人信息：没有生效的家长同意就绝不处理。
-    if (photo && typeof photo.size === 'number' && photo.size > 0) {
+    // 宠物照片不是儿童个人信息，COPPA 同意流程不适用——kind='pet' 时跳过此门。
+    // 同意判定本身（hasConsent）原样不动；缺省 kind='child' 时行为与改动前完全一致。
+    if (photo && kind !== 'pet' && typeof photo.size === 'number' && photo.size > 0) {
       if (!user) {
         return NextResponse.json(
           { error: 'A parent or guardian account is required before a child\u2019s photograph can be used' },
@@ -67,7 +72,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 宝宝照片（方案B）转 base64 作 FLUX reference；无照片（方案A）走纯插画
+    // 宝宝/宠物照片（方案B）转 base64 作 FLUX reference；无照片（方案A）走纯插画
     let photoDataUri: string | undefined
     if (photo && typeof photo.arrayBuffer === 'function' && photo.size > 0) {
       const bytes = await photo.arrayBuffer()
@@ -84,6 +89,8 @@ export async function POST(req: NextRequest) {
       theme,
       photoUsage,
       language, // 可选：内容语言（缺省英语）
+      kind, // 可选：角色物种（缺省 child）
+      species, // 可选：宠物物种
     })
 
     // 角色参考图落 R2（未配置时跳过，客户端仍可拿到 base64 参考图）

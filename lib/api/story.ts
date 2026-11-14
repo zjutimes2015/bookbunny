@@ -44,6 +44,14 @@ interface StoryOptions {
    * 并在 GRL 之上叠加「高频教学词 + 图文对应」的 ELL 约束。
    */
   ell?: EllOptions
+  /**
+   * 无分级模式（可选）：纯宠物款（成人礼物口径）。
+   *
+   * 启用后跳过 GRL 分级映射、约束注入、生成后词汇校验与 Quiz，
+   * prompt 改用纪念册口径（写给成年宠物主人的温情故事）。
+   * 缺省 false——现有儿童链路原样不动；ELL 与无分级同时传时 ELL 被忽略。
+   */
+  ungraded?: boolean
 }
 
 // === 解析防御：字段归一化 ===
@@ -144,9 +152,12 @@ export function resolvePageCount(
 }
 
 export async function generateStory(options: StoryOptions): Promise<StoryResult> {
+  // 无分级模式（纯宠物款）：level 强制为 null——约束注入、词汇校验、Quiz 三处
+  // 本就以 level 存在为条件，null 即全部跳过，无需另起分支。
+  const ungraded = !!options.ungraded
   // 1. 解析分级：优先用 level 参数，否则从 ageGroup 映射（向后兼容）
   const grl = (options.level || grlFromAgeGroup(options.ageGroup)).toUpperCase()
-  const level: ReadingLevel | null = pickLevel(grl)
+  const level: ReadingLevel | null = ungraded ? null : pickLevel(grl)
 
   // 2. 构建 prompt：有分级则注入约束，无分级走旧逻辑
   // 页数由调用方（套餐上限）决定；GRL 只约束语言难度，不覆盖套餐允许的页数。
@@ -159,19 +170,31 @@ export async function generateStory(options: StoryOptions): Promise<StoryResult>
 
   const visualDirectionBlock = buildVisualDirectionBlock(options.styleCard, options.styleLexicon)
   const characterBibleBlock = buildCharacterBibleBlock(options.characterCards)
-  // ELL 模式下正文强制为英语：ELL 读物教的是英语，不能因为孩子母语非英语就写成母语
-  const ellEnabled = !!options.ell?.enabled
+  // ELL 模式下正文强制为英语：ELL 读物教的是英语，不能因为孩子母语非英语就写成母语。
+  // 无分级模式不叠加 ELL：宠物纪念册没有教学目标，ELL 约束只属于儿童分级链路。
+  const ellEnabled = !ungraded && !!options.ell?.enabled
   const lang: BookLanguage = ellEnabled ? 'en' : (options.language ?? DEFAULT_BOOK_LANGUAGE)
   const languageRule = contentLanguageRule(lang)
 
   // ELL 约束叠在 GRL 约束之后：分级管「难度」，ELL 管「怎么教」
   const ellBlock = ellEnabled ? ellPromptConstraints(grl, options.ell!) : ''
 
-  const prompt = `You are a professional children's book author and illustrator-director. Produce a per-page production blueprint (single-page outline) for a children's picture book.
+  // 无分级 prompt 变体：角色、受众、正文口径改纪念册版；18 字段结构与 JSON 契约不变。
+  const roleLine = ungraded
+    ? 'You are a professional keepsake storybook author and illustrator-director. Produce a per-page production blueprint (single-page outline) for a heartwarming illustrated storybook starring a beloved pet, written for the adult owner as a gift or keepsake.'
+    : `You are a professional children's book author and illustrator-director. Produce a per-page production blueprint (single-page outline) for a children's picture book.`
+  const audienceLine = ungraded
+    ? 'Audience: adult pet owner — a gift/keepsake book, no reading level applies'
+    : `Target Age: ${options.ageGroup}`
+  const pageTextGuidance = ungraded
+    ? `pageText (in ${languageName(lang)}, the sentence on the page, 15-30 words, warm reflective tone for an adult reader)`
+    : `pageText (in ${languageName(lang)}, the sentence read to the child, 10-20 words, age-appropriate)`
+
+  const prompt = `${roleLine}
 
 Parameters:
 - Theme: ${options.theme}
-- Target Age: ${options.ageGroup}
+- ${audienceLine}
 - Main Character(s): ${options.characterName}
 - Number of pages: ${pageCount} (page 1 is the COVER, the rest are BODY)
 
@@ -189,7 +212,7 @@ LANGUAGE CONTRACT (strictly enforced, no exceptions):
 5 characters (array of character names appearing, written in ${languageName(lang)})
 6 characterAction (in ${languageName(lang)}, what the protagonist does)
 7 characterEmotion (in ${languageName(lang)})
-8 pageText (in ${languageName(lang)}, the sentence read to the child, 10-20 words, age-appropriate)
+8 ${pageTextGuidance}
 9 wordCountHint (int, words in pageText)
 10 visualStyle (ENGLISH only, e.g. "soft watercolor, gentle low-saturation palette")
 11 colorMood (ENGLISH only, e.g. "warm pink and creamy yellow")
@@ -223,7 +246,7 @@ Return ONLY a JSON object:
     body: JSON.stringify({
       model: 'deepseek/deepseek-chat',
       messages: [
-        { role: 'system', content: 'You are a children\'s book author. Respond only with valid JSON.' },
+        { role: 'system', content: ungraded ? 'You are a keepsake storybook author. Respond only with valid JSON.' : 'You are a children\'s book author. Respond only with valid JSON.' },
         { role: 'user', content: prompt },
       ],
       temperature: 0.8,

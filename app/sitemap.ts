@@ -32,6 +32,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/bedtime-story-starring-my-child', priority: 0.9, changeFrequency: 'weekly' },
     { path: '/personalized-christmas-book', priority: 0.9, changeFrequency: 'weekly' },
     { path: '/personalized-birthday-book', priority: 0.9, changeFrequency: 'monthly' },
+    { path: '/pets', priority: 0.9, changeFrequency: 'weekly' },
     { path: '/dinosaur-bedtime-story', priority: 0.85, changeFrequency: 'monthly' },
     { path: '/afraid-of-the-dark-bedtime-story', priority: 0.85, changeFrequency: 'monthly' },
     { path: '/potty-training-book', priority: 0.85, changeFrequency: 'monthly' },

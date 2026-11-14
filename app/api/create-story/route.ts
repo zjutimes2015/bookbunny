@@ -8,7 +8,7 @@ import { parseEllOptions } from '@/lib/grl/ell'
 
 export async function POST(req: NextRequest) {
   try {
-    const { theme, ageGroup, characterName, pages, level, styleLexicon, styleCard, characterCards, language, worldBrief, turnstileToken, ell } = await req.json()
+    const { theme, ageGroup, characterName, pages, level, styleLexicon, styleCard, characterCards, language, worldBrief, turnstileToken, ell, ungraded } = await req.json()
 
     if (!theme || !ageGroup || !characterName) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       worldBrief, // 可选：官方世界简报（舞台/配角/画风/禁区/本集寓意）
       language, // 可选：内容语言（缺省英语）
       ell: parseEllOptions(ell), // 可选：ELL 教学语言模式（强制英语正文）
+      ungraded: ungraded === true, // 可选：无分级模式（纯宠物款，缺省 false）
     })
 
     const res = NextResponse.json(story)
