@@ -130,9 +130,9 @@ const FAQS: { q: string; a: string }[] = [
 
 /**
  * Theme prefill contract: the "Start this story" links below carry
- * `?theme=<slug>` so /create can pre-fill this page's theme. /create does
- * not read the param yet (known gap — see W3 report); until it does, the
- * links land on the normal blank /create form.
+ * `?theme=<slug>` so /create can pre-fill this page's theme. /create reads
+ * the param on mount (R6) and pre-fills the Story Theme input; unknown
+ * slugs are ignored and land on the normal blank /create form.
  */
 const CREATE_HREF = '/create?theme=ai-picture-book-generator'
 

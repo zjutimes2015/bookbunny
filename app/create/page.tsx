@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import BunnyMascot from '@/components/BunnyMascot'
 import MultiCharacterManager from '@/components/MultiCharacterManager'
@@ -14,6 +14,10 @@ import { runImageChecks, runThreeStepChecks } from '@/lib/page-checks'
 import { buildInteriorPdf, buildCoverPdf, type KdpPageInput } from '@/lib/kdp/export'
 import { KDP_TRIM, padToKdpPageCount, interiorDimsIn, coverDimsIn } from '@/lib/kdp/spec'
 import { KdpChecklist } from '@/components/KdpChecklist'
+import DemandScore from '@/components/DemandScore'
+import ListingSuggestions from '@/components/ListingSuggestions'
+import { themeForSlug } from '@/lib/demand/themes'
+import { isDemandEnabled } from '@/lib/demand/gates'
 import { useAuth } from '@/lib/auth-context'
 import { maxPagesFor, pageCostUnits } from '@/lib/tier-limits'
 import { analyzeStoryForGRL, type GrlReport } from '@/lib/grl/analyzer'
@@ -171,6 +175,19 @@ export default function CreatePage() {
   const [styleCard, setStyleCard] = useState<StyleCard | null>(null)
   const [styleLexicon, setStyleLexicon] = useState<StyleLexicon | null>(null)
   const [styleLoading, setStyleLoading] = useState(false)
+
+  // R6 `?theme=` prefill: landing-page CTAs carry ?theme=<slug>; resolve it
+  // against the tracked-theme map and prefill Story Theme once on mount.
+  // Unknown/empty slugs are ignored (blank form, no error). Read from
+  // window.location so no Suspense boundary is needed for search params.
+  useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get('theme')
+    const prefill = themeForSlug(slug)
+    if (prefill) setTheme((prev) => (prev ? prev : prefill))
+  }, [])
+
+  // Demand feature master switch (default off; only explicit 'true' enables).
+  const demandEnabled = isDemandEnabled(process.env.NEXT_PUBLIC_DEMAND_ENABLED)
 
   // 阶段3：角色一致性固定句 + 参考图（取第一个已生成参考图的角色）
   const consistencyLine = characters.map(c => c.consistencyLine).filter(Boolean).join(' ')
@@ -806,6 +823,8 @@ export default function CreatePage() {
                     placeholder="e.g. A magical forest adventure..."
                     suggestions={THEME_IDEAS}
                   />
+                  {/* R1 theme demand score (login-only, switch-gated; hides on no data) */}
+                  <DemandScore theme={theme} isLoggedIn={!!user} enabled={demandEnabled} />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-[#2D2D2D] mb-1.5 block">Age Group</label>
@@ -1289,6 +1308,19 @@ export default function CreatePage() {
                   paper="white"
                 />
               </div>
+
+              {/* R2 listing suggestions: Creator+ only; the component renders
+                  nothing at all for other tiers (not a disabled state). */}
+              {canKdp && (
+                <div className="mb-6">
+                  <ListingSuggestions
+                    theme={theme}
+                    title={story.title}
+                    canKdp={canKdp}
+                    enabled={demandEnabled}
+                  />
+                </div>
+              )}
 
               {/* Full page grid with images（按绝对页码取图） */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">

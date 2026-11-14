@@ -41,6 +41,12 @@ declare namespace NodeJS {
     NEXT_PUBLIC_ANNUAL_BILLING_ENABLED?: string
     NEXT_PUBLIC_BOOK_PACKS_ENABLED?: string
 
+    // 需求功能（服务端凭证绝不加 NEXT_PUBLIC_ 前缀；开关默认 OFF，仅 'true' 开启）
+    DATAFORSEO_LOGIN?: string
+    DATAFORSEO_PASSWORD?: string
+    DEMAND_MONTHLY_BUDGET_USD?: string
+    NEXT_PUBLIC_DEMAND_ENABLED?: string
+
     // 支付：Creem（旧通道）
     CREEM_API_KEY?: string
     CREEM_TEST_MODE?: string

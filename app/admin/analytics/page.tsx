@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless'
 import AnalyticsClient from './analytics-client'
+import { getDemandStats, type DemandStats } from '@/lib/demand/store'
 
 async function getAnalyticsData() {
   try {
@@ -41,7 +42,7 @@ async function getAnalyticsData() {
 }
 
 export default async function AdminAnalytics() {
-  const data = await getAnalyticsData()
+  const [data, demand] = await Promise.all([getAnalyticsData(), getDemandStats()])
 
   const hasData = data.dailyBooks.length > 0 || data.dailyUsers.length > 0 || data.revenueTrend.length > 0
 
@@ -52,6 +53,8 @@ export default async function AdminAnalytics() {
         <p className="text-sm text-[#8E8E93] mt-1">Usage trends over time</p>
       </div>
 
+      {demand && <DemandStatsCard stats={demand} />}
+
       {!hasData ? (
         <div className="apple-card p-12 text-center">
           <div className="text-5xl mb-4">📈</div>
@@ -61,6 +64,30 @@ export default async function AdminAnalytics() {
       ) : (
         <AnalyticsClient data={data} />
       )}
+    </div>
+  )
+}
+
+/** R5 observability: current-month demand lookups (admin-only page). Hidden when the demand_calls table does not exist yet. */
+function DemandStatsCard({ stats }: { stats: DemandStats }) {
+  const hitRate = stats.calls > 0 ? Math.round((100 * stats.cacheHits) / stats.calls) : 0
+  return (
+    <div className="apple-card p-5 mb-6">
+      <h2 className="font-semibold text-[#2D2D2D] mb-3">Demand lookups · this month</h2>
+      <div className="grid grid-cols-3 gap-4 text-center">
+        <div>
+          <p className="text-2xl font-bold text-[#2D2D2D]">{stats.calls}</p>
+          <p className="text-xs text-[#8E8E93]">lookups</p>
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-[#2D2D2D]">{hitRate}%</p>
+          <p className="text-xs text-[#8E8E93]">cache hits</p>
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-[#2D2D2D]">${stats.estimatedSpendUsd.toFixed(2)}</p>
+          <p className="text-xs text-[#8E8E93]">estimated spend</p>
+        </div>
+      </div>
     </div>
   )
 }
