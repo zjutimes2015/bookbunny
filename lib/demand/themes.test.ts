@@ -15,10 +15,17 @@ const EXPECTED_SLUGS = [
   'personalized-christmas-book',
   'personalized-birthday-book',
   'personalized-childrens-books',
+  'afraid-of-the-dark-bedtime-story',
+  'potty-training-book',
+  'new-baby-sibling-book',
+  'first-day-of-school-book',
+  'grandparents-picture-book',
+  'doctor-dentist-visit-book',
+  'books-like-my-family',
 ]
 
 describe('TRACKED_THEMES (R6 map)', () => {
-  it('covers all 7 landing-page slugs', () => {
+  it('covers all 14 landing-page slugs', () => {
     expect(TRACKED_THEMES.map((t) => t.slug).sort()).toEqual([...EXPECTED_SLUGS].sort())
   })
   it('gives every theme a non-empty prefill text and 3–5 seed phrases', () => {
@@ -41,6 +48,9 @@ describe('themeForSlug (R6 hit / miss / empty)', () => {
   it('hits: known slug returns its theme text', () => {
     expect(themeForSlug('dinosaur-bedtime-story')).toBe('A dinosaur bedtime story')
     expect(themeForSlug('personalized-christmas-book')).toBe('A personalized Christmas book')
+    expect(themeForSlug('afraid-of-the-dark-bedtime-story')).toBe('A bedtime story for a child afraid of the dark')
+    expect(themeForSlug('potty-training-book')).toBe('A potty training story')
+    expect(themeForSlug('books-like-my-family')).toBe('A bedtime story about a family like mine')
   })
   it('is case- and whitespace-tolerant', () => {
     expect(themeForSlug('  Dinosaur-Bedtime-Story ')).toBe('A dinosaur bedtime story')

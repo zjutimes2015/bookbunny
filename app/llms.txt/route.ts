@@ -80,6 +80,20 @@ cycle. Books never expire and stay in the library.
   birthday book starring your child; make it one to two weeks ahead.
 - [Dinosaur bedtime story](${SITE_URL}/dinosaur-bedtime-story): a gentle
   dinosaur bedtime story starring your child, for ages 3 to 6.
+- [Bedtime story for a child afraid of the dark](${SITE_URL}/afraid-of-the-dark-bedtime-story):
+  a calming story with a night-light and a bedtime routine.
+- [Potty training book](${SITE_URL}/potty-training-book): a potty routine story
+  in your family's own words, with accidents treated as normal.
+- [New baby sibling book](${SITE_URL}/new-baby-sibling-book): the older
+  sibling's story — big brother or big sister, helper role, honest feelings.
+- [First day of school book](${SITE_URL}/first-day-of-school-book): the bus,
+  the classroom, making friends, and the goodbye routine.
+- [Grandparents picture book](${SITE_URL}/grandparents-picture-book): an
+  activity-led story with grandma or grandpa, by name.
+- [Doctor and dentist visit book](${SITE_URL}/doctor-dentist-visit-book): a
+  first visit walked through step by step.
+- [Books like my family](${SITE_URL}/books-like-my-family): a story about a
+  family like yours, described in your own words.
 - [Pricing](${SITE_URL}/pricing): plans and the full feature comparison matrix.
 - [How to make a children's book with AI](${SITE_URL}/blog/how-to-make-a-childrens-book):
   step-by-step tutorial.

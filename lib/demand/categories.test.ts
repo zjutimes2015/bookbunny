@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { CATEGORY_MAP, categoriesForTheme } from './categories'
-import { TRACKED_THEMES } from './themes'
 
 describe('CATEGORY_MAP (R2, hand-checked BISAC rows)', () => {
   it('maps exactly 3 categories per covered theme', () => {
@@ -13,12 +12,23 @@ describe('CATEGORY_MAP (R2, hand-checked BISAC rows)', () => {
     }
   })
 
-  it('covers 6 of the 7 tracked themes', () => {
+  it('covers the 6 hand-verified themes (new SEO themes pending BISAC checks)', () => {
+    // The 7 theme pages added 2026-11-14 are deliberately NOT in
+    // CATEGORY_MAP: no BISAC triple has been hand-verified for them, and
+    // categories.ts forbids invented paths. They fall back to the "no
+    // suggestions yet" line via categoriesForTheme() returning null.
+    // This test pins the verified set exactly; extend it only with
+    // verified triples, never to match TRACKED_THEMES blindly.
     const covered = Object.keys(CATEGORY_MAP).sort()
     expect(covered).toEqual(
-      TRACKED_THEMES.map((t) => t.slug)
-        .filter((s) => s !== 'ai-picture-book-generator')
-        .sort(),
+      [
+        'bedtime-story-starring-my-child',
+        'dinosaur-bedtime-story',
+        'english-reading-for-beginners',
+        'personalized-birthday-book',
+        'personalized-childrens-books',
+        'personalized-christmas-book',
+      ].sort(),
     )
   })
 
@@ -42,6 +52,12 @@ describe('categoriesForTheme', () => {
   it('returns null for the unmapped tool page (fallback line, never invented)', () => {
     expect(categoriesForTheme('A picture book adventure')).toBeNull()
     expect(categoriesForTheme('ai picture book generator')).toBeNull()
+  })
+
+  it('returns null for the 7 new SEO themes until BISAC triples are verified', () => {
+    expect(categoriesForTheme('A potty training story')).toBeNull()
+    expect(categoriesForTheme('A bedtime story about a family like mine')).toBeNull()
+    expect(categoriesForTheme('A first day of school story')).toBeNull()
   })
 
   it('returns null for untracked free text and empty input', () => {

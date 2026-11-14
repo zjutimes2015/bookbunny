@@ -2,11 +2,18 @@
  * Tracked themes: the slug -> theme text map shared by the `?theme=` prefill
  * (R6) and the demand seed keywords (R4 §4.1).
  *
- * The 7 slugs below were read off the `CREATE_HREF` constants of the 7
- * existing landing pages (2026-11-14). Theme texts are derived from each
- * page's own title/copy; seed phrases are QUERY STRINGS (inputs to the
- * third-party API), not measurements — no volume, score, or ranking data is
- * hardcoded anywhere in this file. All numbers come only from API responses.
+ * The 14 slugs below were read off the `CREATE_HREF` constants of the 14
+ * landing pages (7 original + 7 theme pages added 2026-11-14 from the theme
+ * demand research round). Theme texts are derived from each page's own
+ * title/copy; seed phrases are QUERY STRINGS (inputs to the third-party API),
+ * not measurements — no volume, score, or ranking data is hardcoded anywhere
+ * in this file. All numbers come only from API responses.
+ *
+ * NOTE: the 7 theme pages added 2026-11-14 have no verified BISAC triple in
+ * `categories.ts` yet, so R2 category suggestions fall back to the "no
+ * suggestions yet" line for them (see categories.ts doctrine: unverified
+ * paths are never invented). Their `?theme=` prefill and seed keywords work
+ * from this table alone.
  *
  * Client-safe: no secrets, no Node APIs.
  */
@@ -87,6 +94,83 @@ export const TRACKED_THEMES: TrackedTheme[] = [
       'picture book for kids',
       'childrens picture book',
       'kids story book',
+    ],
+  },
+  {
+    slug: 'afraid-of-the-dark-bedtime-story',
+    themeText: 'A bedtime story for a child afraid of the dark',
+    seeds: [
+      'bedtime story for child afraid of the dark',
+      'book about fear of the dark for toddlers',
+      'personalized book scared of the dark',
+      'afraid of the dark book ages 3 5',
+      'goodnight story for child afraid of the dark',
+    ],
+  },
+  {
+    slug: 'potty-training-book',
+    themeText: 'A potty training story',
+    seeds: [
+      'potty training book for toddlers',
+      'potty training book for boys',
+      'personalized potty training book',
+      'toddler potty book',
+      'potty training story book for 2 year old',
+    ],
+  },
+  {
+    slug: 'new-baby-sibling-book',
+    themeText: 'A new baby sibling story',
+    seeds: [
+      'new baby sibling book',
+      'big brother book',
+      'big sister book for toddlers',
+      'personalized big sister book new baby',
+      'book about becoming a big brother',
+    ],
+  },
+  {
+    slug: 'first-day-of-school-book',
+    themeText: 'A first day of school story',
+    seeds: [
+      'first day of school book',
+      'first day of school picture book',
+      'school anxiety book for kids',
+      'kindergarten preparation book',
+      'personalized first day of school book',
+    ],
+  },
+  {
+    slug: 'grandparents-picture-book',
+    themeText: 'A grandparents story',
+    seeds: [
+      'grandparent picture book',
+      'grandma book for kids',
+      'personalized book from grandma',
+      'grandparents day book',
+      'book about grandma and grandchild',
+    ],
+  },
+  {
+    slug: 'doctor-dentist-visit-book',
+    themeText: 'A doctor and dentist visit story',
+    seeds: [
+      'going to the dentist book for toddlers',
+      'first dentist visit book for kids',
+      'personalized dentist book for kids',
+      'going to the doctor book for toddlers',
+      'book about visiting the doctor for preschoolers',
+    ],
+  },
+  {
+    slug: 'books-like-my-family',
+    themeText: 'A bedtime story about a family like mine',
+    seeds: [
+      "diverse children's picture books",
+      "children's books about different families",
+      'inclusive bedtime story book',
+      'personalized book diverse characters',
+      'books where kids see themselves',
     ],
   },
 ]

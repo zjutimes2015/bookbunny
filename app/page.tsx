@@ -530,6 +530,22 @@ export default function HomePage() {
             </Link>
           ))}
         </div>
+        <p className="mt-6 text-sm leading-relaxed text-[#545558]">
+          More bedtime stories:{' '}
+          <Link href="/afraid-of-the-dark-bedtime-story" className="underline underline-offset-4">afraid of the dark</Link>
+          {' · '}
+          <Link href="/potty-training-book" className="underline underline-offset-4">potty training</Link>
+          {' · '}
+          <Link href="/new-baby-sibling-book" className="underline underline-offset-4">new baby sibling</Link>
+          {' · '}
+          <Link href="/first-day-of-school-book" className="underline underline-offset-4">first day of school</Link>
+          {' · '}
+          <Link href="/grandparents-picture-book" className="underline underline-offset-4">grandparents</Link>
+          {' · '}
+          <Link href="/doctor-dentist-visit-book" className="underline underline-offset-4">doctor &amp; dentist visits</Link>
+          {' · '}
+          <Link href="/books-like-my-family" className="underline underline-offset-4">books like my family</Link>
+        </p>
       </section>
 
       {/* 07 · Final CTA + FAQ */}
